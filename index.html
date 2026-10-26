@@ -122,8 +122,12 @@ const defaults = () => ({
   settings: { start: "09:00", gameMin: 12, breakMin: 5 },
   teams: Array.from({ length: 8 }, (_, i) => ({ name: "Team " + (i + 1), m1: "", m2: "", w: "" })),
   drawn: [],
-  scores: {}
+  scores: {},
+  who: {}
 });
+
+const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
 function load() {
   if (VIEW) return defaults();
@@ -133,12 +137,21 @@ function load() {
   } catch (e) {}
   return defaults();
 }
-function save() { if (VIEW) return; try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} schedulePush(); }
+function store() { lsSet(KEY, JSON.stringify(S)); }
+function save() { if (VIEW) return; store(); edits++; setSync(undefined, true); schedulePush(); }
 
 let S = load();
 let tab = VIEW ? "me" : (S.drawn.length >= 8 ? "sched" : "setup");
-let busy = false, flashTeam = null;
+let busy = false, flashTeam = null, pendingRender = false;
 let pushTimer = null, liveMsg = "", lastSig = "", updMsg = "";
+// serverRev: the server revision this device last matched (null = never synced).
+// dirty: this device has edits the server has not received.
+let serverRev = lsGet("bt_rev") === null ? null : +lsGet("bt_rev");
+let dirty = lsGet("bt_dirty") === "1", edits = 0;
+function setSync(rev, d) {
+  if (rev !== undefined) { serverRev = rev; lsSet("bt_rev", String(rev)); }
+  dirty = d; lsSet("bt_dirty", d ? "1" : "");
+}
 
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const rnd = n => { try { const a = new Uint32Array(1); crypto.getRandomValues(a); return a[0] % n; } catch (e) { return Math.floor(Math.random() * n); } };
@@ -177,12 +190,24 @@ function prelims() {
   return out;
 }
 
+// Scores belong to the two teams they were entered for. If a corrected
+// earlier result puts different teams in a playoff match, its old scores are ignored.
+function scoresOf(m) {
+  const w = S.who && S.who[m.id];
+  if (w && (w[0] !== m.a || w[1] !== m.b)) return [];
+  return S.scores[m.id] || [];
+}
 function game(m, i) {
-  const s = (S.scores[m.id] || [])[i];
+  const s = scoresOf(m)[i];
   if (!s) return null;
   const a = s[0], b = s[1];
   if (a === "" || b === "" || a == null || b == null || +a === +b) return null;
   return { a: +a, b: +b, w: +a > +b ? 0 : 1 };
+}
+// A finished game to 15 with no cap: 15 to 13 or less, or won by exactly 2 after 14-all.
+function validGame(g) {
+  const hi = Math.max(g.a, g.b), lo = Math.min(g.a, g.b);
+  return hi === 15 ? lo <= 13 : hi > 15 && hi - lo === 2;
 }
 function res(m) {
   const gs = [0, 1, 2].map(i => game(m, i));
@@ -213,7 +238,19 @@ function table(gk) {
   });
   const arr = Object.values(st);
   arr.forEach(x => x.pd = x.pf - x.pa);
-  arr.sort((x, y) => y.w - x.w || y.gw - x.gw || y.pd - x.pd || h2h(x.t, y.t) || x.t - y.t);
+  arr.sort((x, y) => y.w - x.w || y.gw - x.gw || y.pd - x.pd || x.t - y.t);
+  // Teams level on all three: order them by ties won against each other.
+  for (let i = 0; i < arr.length;) {
+    let j = i + 1;
+    while (j < arr.length && arr[j].w === arr[i].w && arr[j].gw === arr[i].gw && arr[j].pd === arr[i].pd) j++;
+    if (j - i > 1) {
+      const blk = arr.slice(i, j), ts = blk.map(x => x.t);
+      const mini = t => ts.filter(o => o !== t && h2h(t, o) === -1).length;
+      blk.sort((x, y) => mini(y.t) - mini(x.t) || x.t - y.t);
+      arr.splice(i, j - i, ...blk);
+    }
+    i = j;
+  }
   return arr;
 }
 function prelimsDone() { return !!groups() && prelims().every(m => res(m).done); }
@@ -262,8 +299,10 @@ function endTime() {
 function stat(m) {
   const r = res(m);
   if (m.a == null || m.b == null) return "Waiting for earlier results";
-  if (r.done) return tn(r.winner === 0 ? m.a : m.b) + " win the tie, " + Math.max(...r.gw) + " games to " + Math.min(...r.gw);
-  return r.played + " of 3 games entered";
+  const bad = [0, 1, 2].filter(i => r.gs[i] && !validGame(r.gs[i])).map(i => i + 1);
+  const warn = bad.length ? ". Check game " + bad.join(" and ") + ": not a finished score" : "";
+  if (r.done) return tn(r.winner === 0 ? m.a : m.b) + " win the tie, " + Math.max(...r.gw) + " games to " + Math.min(...r.gw) + warn;
+  return r.played + " of 3 games entered" + warn;
 }
 function card(m) {
   const r = res(m), ready = m.a != null && m.b != null;
@@ -272,8 +311,8 @@ function card(m) {
   h += `<div class="vs"><div class="tm ${r.done && r.winner === 0 ? "win" : ""}"><b>${esc(nameA)}</b><small>${ready ? esc(tp(m.a)) : ""}</small></div><div class="x">v</div><div class="tm right ${r.done && r.winner === 1 ? "win" : ""}"><b>${esc(nameB)}</b><small>${ready ? esc(tp(m.b)) : ""}</small></div></div>`;
   if (ready) {
     for (let i = 0; i < 3; i++) {
-      const s = (S.scores[m.id] || [])[i] || ["", ""];
-      h += `<div class="g"><div class="gl">Game ${i + 1}: ${GAME_LABELS[i]}</div><div class="gr"><div class="p">${esc(pairOf(m.a, i))}</div><div class="scs"><input class="sc" type="number" inputmode="numeric" min="0" max="40" data-id="${m.id}" data-g="${i}" data-s="0" value="${s[0]}" ${VIEW ? "disabled" : ""}><span>:</span><input class="sc" type="number" inputmode="numeric" min="0" max="40" data-id="${m.id}" data-g="${i}" data-s="1" value="${s[1]}" ${VIEW ? "disabled" : ""}></div><div class="p r">${esc(pairOf(m.b, i))}</div></div></div>`;
+      const s = scoresOf(m)[i] || ["", ""];
+      h += `<div class="g"><div class="gl">Game ${i + 1}: ${GAME_LABELS[i]}</div><div class="gr"><div class="p">${esc(pairOf(m.a, i))}</div><div class="scs"><input class="sc" type="number" inputmode="numeric" min="0" max="40" data-id="${m.id}" data-g="${i}" data-s="0" value="${esc(s[0])}" ${VIEW ? "disabled" : ""}><span>:</span><input class="sc" type="number" inputmode="numeric" min="0" max="40" data-id="${m.id}" data-g="${i}" data-s="1" value="${esc(s[1])}" ${VIEW ? "disabled" : ""}></div><div class="p r">${esc(pairOf(m.b, i))}</div></div></div>`;
     }
   }
   h += `<div class="st ${r.done ? "" : "pend"}">${esc(stat(m))}</div></div>`;
@@ -304,10 +343,10 @@ function vSetup() {
   h += `<h2>Timing</h2><div class="card"><label class="f">Start time</label><input class="in" type="time" data-set="start" value="${esc(S.settings.start)}">
   <label class="f">Planned minutes per game</label><input class="in" type="number" inputmode="numeric" data-set="gameMin" value="${S.settings.gameMin}">
   <label class="f">Break between rounds (minutes)</label><input class="in" type="number" inputmode="numeric" data-set="breakMin" value="${S.settings.breakMin}">
-  <div class="note">6 rounds. Planned finish: ${endTime()}. The times only guide you. Games run to 15 points with no cap.</div></div>`;
+  <div class="note">6 rounds. Planned finish: ${endTime()}. The times only guide you. Games run to 15 points with no cap. A score that is not a finished game gets a "check" note.</div></div>`;
 
   h += liveCard();
-  h += `<h2>Backup</h2><div class="card"><div class="note" style="margin-top:0">Scores save on this device only. Use one phone for score entry.</div>
+  h += `<h2>Backup</h2><div class="card"><div class="note" style="margin-top:0">Scores save on this device. With the admin PIN they also go to the server. Use one phone for score entry.</div>
   <div class="row"><button class="btn ghost" data-act="export">Copy backup</button><button class="btn ghost" data-act="import">Restore backup</button><button class="btn ghost" data-act="reset">Reset everything</button></div></div>`;
   return h;
 }
@@ -335,7 +374,7 @@ function vTables() {
     h += t.map((x, i) => `<tr class="${i < 2 ? "cup" : ""}"><td class="l">${i + 1}</td><td class="l"><b>${esc(tn(x.t))}</b></td><td>${x.p}</td><td>${x.w}</td><td>${x.l}</td><td>${x.gw}</td><td>${x.gl}</td><td>${x.pd > 0 ? "+" : ""}${x.pd}</td></tr>`).join("");
     h += `</table></div>`;
   }
-  h += `<div class="note">Green rows go to the Champions League. The other two teams go to the FPL.<br>P played, W ties won, L ties lost, GW games won, GL games lost, PD point difference.<br>Order: ties won, then games won, then point difference, then the result between the two teams.</div>`;
+  h += `<div class="note">Green rows go to the Champions League. The other two teams go to the FPL.<br>P played, W ties won, L ties lost, GW games won, GL games lost, PD point difference.<br>Order: ties won, then games won, then point difference, then ties won between the level teams.</div>`;
   const sd = seeds();
   if (sd) {
     h += `<h2>Playoff seeds</h2><div class="card"><b>Champions League</b><ol>${sd.Cup.map(t => `<li>${esc(tn(t))}</li>`).join("")}</ol><b>FPL</b><ol>${sd.Plate.map(t => `<li>${esc(tn(t))}</li>`).join("")}</ol></div>`;
@@ -362,9 +401,14 @@ function vPo() {
 const TABS = VIEW ? [["me", "My matches"], ["sched", "All matches"], ["tables", "Tables"], ["po", "Playoffs"]] : [["setup", "Setup"], ["sched", "Matches"], ["tables", "Tables"], ["po", "Playoffs"]];
 function render() {
   const y = window.scrollY;
+  pendingRender = false;
+  // Keep focus on the same field so a redraw does not swallow typing.
+  const a = document.activeElement;
+  const sel = a && a.closest && a.closest("#app") ? Object.keys(a.dataset).map(k => `[data-${k}="${CSS.escape(a.dataset[k])}"]`).join("") : "";
   const v = { setup: vSetup, me: vMe, sched: vSched, tables: vTables, po: vPo }[tab];
   document.getElementById("app").innerHTML = v();
   document.getElementById("tabs").innerHTML = TABS.map(([k, n]) => `<button data-tab="${k}" class="${tab === k ? "on" : ""}">${n}</button>`).join("");
+  if (sel) { const n = document.querySelector("#app " + sel); if (n) n.focus({ preventScroll: true }); }
   window.scrollTo(0, y);
 }
 
@@ -373,19 +417,24 @@ function drawNext() {
   if (busy || S.drawn.length >= 8) return;
   busy = true;
   const rem = [0, 1, 2, 3, 4, 5, 6, 7].filter(t => !S.drawn.includes(t));
-  const pick = rem[rnd(rem.length)];
+  const pick = rem[rnd(rem.length)], s0 = S;
   const el = document.getElementById("flash");
+  document.querySelectorAll("[data-act]").forEach(b => b.disabled = true);
   let n = 0;
   const iv = setInterval(() => {
     if (el) el.textContent = tn(rem[rnd(rem.length)]);
     if (++n >= 14) {
       clearInterval(iv);
-      S.drawn.push(pick); flashTeam = pick; busy = false;
+      busy = false;
+      // The state was replaced (for example loaded from the server) during the animation.
+      if (S !== s0 || S.drawn.includes(pick) || S.drawn.length >= 8) { render(); return; }
+      S.drawn.push(pick); flashTeam = pick;
       save(); render();
     }
   }, 80);
 }
 function drawAll() {
+  if (busy) return;
   while (S.drawn.length < 8) {
     const rem = [0, 1, 2, 3, 4, 5, 6, 7].filter(t => !S.drawn.includes(t));
     S.drawn.push(rem[rnd(rem.length)]);
@@ -425,14 +474,14 @@ function vMe() {
 
 /* ---------- live sharing ---------- */
 const hhmm = () => new Date().toTimeString().slice(0, 5);
-const getPin = () => { try { return localStorage.getItem("bt_pin") || ""; } catch (e) { return ""; } };
+const getPin = () => lsGet("bt_pin") || "";
 function liveCard() {
   return `<h2>Live link for players</h2><div class="card"><div class="note" style="margin-top:0">Players open this link on their phones. They choose their name and see only their matches.</div>
   <input class="in" readonly value="${esc(location.origin + "/watch")}">
   <label class="f">Admin PIN (the same PIN you set in Vercel as ADMIN_PIN)</label>
   <input class="in" type="password" data-pin="1" value="${esc(getPin())}" placeholder="Admin PIN">
-  <div class="row"><button class="btn" data-act="connect">Connect and publish</button><button class="btn ghost" data-act="copylink">Copy link</button><button class="btn ghost" data-act="pull">Load from server</button></div>
-  <div class="note" id="livemsg">${esc(liveMsg || "Not connected")}</div></div>`;
+  <div class="row"><button class="btn" data-act="connect">Connect</button><button class="btn ghost" data-act="copylink">Copy link</button><button class="btn ghost" data-act="pull">Load from server</button></div>
+  <div class="note" id="livemsg">${esc(liveMsg || (dirty && getPin() ? "Changes not sent yet" : "Not connected"))}</div></div>`;
 }
 function setLive(t) { liveMsg = t; const m = document.getElementById("livemsg"); if (m) m.textContent = t; }
 function schedulePush() {
@@ -440,23 +489,85 @@ function schedulePush() {
   clearTimeout(pushTimer);
   pushTimer = setTimeout(pushNow, 1500);
 }
-async function pushNow() {
+
+let pushing = false, pushAgain = false, retryTimer = null, retryDelay = 5000;
+function retryLater(fn) {
+  clearTimeout(retryTimer);
+  retryTimer = setTimeout(fn, retryDelay);
+  retryDelay = Math.min(retryDelay * 2, 60000);
+}
+async function getServer() {
+  const r = await fetch("/api/state", { cache: "no-store" });
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || "error " + r.status);
+  return j;
+}
+function adopt(j) {
+  S = Object.assign(defaults(), j.state); flashTeam = null;
+  store(); setSync(j.rev, false); render();
+}
+// Another device saved since this one last synced and this device has its own edits.
+function conflict(j) {
+  if (j.state && confirm("Another device saved newer data on the server.\n\nOK: load the server copy. Changes on this device that were not sent are lost.\nCancel: replace the server copy with this device's data.")) {
+    adopt(j); setLive("Loaded from server at " + hhmm());
+  } else { setSync(j.rev, true); pushNow(); }
+}
+
+// Checks the server before sending, so a device with old or empty data
+// never overwrites newer scores without asking.
+async function sync() {
+  if (VIEW) return;
   if (!getPin()) { setLive("Enter the admin PIN first"); return; }
+  clearTimeout(retryTimer);
+  let j;
+  try { j = await getServer(); }
+  catch (e) { setLive("Could not reach the server (" + e.message + "). Retrying"); retryLater(sync); return; }
+  retryDelay = 5000;
+  if (!j.state) { setSync(j.rev, true); return pushNow(); }
+  if (j.rev === serverRev) return dirty ? pushNow() : setLive("Live. Up to date at " + hhmm());
+  const same = JSON.stringify(Object.assign(defaults(), j.state)) === JSON.stringify(S);
+  const blank = JSON.stringify(S) === JSON.stringify(defaults());
+  if (same || blank || (serverRev !== null && !dirty)) { adopt(j); setLive("Live. Loaded from server at " + hhmm()); }
+  else conflict(j);
+}
+async function pushNow(leaving) {
+  clearTimeout(pushTimer); clearTimeout(retryTimer);
+  if (VIEW) return;
+  if (!getPin()) { setLive("Enter the admin PIN first"); return; }
+  if (serverRev === null) return sync();
+  if (pushing) { pushAgain = true; return; }
+  pushing = true;
+  const sent = edits;
   try {
-    const r = await fetch("/api/state", { method: "POST", headers: { "Content-Type": "application/json", "x-pin": getPin() }, body: JSON.stringify({ state: S }) });
+    const r = await fetch("/api/state", { method: "POST", keepalive: leaving === true, headers: { "Content-Type": "application/json", "x-pin": getPin() }, body: JSON.stringify({ state: S, baseRev: serverRev }) });
     const j = await r.json().catch(() => ({}));
-    setLive(r.ok ? "Live. Saved at " + hhmm() : "Not saved: " + (j.error || r.status));
-  } catch (e) { setLive("Not saved: no internet"); }
+    if (r.ok) {
+      retryDelay = 5000;
+      setSync(j.rev, edits !== sent);
+      setLive(dirty ? "Sending…" : "Live. Saved at " + hhmm());
+      if (dirty) schedulePush();
+    } else if (r.status === 409) {
+      if (leaving !== true) conflict(j);
+    } else if (r.status === 401 || r.status === 429) {
+      setLive("Not saved: " + (j.error || r.status));
+    } else {
+      setLive("Not saved: " + (j.error || r.status) + ". Retrying");
+      retryLater(pushNow);
+    }
+  } catch (e) { setLive("Not saved: no internet. Retrying"); retryLater(pushNow); }
+  pushing = false;
+  if (pushAgain) { pushAgain = false; pushNow(); }
 }
 async function pullNow() {
   try {
-    const r = await fetch("/api/state", { cache: "no-store" });
-    const j = await r.json();
-    if (j && j.state) { S = Object.assign(defaults(), j.state); save(); render(); setLive("Loaded from server at " + hhmm()); }
-    else setLive("Nothing is saved on the server yet");
-  } catch (e) { setLive("Could not load: no internet"); }
+    const j = await getServer();
+    if (!j.state) return setLive("Nothing is saved on the server yet");
+    if (dirty && !confirm("Load the server copy? Changes on this device that were not sent are lost.")) return;
+    adopt(j); setLive("Loaded from server at " + hhmm());
+  } catch (e) { setLive("Could not load (" + e.message + ")"); }
 }
 async function poll() {
+  if (document.hidden) return;
   try {
     const r = await fetch("/api/state", { cache: "no-store" });
     const j = await r.json();
@@ -476,9 +587,10 @@ document.addEventListener("click", e => {
   const b = e.target.closest("[data-act]");
   if (!b) return;
   const a = b.dataset.act;
+  if (busy && ["next", "all", "redo", "reset", "import", "pull"].includes(a)) return;
   if (a === "next") drawNext();
   else if (a === "all") drawAll();
-  else if (a === "connect") pushNow();
+  else if (a === "connect") sync();
   else if (a === "pull") pullNow();
   else if (a === "copylink") {
     const link = location.origin + "/watch";
@@ -486,7 +598,7 @@ document.addEventListener("click", e => {
     else prompt("Copy this link:", link);
   }
   else if (a === "redo") {
-    if (confirm("Redo the draw? This clears the groups and all scores.")) { S.drawn = []; S.scores = {}; flashTeam = null; save(); render(); }
+    if (confirm("Redo the draw? This clears the groups and all scores.")) { S.drawn = []; S.scores = {}; S.who = {}; flashTeam = null; save(); render(); }
   } else if (a === "export") {
     const txt = JSON.stringify(S);
     if (navigator.clipboard) navigator.clipboard.writeText(txt).then(() => alert("Backup copied. Paste it in a note."), () => prompt("Copy this backup:", txt));
@@ -513,21 +625,35 @@ document.addEventListener("input", e => {
     const m = allMatches().find(x => x.id === el.dataset.id);
     if (!m) return;
     const b = res(m), before = b.done + ":" + b.winner;
-    const arr = S.scores[m.id] || (S.scores[m.id] = [["", ""], ["", ""], ["", ""]]);
+    let arr = scoresOf(m);
+    if (arr !== S.scores[m.id]) arr = S.scores[m.id] = [["", ""], ["", ""], ["", ""]];
+    S.who[m.id] = [m.a, m.b];
     arr[+el.dataset.g][+el.dataset.s] = el.value === "" ? "" : +el.value;
     save();
     const r = res(m), after = r.done + ":" + r.winner;
     const c = el.closest(".card");
     const s = c && c.querySelector(".st");
     if (s) { s.textContent = stat(m); s.className = "st " + (r.done ? "" : "pend"); }
-    if (before !== after) render();
+    // Redraw (tables, next playoff teams) once the field is left, not mid-typing.
+    if (before !== after) pendingRender = true;
   }
 });
+
+document.addEventListener("focusout", e => {
+  if (pendingRender && e.target.classList.contains("sc")) setTimeout(() => { if (pendingRender) render(); }, 0);
+});
+// Send unsent scores before the page is closed or hidden, and when the connection returns.
+document.addEventListener("visibilitychange", () => {
+  if (VIEW) { if (!document.hidden) poll(); return; }
+  if (document.hidden && dirty && getPin() && serverRev !== null) pushNow(true);
+});
+window.addEventListener("online", () => { if (!VIEW && dirty && getPin()) pushNow(); });
 
 document.getElementById("dl-m").innerHTML = MEN.map(n => `<option value="${n}">`).join("");
 document.getElementById("dl-w").innerHTML = WOMEN.map(n => `<option value="${n}">`).join("");
 render();
 if (VIEW) { document.title = "Live scores"; poll(); setInterval(poll, 15000); }
+else if (getPin()) sync();
 </script>
 </body>
 </html>
