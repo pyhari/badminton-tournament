@@ -6,8 +6,12 @@ const crypto = require("crypto");
 
 const DB_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const DB_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
-const KEY = "badminton:state";
-const REV = "badminton:rev";
+// Preview deployments keep their own data, so testing never touches the live tournament.
+// Production keeps the original keys.
+const ENV = process.env.VERCEL_ENV;
+const NS = "badminton:" + (ENV && ENV !== "production" ? ENV + ":" : "");
+const KEY = NS + "state";
+const REV = NS + "rev";
 const MAX_FAILS = 10, FAIL_WINDOW = 15 * 60;
 
 // Saves only when the stored revision matches the one the client started from.
@@ -54,7 +58,7 @@ module.exports = async (req, res) => {
     if (req.method === "GET") return res.status(200).json(await readState());
 
     if (req.method === "POST") {
-      const failKey = "badminton:fails:" + clientIp(req);
+      const failKey = NS + "fails:" + clientIp(req);
       const fails = Number(await redis(["GET", failKey])) || 0;
       if (fails >= MAX_FAILS) return res.status(429).json({ error: "Too many wrong PINs. Wait 15 minutes" });
       if (!pinOk(req.headers["x-pin"])) {
@@ -67,6 +71,8 @@ module.exports = async (req, res) => {
       if (typeof body === "string") {
         try { body = JSON.parse(body); } catch (e) { return res.status(400).json({ error: "Bad JSON" }); }
       }
+      // Organizer login: the PIN is right, nothing to save.
+      if (body && body.check === true) return res.status(200).json({ ok: true });
       if (!body || !body.state || typeof body.state !== "object") return res.status(400).json({ error: "No state" });
       const baseRev = Number(body.baseRev);
       if (!Number.isInteger(baseRev) || baseRev < 0) return res.status(400).json({ error: "No revision" });
