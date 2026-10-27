@@ -37,6 +37,17 @@ npm run build   # production build in dist/
 - `ADMIN_PIN` can be set separately for Production and Preview in the Vercel environment variable settings. The Upstash variables must be available to both.
 - Workflow: push to `dev`, test on the preview link, then merge `dev` into `main` to go live.
 
+## Testing a whole tournament
+
+On preview and local builds, **Setup → Test** has tools to play the tournament through quickly. They are hidden on the live site (add `?test=1` to the URL to show them there, with a warning).
+
+1. **Quick setup** draws balanced teams and the groups in one tap.
+2. **Who wins**: Random, Favourites (stronger team wins 8 in 10), Upsets, or Tight (every tie 2–1). Or pick one team to win every tie it plays.
+3. **Play**: next round, the group stage, or to the end. **Rerun whole tournament** clears scores and plays again, for a new result each tap.
+4. **Scenarios**: a three-way tie in Group A to check the tiebreakers.
+
+Each run is added to a run log showing the group tables, both playoff brackets and the champions. `npm test` also plays 200 random tournaments and checks every playoff pairing.
+
 ## Setting up teams and groups
 
 The **Setup** tab has three steps: Players, Teams and Groups. **More** holds timing, the live link, backup and log out.

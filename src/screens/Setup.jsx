@@ -4,13 +4,14 @@ import * as E from "../lib/engine.js";
 import { update, replaceAll, getState, getPin, sync, pullNow, logout, isDirty } from "../lib/store.js";
 import { Badge, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
+import TestTools, { showTests } from "./TestTools.jsx";
 
 const firstStep = S => !S.locked ? (S.teams.some(x => x.m1) ? "teams" : "players") : S.drawn.length < E.NT ? "groups" : "more";
 
 export default function Setup({ S, live }) {
   const [seg, setSeg] = useState(() => firstStep(S));
   const done = { players: !E.poolIssues(S).length, teams: S.locked, groups: S.drawn.length >= E.NT };
-  const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]];
+  const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]].concat(showTests ? [["test", "Test"]] : []);
   return (
     <div className="page">
       <h1 className="page-title">Setup</h1>
@@ -25,6 +26,7 @@ export default function Setup({ S, live }) {
       {seg === "teams" && <Teams S={S} next={() => setSeg("groups")} />}
       {seg === "groups" && <Groups S={S} back={() => setSeg("teams")} />}
       {seg === "more" && <More S={S} live={live} />}
+      {seg === "test" && <TestTools S={S} />}
     </div>
   );
 }
