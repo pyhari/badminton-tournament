@@ -1,5 +1,5 @@
 import { Minus, Plus, X } from "lucide-react";
-import { GAME_LABELS, allMatches, pairOf, res, scoresOf, setScore, tn, validGame } from "../lib/engine.js";
+import { GAME_LABELS, allMatches, busyCourts, courtCount, courtOf, pairOf, res, scoresOf, setCourt, setScore, tn, validGame } from "../lib/engine.js";
 import { update } from "../lib/store.js";
 import { Badge, Sheet } from "./ui.jsx";
 
@@ -30,7 +30,7 @@ export default function ScoreSheet({ S, id, onClose }) {
   return (
     <Sheet onClose={onClose}>
       <div className="sheet-head">
-        <h3>{m.stage}{m.label ? " · " + m.label : ""} <span className="hint">Court {m.court}</span></h3>
+        <h3>{m.stage}{m.label ? " · " + m.label : ""}</h3>
         <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
       </div>
       <div className="vs-head">
@@ -38,6 +38,7 @@ export default function ScoreSheet({ S, id, onClose }) {
         <div className="big num">{r.gw[0]}<span style={{ color: "var(--muted)" }}> : </span>{r.gw[1]}</div>
         <div className="side"><Badge S={S} t={m.b} size="lg" /><span>{tn(S, m.b)}</span></div>
       </div>
+      {!r.done && <CourtPicker S={S} m={m} />}
       {GAME_LABELS.map((label, g) => {
         const gm = r.gs[g];
         return (
@@ -54,5 +55,25 @@ export default function ScoreSheet({ S, id, onClose }) {
       <p className="hint">Games go to 15 with no cap: 15–13 or better, or two clear after 14–all. Scores save as you type.</p>
       <button className="btn primary block" onClick={onClose}>{r.done ? `${tn(S, r.winner ? m.b : m.a)} win ${Math.max(...r.gw)}–${Math.min(...r.gw)}` : "Done"}</button>
     </Sheet>
+  );
+}
+
+// Call the tie to a free court. Busy courts show which tie is on them.
+function CourtPicker({ S, m }) {
+  const busy = busyCourts(S), mine = courtOf(S, m);
+  const pick = c => update(n => setCourt(n, m.id, c === mine ? null : c));
+  return (
+    <div className="courts">
+      <span className="lbl" style={{ margin: 0 }}>Court</span>
+      {Array.from({ length: courtCount(S) }, (_, i) => i + 1).map(c => {
+        const other = busy[c] && busy[c].id !== m.id ? busy[c] : null;
+        return (
+          <button key={c} className={`cpick ${mine === c ? "on" : ""} ${other ? "busy" : ""}`} onClick={() => pick(c)} disabled={!!other}
+            aria-pressed={mine === c} title={other ? `In use: ${tn(S, other.a)} v ${tn(S, other.b)}` : `Court ${c}`}>
+            {c}{other && <small>busy</small>}
+          </button>
+        );
+      })}
+    </div>
   );
 }

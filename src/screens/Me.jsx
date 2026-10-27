@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Search, Users, Repeat2, MapPin } from "lucide-react";
-import { allMatches, groups, prelimsDone, res, roundTime, table, tn, tp } from "../lib/engine.js";
+import { allMatches, courtOf, groups, onCourt, prelimsDone, ready, res, table, tn, tp } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, Empty, MatchCard, teamColor } from "../components/ui.jsx";
 
@@ -38,8 +38,9 @@ export default function Me({ S }) {
   const mine = allMatches(S).filter(m => m.a === idx || m.b === idx);
   const gk = g.A.includes(idx) ? "A" : "B";
   const tbl = table(S, gk), pos = tbl.findIndex(x => x.t === idx), rec = tbl[pos];
-  const nxt = mine.find(m => !res(S, m).done && m.a != null && m.b != null);
-  const opp = nxt ? (nxt.a === idx ? nxt.b : nxt.a) : null;
+  const opp = m => (m.a === idx ? m.b : m.a);
+  const now = mine.find(m => onCourt(S, m));
+  const todo = mine.filter(m => ready(m) && !res(S, m).done && m !== now);
   return (
     <div className="page">
       <div className="section" style={{ marginTop: 14 }}><h2>{name ? "Hi " + name : "Your team"}</h2><button className="btn sm" onClick={() => choose("")}><Repeat2 size={14} />Change</button></div>
@@ -51,16 +52,22 @@ export default function Me({ S }) {
           <div><b>{rec.pd > 0 ? "+" : ""}{rec.pd}</b><small>Pt diff</small></div>
         </div>
       </div>
-      {nxt ? (
+      {now ? (
         <div className="next">
-          <div className="k"><span className="dot live" />Next up · {nxt.stage}{nxt.label ? " · " + nxt.label : ""}</div>
-          <div className="big"><b>Court {nxt.court}</b><span>Round {nxt.round} · {roundTime(S, nxt.round)}</span></div>
-          <div className="opp"><span className="hint" style={{ margin: 0 }}>vs</span><Badge S={S} t={opp} /><span>{tn(S, opp)}</span></div>
+          <div className="k"><span className="dot live" />On court now · {now.stage}{now.label ? " · " + now.label : ""}</div>
+          <div className="big"><b>{courtOf(S, now) ? "Court " + courtOf(S, now) : "Playing"}</b></div>
+          <div className="opp"><span className="hint" style={{ margin: 0 }}>vs</span><Badge S={S} t={opp(now)} /><span>{tn(S, opp(now))}</span></div>
+        </div>
+      ) : todo.length ? (
+        <div className="next">
+          <div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />Still to play · {todo.length}</div>
+          <div className="todo">{todo.map(m => <div key={m.id}><span className="hint" style={{ margin: 0, width: 22 }}>vs</span><Badge S={S} t={opp(m)} size="sm" />{tn(S, opp(m))}<span className="hint" style={{ margin: "0 0 0 auto" }}>{m.label || m.stage}</span></div>)}</div>
+          <p className="hint" style={{ marginBottom: 0 }}>Ties are called to a free court in any order. This page shows your court as soon as you are called.</p>
         </div>
       ) : (
-        <div className="next"><div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />No match waiting</div><p className="hint" style={{ marginBottom: 0 }}>{prelimsDone(S) ? "Check Playoffs for what comes next." : "Wait for the other group ties to finish."}</p></div>
+        <div className="next"><div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />No tie waiting</div><p className="hint" style={{ marginBottom: 0 }}>{prelimsDone(S) ? "Check Playoffs for what comes next." : "Wait for the other group ties to finish."}</p></div>
       )}
-      <div className="section"><h2>Your matches</h2><span>Times are planned</span></div>
+      <div className="section"><h2>Your ties</h2></div>
       {mine.map(m => <MatchCard key={m.id} S={S} m={m} />)}
       <p className="hint">Playoff matches appear here when your team qualifies.</p>
     </div>

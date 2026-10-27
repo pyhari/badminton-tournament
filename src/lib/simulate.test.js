@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as E from "./engine.js";
-import { simulate, quickSetup, threeWayTie, clearScores, summary, MODES } from "./simulate.js";
+import { simulate, quickSetup, threeWayTie, clearScores, summary, allPlayed, MODES } from "./simulate.js";
 
 const fresh = () => { const S = E.defaults(); S.players.forEach((p, i) => p.lvl = 1 + (i * 7) % 5); quickSetup(S); return S; };
 
@@ -37,17 +37,18 @@ describe("simulator", () => {
     }
   });
 
-  it("goes one round at a time and stops after the groups", () => {
+  it("plays a few ties at a time and stops after the groups", () => {
     const S = fresh();
-    expect(simulate(S, { upTo: "round" })).toBe(4);
-    expect(E.currentRound(S)).toBe(2);
+    expect(simulate(S, { upTo: "some" })).toBe(4);
+    expect(E.prelims(S).filter(m => E.res(S, m).done)).toHaveLength(4);
     simulate(S, { upTo: "groups" });
     expect(E.prelimsDone(S)).toBe(true);
-    expect(E.currentRound(S)).toBe(4);
-    expect(simulate(S, { upTo: "round" })).toBe(4); // Q1 and Eliminator in both brackets
-    expect(simulate(S, { upTo: "round" })).toBe(2); // Qualifier 2s
-    expect(simulate(S, { upTo: "round" })).toBe(2); // Finals
-    expect(E.currentRound(S)).toBe(null);
+    expect(E.playoffs(S).some(m => E.res(S, m).done)).toBe(false);
+    // Only Qualifier 1 and the Eliminator are ready in each bracket.
+    expect(simulate(S, { upTo: "some" })).toBe(4);
+    expect(simulate(S, { upTo: "some" })).toBe(2); // Qualifier 2s
+    expect(simulate(S, { upTo: "some" })).toBe(2); // Finals
+    expect(allPlayed(S)).toBe(true);
   });
 
   it("makes a chosen team win everything, whichever team it is", () => {
@@ -76,6 +77,6 @@ describe("simulator", () => {
     simulate(S, { mode: "upsets" });
     expect(E.winnerTeam(S, m)).toBe(m.a);
     clearScores(S);
-    expect(E.currentRound(S)).toBe(1);
+    expect(E.allMatches(S).some(x => E.res(S, x).played)).toBe(false);
   });
 });

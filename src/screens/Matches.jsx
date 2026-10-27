@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { CalendarClock, PartyPopper, X, SearchX } from "lucide-react";
-import { ROUND_NAMES, allMatches, currentRound, groups, res, roundTime, tn } from "../lib/engine.js";
+import { STAGES, allMatches, courtOf, groups, onCourt, res, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, Empty, MatchCard } from "../components/ui.jsx";
 
@@ -15,10 +15,7 @@ const inStatus = (S, m, s) => s === "all" || (s === "done" ? gamesDone(S, m) > 0
 const saved = () => { try { return JSON.parse(lsGet("bt_filter")) || {}; } catch (e) { return {}; } };
 
 export default function Matches({ S, admin, onOpen }) {
-  const all = allMatches(S), cur = currentRound(S, all);
-  const now = useRef(null);
-  // Open at the round being played, below the sticky top bar.
-  useEffect(() => { if (now.current && cur > 1) now.current.scrollIntoView({ block: "start" }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const all = allMatches(S);
   const [f, setF] = useState(() => { const v = { team: null, status: "all", ...saved() }; if (!STATUS.some(s => s[0] === v.status)) v.status = "all"; return v; });
   if (!groups(S)) return <div className="page"><Empty icon={CalendarClock} title="No matches yet">{admin ? "Draw the groups in Setup to build the fixtures." : "The groups have not been drawn. This page updates by itself."}</Empty></div>;
 
@@ -66,28 +63,34 @@ export default function Matches({ S, admin, onOpen }) {
   );
 
   const list = byTeam.filter(m => inStatus(S, m, f.status));
-  const rounds = [...new Set(list.map(m => m.round))];
+  const live = list.filter(m => onCourt(S, m)).sort((x, y) => (courtOf(S, x) || 99) - (courtOf(S, y) || 99));
+  const finished = all.length > 0 && all.every(m => res(S, m).done);
+  const card = m => <MatchCard key={m.id} S={S} m={m} onOpen={admin ? onOpen : null} />;
   return (
     <div className="page">
       <div className="title-row"><h1 className="page-title">Matches</h1>{filtered && <button className="btn sm" onClick={() => set({ team: null, status: "all" })}><X size={14} />Clear</button>}</div>
       {filters}
       {filtered && <p className="hint">{list.length} {list.length === 1 ? "tie" : "ties"}{team != null ? ` for ${tn(S, team)}` : ""}{f.status !== "all" ? ` · ${STATUS.find(s => s[0] === f.status)[1].toLowerCase()}` : ""}</p>}
-      {cur == null && <div className="banner ok"><PartyPopper size={18} /> Tournament finished. Congratulations to the winners!</div>}
+      {finished && <div className="banner ok"><PartyPopper size={18} /> Tournament finished. Congratulations to the winners!</div>}
       {!list.length && <Empty icon={SearchX} title="Nothing here">{f.status === "up" ? "Every game has been played." : "No games played yet."}</Empty>}
-      {rounds.map(r => {
-        const ms = list.filter(m => m.round === r), done = ms.filter(m => res(S, m).done).length;
+      {live.length > 0 && (
+        <>
+          <div className="section"><h2 className="live-h"><span className="dot live" />On court now</h2><span>{live.length} {live.length === 1 ? "tie" : "ties"}</span></div>
+          {live.map(card)}
+        </>
+      )}
+      {STAGES.map(stage => {
+        const ms = list.filter(m => m.stage === stage && !onCourt(S, m));
+        if (!ms.length) return null;
+        const inStage = byTeam.filter(m => m.stage === stage), done = inStage.filter(m => res(S, m).done).length;
         return (
-          <div key={r}>
-            <div className="section round-head" ref={r === cur ? now : null}>
-              <h2>{ROUND_NAMES[r]}{r === cur && <span className="now-tag"><span className="dot live" />Now</span>}</h2>
-              <span>{done}/{ms.length} done · {roundTime(S, r)}</span>
-            </div>
-            {ms.map(m => <MatchCard key={m.id} S={S} m={m} onOpen={admin ? onOpen : null} />)}
-            {r >= 5 && f.status !== "done" && team == null && <p className="hint">Courts 3 and 4 are free this round. Use them for fun games.</p>}
+          <div key={stage}>
+            <div className="section"><h2>{stage}</h2><span>{done}/{inStage.length} played</span></div>
+            {ms.map(card)}
           </div>
         );
       })}
-      {team != null && f.status !== "done" && <p className="hint">Playoff matches appear once a team qualifies.</p>}
+      {team != null && f.status !== "done" && <p className="hint">Playoff ties appear once a team qualifies.</p>}
     </div>
   );
 }

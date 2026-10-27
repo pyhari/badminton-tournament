@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FlaskConical, Wand2, StepForward, Flag, Trophy, RotateCcw, Eraser, Shuffle, AlertTriangle } from "lucide-react";
 import * as E from "../lib/engine.js";
-import { MODES, simulate, quickSetup, threeWayTie, clearScores, summary } from "../lib/simulate.js";
+import { MODES, simulate, quickSetup, threeWayTie, clearScores, summary, allPlayed } from "../lib/simulate.js";
 import { update, getState } from "../lib/store.js";
 import { Badge, toast } from "../components/ui.jsx";
 
@@ -28,7 +28,7 @@ export default function TestTools({ S }) {
     if (fresh && hasScores && !ok("All scores will be replaced.")) return;
     let n = 0;
     update(st => { if (fresh) clearScores(st); n = simulate(st, { upTo, mode, team }); });
-    if (!n) { toast(E.currentRound(getState()) == null ? "Everything is already played. Use Rerun." : "Nothing to play yet."); return; }
+    if (!n) { toast(allPlayed(getState()) ? "Everything is already played. Use Rerun." : "Nothing to play yet."); return; }
     toast(`${n} ${n === 1 ? "tie" : "ties"} played`);
     record(label);
   };
@@ -76,10 +76,10 @@ export default function TestTools({ S }) {
         </div>
       </div>
 
-      <div className="section"><h2>3 · Play</h2><span>{g ? (E.currentRound(S) ? "Next: " + E.ROUND_NAMES[E.currentRound(S)] : "All played") : "Not set up"}</span></div>
+      <div className="section"><h2>3 · Play</h2><span>{g ? (allPlayed(S) ? "All played" : `${E.allMatches(S).filter(m => E.res(S, m).done).length}/20 ties played`) : "Not set up"}</span></div>
       <div className="card">
         <div className="btns" style={{ marginTop: 0 }}>
-          <button className="btn" onClick={() => run("round", "One round")}><StepForward size={16} />Next round</button>
+          <button className="btn" onClick={() => run("some", "A few ties")}><StepForward size={16} />Play a few ties</button>
           <button className="btn" onClick={() => run("groups", "Group stage")}><Flag size={16} />Group stage</button>
           <button className="btn" onClick={() => run("all", "Everything")}><Trophy size={16} />To the end</button>
         </div>

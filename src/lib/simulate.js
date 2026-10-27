@@ -40,23 +40,26 @@ export function playTie(S, m, winner, { tight = false, rnd = E.cryptoRnd } = {})
   }
 }
 
-// Plays every unfinished tie whose teams are known, round by round, so playoff
-// pairings follow from earlier results. upTo: "round" (current round only), "groups" or "all".
+// Plays unfinished ties whose teams are known. Playoff ties become ready as earlier
+// results come in, so it keeps going until nothing is left to play.
+// upTo: "some" (up to 4 ties, like one turn of the courts), "groups" or "all".
 export function simulate(S, { upTo = "all", mode = "random", team = null, rnd = E.cryptoRnd } = {}) {
   if (!E.groups(S)) return 0;
   let played = 0;
-  const first = E.currentRound(S);
-  for (let r = 1; r <= E.ROUNDS; r++) {
-    if (upTo === "round" && r !== first) continue;
-    if (upTo === "groups" && r > 3) break;
-    for (const m of E.allMatches(S).filter(x => x.round === r)) {
-      if (m.a == null || m.b == null || E.res(S, m).done) continue;
+  for (;;) {
+    let todo = E.allMatches(S).filter(m => E.ready(m) && !E.res(S, m).done);
+    if (upTo === "groups") todo = todo.filter(m => m.stage.startsWith("Group"));
+    if (upTo === "some") todo = E.shuffle(todo, rnd).slice(0, Math.max(0, E.courtCount(S) - played));
+    if (!todo.length) break;
+    for (const m of todo) {
       playTie(S, m, pickWinner(S, m, mode, team, rnd), { tight: mode === "tight", rnd });
       played++;
     }
+    if (upTo === "some") break;
   }
   return played;
 }
+export const allPlayed = S => !!E.groups(S) && E.allMatches(S).every(m => E.res(S, m).done);
 
 // Group seats 1 > 2 > 3 > 1 in a circle with identical scores, and all three beat seat 4,
 // so the table has to fall back to its last tiebreaker.
@@ -69,7 +72,7 @@ export function threeWayTie(S, gk = "A") {
   }
 }
 
-export function clearScores(S) { S.scores = {}; S.who = {}; }
+export function clearScores(S) { S.scores = {}; S.who = {}; S.court = {}; }
 
 // One tap from any state to drawn groups: picks 16 men and 8 women if the numbers are off,
 // draws balanced teams, locks them and draws the groups. Scores are cleared.

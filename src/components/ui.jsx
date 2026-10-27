@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { Clock, AlertTriangle } from "lucide-react";
-import { abbr, tn, tp, res, roundTime } from "../lib/engine.js";
+import { AlertTriangle } from "lucide-react";
+import { abbr, tn, tp, res, courtOf, onCourt } from "../lib/engine.js";
 
 // One colour per team, bright enough for dark text in both themes.
 export const TEAM_COLORS = ["#ff6b6b", "#ffb020", "#3ddc97", "#4cc9f0", "#b388ff", "#ff7eb6", "#c6f432", "#ff8a3d"];
@@ -14,12 +14,12 @@ export function Empty({ icon: Icon, title, children }) {
   return <div className="empty">{Icon && <Icon size={40} strokeWidth={1.6} />}<b>{title}</b>{children}</div>;
 }
 
-// Match state for the card header: final, in progress, or the planned time.
+// Match state for the card header: finished, on court, or not played yet.
 export function matchState(S, m) {
   const r = res(S, m);
   if (r.done) return { cls: "ft", text: "Final" };
-  if (r.played > 0) return { cls: "live", text: "Live", dot: true };
-  return { cls: "", text: roundTime(S, m.round) };
+  if (onCourt(S, m)) return { cls: "live", text: "Live", dot: true };
+  return { cls: "", text: m.a == null || m.b == null ? "" : "Not played" };
 }
 
 export function MatchCard({ S, m, onOpen, showStage = true }) {
@@ -40,14 +40,14 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
     <Tag className="match" onClick={onOpen && ready ? () => onOpen(m) : undefined}>
       <div className="match-head">
         <span className="grow">{showStage ? m.stage + (m.label ? " · " + m.label : "") : m.label || m.stage}</span>
-        <span className={`state ${st.cls}`}>{st.dot && <span className="dot live" />}{!st.cls && <Clock size={12} />}{st.text}</span>
-        <span className="court">Court {m.court}</span>
+        <span className={`state ${st.cls}`}>{st.dot && <span className="dot live" />}{st.text}</span>
+        {st.cls === "live" && courtOf(S, m) && <span className="court on">Court {courtOf(S, m)}</span>}
       </div>
       {side(m.a, m.la, 0)}
       {side(m.b, m.lb, 1)}
       {!ready && <div className="match-foot">Waiting for earlier results</div>}
       {ready && r.bad.length > 0 && <div className="match-foot warn"><AlertTriangle size={14} /> Check game {r.bad.map(i => i + 1).join(" and ")}: not a finished score</div>}
-      {ready && onOpen && !r.played && <div className="match-foot">Tap to enter scores</div>}
+      {ready && onOpen && !r.played && <div className="match-foot">{courtOf(S, m) ? "Tap to enter scores" : "Tap to call to a court or enter scores"}</div>}
     </Tag>
   );
 }

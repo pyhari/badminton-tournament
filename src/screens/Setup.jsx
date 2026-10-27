@@ -267,7 +267,7 @@ function Groups({ S, back }) {
           </div>
         ))}
       </div>
-      <p className="hint">Teams are ranked by strength into {E.NT / E.NG} pots of {E.NG}. Each pot sends one team to each group, so the strongest teams start apart and meet in the last group round.</p>
+      <p className="hint">Teams are ranked by strength into {E.NT / E.NG} pots of {E.NG}. Each pot sends one team to each group, so the strongest teams start in different groups.</p>
     </>
   );
 }
@@ -282,7 +282,6 @@ function More({ S, live }) {
     try { replaceAll(E.fix(JSON.parse(t))); toast("Backup restored"); } catch (e) { toast("This backup is not valid."); }
   };
   const reset = () => { if (confirm("Delete players, teams, draw and scores?")) { replaceAll(E.defaults()); toast("Everything was reset"); } };
-  const set = (k, v) => update(n => { n.settings[k] = k === "start" ? (v || "09:00") : Math.max(0, +v || 0); });
   return (
     <>
       <div className="section"><h2>Live link for players</h2></div>
@@ -297,15 +296,13 @@ function More({ S, live }) {
         <p className="hint" style={{ marginBottom: 0 }}>{live || (isDirty() ? "Changes not sent yet" : "")}</p>
       </div>
 
-      <div className="section"><h2>Timing</h2><span>Finish about {E.endTime(S)}</span></div>
+      <div className="section"><h2>Courts</h2></div>
       <div className="card">
-        <label className="lbl" style={{ marginTop: 0 }}>Start time</label>
-        <input className="field" type="time" value={S.settings.start} onChange={e => set("start", e.target.value)} />
-        <label className="lbl">Minutes per game</label>
-        <input className="field" type="number" inputMode="numeric" value={S.settings.gameMin} onChange={e => set("gameMin", e.target.value)} />
-        <label className="lbl">Break between rounds (minutes)</label>
-        <input className="field" type="number" inputMode="numeric" value={S.settings.breakMin} onChange={e => set("breakMin", e.target.value)} />
-        <p className="hint" style={{ marginBottom: 0 }}>6 rounds. Times only guide you; courts call teams when they are free.</p>
+        <label className="lbl" style={{ marginTop: 0 }}>Courts available</label>
+        <div className="courts" style={{ marginTop: 0 }}>
+          {[1, 2, 3, 4, 5, 6].map(c => <button key={c} className={`cpick ${E.courtCount(S) === c ? "on" : ""}`} onClick={() => update(n => { n.settings = { ...n.settings, courts: c }; })}>{c}</button>)}
+        </div>
+        <p className="hint" style={{ marginBottom: 0 }}>Ties are played in any order on any free court. When you open a tie, pick the court it goes to.</p>
       </div>
 
       <div className="section"><h2>Backup</h2></div>

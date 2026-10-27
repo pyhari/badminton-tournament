@@ -43,20 +43,22 @@ On preview and local builds, **Setup → Test** has tools to play the tournament
 
 1. **Quick setup** draws balanced teams and the groups in one tap.
 2. **Who wins**: Random, Favourites (stronger team wins 8 in 10), Upsets, or Tight (every tie 2–1). Or pick one team to win every tie it plays.
-3. **Play**: next round, the group stage, or to the end. **Rerun whole tournament** clears scores and plays again, for a new result each tap.
+3. **Play**: a few ties (one per court), the group stage, or to the end. **Rerun whole tournament** clears scores and plays again, for a new result each tap.
 4. **Scenarios**: a three-way tie in Group A to check the tiebreakers.
 
 Each run is added to a run log showing the group tables, both playoff brackets and the champions. `npm test` also plays 200 random tournaments and checks every playoff pairing.
 
 ## Setting up teams and groups
 
-The **Setup** tab has three steps: Players, Teams and Groups. **More** holds timing, the live link, backup and log out.
+The **Setup** tab has three steps: Players, Teams and Groups. **More** holds the number of courts, the live link, backup and log out.
 
 1. **Players.** Tick who is playing (16 men and 8 women) and give each player a level from 1 to 5, with 5 the strongest. The page says how many to tick or untick.
 2. **Teams.** **Draw balanced teams** puts the stronger half of the men in Pot 1 (Man 1) and the rest in Pot 2 (Man 2), then gives each team one man from each pot and one woman. It keeps team strengths (the sum of levels) as even as possible. To adjust, tap two players to swap them, or tap a player and then a reserve to sub the reserve in. **Lock teams** checks for empty slots, duplicates and players not marked as playing.
-3. **Group draw.** Teams are ranked by strength into 4 pots of 2. Each pot sends one team to each group, so the two strongest teams start in different groups and meet in the last group round. Draw one team at a time or all at once. **Redo draw** clears the groups and all scores.
+3. **Group draw.** Teams are ranked by strength into 4 pots of 2. Each pot sends one team to each group, so the two strongest teams start in different groups. Draw one team at a time or all at once. **Redo draw** clears the groups and all scores.
 
 ## On the day
+
+- There are no rounds or fixed times. When a court is free, open any tie that is ready on the Matches tab and tap the court it goes to. It moves to **On court now**, and those players see their court on their phones. Playoff ties become ready once their teams are known.
 
 - On the organizer phone, open `/` and log in with the admin PIN. The server checks it, so this needs Upstash and `ADMIN_PIN` set up. The phone stays logged in until **Log out**, even if the server goes down later. Anyone else who opens `/` sees only the login card and a link to live scores.
 - For testing on your own computer, run `npm run dev`, open `http://127.0.0.1:5173/` and choose **Local test mode**. Nothing is sent to a server, and `/watch` shows the tournament saved on that computer.

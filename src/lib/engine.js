@@ -9,13 +9,12 @@ export const NT = 8, NG = 2; // teams, groups
 export const SLOT = { m1: "Man 1", m2: "Man 2", w: "Woman" };
 export const SLOTS = ["m1", "m2", "w"];
 export const slotG = f => f === "w" ? "F" : "M";
-export const ROUND_NAMES = ["", "Group round 1", "Group round 2", "Group round 3", "Playoffs round 1", "Playoffs round 2", "Finals"];
-export const ROUNDS = 6;
+export const STAGES = ["Group A", "Group B", "Champions League", "FPL"];
 
 export const player = (name, g) => ({ name, g, lvl: 3, on: true });
 
 export const defaults = () => ({
-  settings: { start: "09:00", gameMin: 12, breakMin: 5 },
+  settings: { courts: 4 },
   players: MEN.map(n => player(n, "M")).concat(WOMEN.map(n => player(n, "F"))),
   teams: Array.from({ length: NT }, (_, i) => ({ name: "Team " + (i + 1), m1: "", m2: "", w: "" })),
   locked: false, // teams are final; the group draw can start
@@ -23,7 +22,8 @@ export const defaults = () => ({
   picks: [],     // group draw order; pick k goes to group k % NG, seat k / NG
   drawn: [],     // final seats: Group A seats 1-4, then Group B seats 1-4
   scores: {},
-  who: {}
+  who: {},
+  court: {}      // tie id -> court it was called to; ties are played on any free court in any order
 });
 
 // Fill in fields that older saved states do not have.
@@ -173,7 +173,7 @@ export function pickNext(S, rnd = cryptoRnd) {
   return t;
 }
 export function clearDraw(S) {
-  S.drawn = []; S.picks = []; S.pots = []; S.scores = {}; S.who = {};
+  S.drawn = []; S.picks = []; S.pots = []; S.scores = {}; S.who = {}; S.court = {};
 }
 
 /* ---------- fixtures ---------- */
@@ -185,11 +185,11 @@ const PR = [[[0, 3], [1, 2]], [[0, 2], [3, 1]], [[0, 1], [2, 3]]];
 export function prelims(S) {
   const g = groups(S); if (!g) return [];
   const out = [];
+  // Listed so each team's three ties are spread out; any order can be played.
   for (let r = 0; r < 3; r++) {
-    let c = 1;
     for (const gk of ["A", "B"]) {
       for (const [x, y] of PR[r]) {
-        out.push({ id: gk + (r + 1) + "-" + (x + 1) + "v" + (y + 1), round: r + 1, court: c++, stage: "Group " + gk, label: "", a: g[gk][x], b: g[gk][y] });
+        out.push({ id: gk + (r + 1) + "-" + (x + 1) + "v" + (y + 1), stage: "Group " + gk, label: "", a: g[gk][x], b: g[gk][y] });
       }
     }
   }
@@ -280,26 +280,35 @@ export function playoffs(S) {
   const sd = seeds(S), out = [];
   for (const br of ["Cup", "Plate"]) {
     const s = sd ? sd[br] : [null, null, null, null];
-    const c = br === "Cup" ? [1, 2, 1, 1] : [3, 4, 2, 2];
-    const q1 = { id: br + "Q1", br, round: 4, court: c[0], stage: BR[br], label: "Qualifier 1", a: s[0], b: s[1], la: "Seed 1", lb: "Seed 2" };
-    const el = { id: br + "E", br, round: 4, court: c[1], stage: BR[br], label: "Eliminator", a: s[2], b: s[3], la: "Seed 3", lb: "Seed 4" };
-    const q2 = { id: br + "Q2", br, round: 5, court: c[2], stage: BR[br], label: "Qualifier 2", a: loserTeam(S, q1), b: winnerTeam(S, el), la: "Loser Q1", lb: "Winner Eliminator" };
-    const f = { id: br + "F", br, round: 6, court: c[3], stage: BR[br], label: "Final", a: winnerTeam(S, q1), b: winnerTeam(S, q2), la: "Winner Q1", lb: "Winner Q2" };
+    const q1 = { id: br + "Q1", br, stage: BR[br], label: "Qualifier 1", a: s[0], b: s[1], la: "Seed 1", lb: "Seed 2" };
+    const el = { id: br + "E", br, stage: BR[br], label: "Eliminator", a: s[2], b: s[3], la: "Seed 3", lb: "Seed 4" };
+    const q2 = { id: br + "Q2", br, stage: BR[br], label: "Qualifier 2", a: loserTeam(S, q1), b: winnerTeam(S, el), la: "Loser Q1", lb: "Winner Eliminator" };
+    const f = { id: br + "F", br, stage: BR[br], label: "Final", a: winnerTeam(S, q1), b: winnerTeam(S, q2), la: "Winner Q1", lb: "Winner Q2" };
     out.push(q1, el, q2, f);
   }
   return out;
 }
 export function allMatches(S) {
-  return prelims(S).concat(playoffs(S)).sort((x, y) => x.round - y.round || x.court - y.court);
-}
-export function currentRound(S, all = allMatches(S)) {
-  const p = all.filter(m => !res(S, m).done);
-  return p.length ? Math.min(...p.map(m => m.round)) : null;
+  return prelims(S).concat(playoffs(S));
 }
 
-/* ---------- times ---------- */
-const fmt = t => String(Math.floor(t / 60) % 24).padStart(2, "0") + ":" + String(t % 60).padStart(2, "0");
-const per = S => 3 * S.settings.gameMin + S.settings.breakMin;
-const startMin = S => { const [h, m] = S.settings.start.split(":").map(Number); return h * 60 + m; };
-export const roundTime = (S, r) => fmt(startMin(S) + (r - 1) * per(S));
-export const endTime = S => fmt(startMin(S) + ROUNDS * per(S) - S.settings.breakMin);
+/* ---------- courts ---------- */
+export const courtCount = S => (S.settings && S.settings.courts) || 4;
+export const courtOf = (S, m) => (S.court && S.court[m.id]) || null;
+export const ready = m => m.a != null && m.b != null;
+// A tie is on court once it is called to a court or has a game entered, until it is finished.
+export function onCourt(S, m) {
+  if (!ready(m)) return false;
+  const r = res(S, m);
+  return !r.done && (courtOf(S, m) != null || r.played > 0);
+}
+// Courts in use by ties that are not finished, as { court: tie }.
+export function busyCourts(S) {
+  const out = {};
+  allMatches(S).forEach(m => { const c = courtOf(S, m); if (c && onCourt(S, m)) out[c] = m; });
+  return out;
+}
+export function setCourt(S, id, c) {
+  if (!S.court) S.court = {};
+  if (c) S.court[id] = c; else delete S.court[id];
+}

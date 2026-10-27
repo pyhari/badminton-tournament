@@ -104,10 +104,11 @@ describe("team draw", () => {
   it("renames a player inside their team", () => {
     const S = ready();
     E.drawTeams(S);
-    const i = S.players.findIndex(p => p.name === S.teams[2].w);
+    const i = S.players.findIndex(p => p.g === "F" && p.name === S.teams[2].w);
     expect(E.renamePlayer(S, i, "  Priya ")).toBe("");
     expect(S.teams[2].w).toBe("Priya");
-    expect(E.renamePlayer(S, i, "hema")).toMatch(/already/);
+    const other = S.players.find((q, k) => q.g === "F" && k !== i).name;
+    expect(E.renamePlayer(S, i, other.toLowerCase())).toMatch(/already/);
     expect(E.renamePlayer(S, i, " ")).toMatch(/needs a name/);
   });
 });
@@ -151,9 +152,15 @@ describe("misc", () => {
     expect(E.abbr(S, 1)).toBe("SMA");
     expect(E.abbr(S, null)).toBe("TBD");
   });
-  it("plans times", () => {
-    const S = E.defaults();
-    expect(E.roundTime(S, 2)).toBe("09:41");
-    expect(E.endTime(S)).toBe("13:01");
+  it("tracks which courts are busy", () => {
+    const S = full(), [m1, m2] = E.prelims(S);
+    E.setCourt(S, m1.id, 2);
+    expect(E.onCourt(S, m1)).toBe(true);
+    expect(E.busyCourts(S)).toEqual({ 2: m1 });
+    E.setScore(S, m2, 0, 0, 15); E.setScore(S, m2, 0, 1, 9);
+    expect(E.onCourt(S, m2)).toBe(true); // a game entered without a court still counts
+    win(S, m1.id, true);
+    expect(E.onCourt(S, m1)).toBe(false);
+    expect(E.busyCourts(S)).toEqual({});
   });
 });
