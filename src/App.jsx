@@ -36,13 +36,20 @@ function Status({ live, updated }) {
   return <span className={`status ${hit[2] ? "live" : ""}`} title={text}><span className={`dot ${hit[2]}`} />{label}</span>;
 }
 
+// Light is the default; the choice is remembered per device.
+export function applyTheme(t) {
+  document.documentElement.dataset.theme = t;
+  const m = document.querySelector('meta[name="theme-color"]');
+  if (m) m.content = t === "dark" ? "#0a0c10" : "#eef0f4";
+}
+
 export default function App() {
   const { S, live, updated } = useStore();
   const [tab, setTab] = useState(VIEW ? "me" : S.drawn.length >= NT ? "sched" : "setup");
   const [open, setOpen] = useState(null);
-  const [theme, setTheme] = useState(lsGet("bt_theme") || "dark");
+  const [theme, setTheme] = useState(lsGet("bt_theme") || "light");
   const close = useCallback(() => setOpen(null), []);
-  const flip = () => { const t = theme === "dark" ? "light" : "dark"; setTheme(t); lsSet("bt_theme", t); document.documentElement.dataset.theme = t; };
+  const flip = () => { const t = theme === "dark" ? "light" : "dark"; setTheme(t); lsSet("bt_theme", t); applyTheme(t); };
   const go = k => { setTab(k); window.scrollTo(0, 0); };
   if (LOGIN) return <><Login /><Toaster /></>;
   const onOpen = m => setOpen(m.id);
