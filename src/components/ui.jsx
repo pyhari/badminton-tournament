@@ -10,6 +10,9 @@ export function Badge({ S, t, size = "" }) {
   return <span className={`badge ${size} ${t == null ? "tbd" : ""}`} style={{ background: teamColor(t) }}>{abbr(S, t)}</span>;
 }
 
+// A short buzz under the finger on phones that support it (Android; iPhones ignore it).
+export const buzz = (ms = 8) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
 export function Empty({ icon: Icon, title, children }) {
   return <div className="empty">{Icon && <Icon size={40} strokeWidth={1.6} />}<b>{title}</b>{children}</div>;
 }

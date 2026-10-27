@@ -3,7 +3,7 @@
 A one-page app to run a one-day badminton tournament: 8 teams of 3, two groups of 4, then IPL-style playoffs ("Champions League" for the top two of each group, "FPL" for the rest). Each tie has 3 games to 15 points: men's doubles and two mixed doubles.
 
 - `/`: organizer page. Set up teams, draw the groups, and enter scores.
-- `/watch`: player page. It is read-only, updates every 15 seconds, and shows each player their next match and court.
+- `/watch`: player page. It is read-only, updates every 3 seconds, and shows each player their next match and court.
 
 ## Files
 
@@ -11,7 +11,8 @@ A one-page app to run a one-day badminton tournament: 8 teams of 3, two groups o
 - `src/lib/store.js`: saving on the device, server sync, organizer login.
 - `src/screens/`, `src/components/`: the React screens (Setup, Matches, Tables, Playoffs, Me, Login).
 - `api/state.js`: a Vercel function that stores the tournament in Upstash Redis. Anyone can read it. Saving needs the admin PIN.
-- `vercel.json`: builds with Vite and sends `/watch` to the app.
+- `vercel.json`: builds with Vite, sends `/watch` to the app and sets cache headers.
+- `public/sw.js`: keeps the app (not the scores) on each phone, so it opens at once and works with a weak signal. `public/manifest*.webmanifest`: lets players add the app to their home screen.
 
 ## Development
 
@@ -21,6 +22,13 @@ npm run dev     # http://127.0.0.1:5173, choose "Local test mode"
 npm test        # engine tests
 npm run build   # production build in dist/
 ```
+
+## Speed
+
+- Players' phones check for new scores every 3 seconds. Vercel's edge answers those checks from a copy at most a second old, so the database is read about once a second however many phones are watching. The organizer always reads the database directly (`/api/state?fresh=1`).
+- Everything the organizer does is saved on the phone first, so taps never wait for the network.
+- Fonts are bundled with the app. Setup, the team draw and the test tools load only for the organizer.
+- After the first visit the app opens from the phone's cache, even offline. After a deploy, phones get the new version on their next visit.
 
 ## Setup on Vercel
 
@@ -63,6 +71,6 @@ The **Setup** tab has three steps: Players, Teams and Groups. **More** holds the
 - On the organizer phone, open `/` and log in with the admin PIN. The server checks it, so this needs Upstash and `ADMIN_PIN` set up. The phone stays logged in until **Log out**, even if the server goes down later. Anyone else who opens `/` sees only the login card and a link to live scores.
 - For testing on your own computer, run `npm run dev`, open `http://127.0.0.1:5173/` and choose **Local test mode**. Nothing is sent to a server, and `/watch` shows the tournament saved on that computer.
 - Share the `/watch` link with players.
-- Scores are saved on the phone and sent to the server about 1.5 seconds after each change. Failed sends retry by themselves.
+- Scores are saved on the phone and sent to the server under half a second after each change, so players see them within about 3 seconds. Failed sends retry by themselves.
 - Each save carries a revision number. If another device has saved newer data, you are asked whether to load the server copy or replace it. A new device never overwrites the server without asking.
 - After 10 wrong PINs from one address, saving is blocked for 15 minutes.

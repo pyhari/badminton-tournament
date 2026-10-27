@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import { defaults, fix } from "./engine.js";
 
 const KEY = "bt_tournament_v1";
+const WATCH_KEY = "bt_watch_v1"; // players: the last scores seen, shown at once on the next visit
 export const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 export const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
 
@@ -15,16 +16,20 @@ export const LOGIN = !VIEW && !ADMIN;
 export const getPin = () => lsGet("bt_pin") || "";
 
 function load() {
-  if (VIEW) return defaults();
+  if (VIEW) { try { const r = localStorage.getItem(WATCH_KEY); if (r) return fix(JSON.parse(r)); } catch (e) {} return defaults(); }
   try { const r = localStorage.getItem(KEY); if (r) return fix(JSON.parse(r)); } catch (e) {}
   return defaults();
 }
 
 let S = load();
 // live: status line for the organizer. updated: status line for players.
-let snap = { S, live: "", updated: "", loaded: !VIEW };
+let snap = { S, live: "", updated: "", loaded: !VIEW || !!lsGet(WATCH_KEY) };
 const listeners = new Set();
-function emit(patch) { snap = { ...snap, S, ...patch }; listeners.forEach(f => f()); }
+function emit(patch) {
+  // Nothing new (a poll with the same scores): skip the redraw.
+  if (S === snap.S && Object.keys(patch).every(k => snap[k] === patch[k])) return;
+  snap = { ...snap, S, ...patch }; listeners.forEach(f => f());
+}
 const subscribe = f => { listeners.add(f); return () => listeners.delete(f); };
 export const useStore = () => useSyncExternalStore(subscribe, () => snap);
 export const getState = () => S;
@@ -77,7 +82,8 @@ let pushTimer = null, pushing = false, pushAgain = false, retryTimer = null, ret
 function schedulePush() {
   if (VIEW || !getPin()) return;
   clearTimeout(pushTimer);
-  pushTimer = setTimeout(pushNow, 1500);
+  // Short enough to feel instant on players' phones, long enough to send a burst of taps together.
+  pushTimer = setTimeout(pushNow, 400);
 }
 function retryLater(fn) {
   clearTimeout(retryTimer);
@@ -85,7 +91,7 @@ function retryLater(fn) {
   retryDelay = Math.min(retryDelay * 2, 60000);
 }
 async function getServer() {
-  const r = await fetch("/api/state", { cache: "no-store" });
+  const r = await fetch("/api/state?fresh=1", { cache: "no-store" });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(j.error || "error " + r.status);
   return j;
@@ -154,27 +160,29 @@ export async function pullNow() {
   } catch (e) { setLive("Could not load (" + e.message + ")"); }
 }
 
+// The server answers from Vercel's edge cache, so frequent checks are cheap.
+const POLL_MS = 3000;
 let lastSig = "";
 async function poll() {
   if (document.hidden) return;
   try {
-    const r = await fetch("/api/state", { cache: "no-store" });
+    const r = await fetch("/api/state");
     const j = await r.json();
     if (j && j.state) {
       const sig = JSON.stringify(j.state);
-      if (sig !== lastSig) { lastSig = sig; S = fix(j.state); }
+      if (sig !== lastSig) { lastSig = sig; S = fix(j.state); lsSet(WATCH_KEY, sig); }
       emit({ updated: "Updated " + hhmm(), loaded: true });
     } else emit({ updated: "Waiting for the organizer", loaded: true });
   } catch (e) {
     // Local testing has no server: show the tournament saved on this computer.
-    if (LOCAL) { try { S = fix(JSON.parse(localStorage.getItem(KEY))); emit({ updated: "Local test mode", loaded: true }); return; } catch (err) {} }
+    if (LOCAL) { try { const raw = localStorage.getItem(KEY); if (raw !== lastSig) { lastSig = raw; S = fix(JSON.parse(raw)); } emit({ updated: "Local test mode", loaded: true }); return; } catch (err) {} }
     emit({ updated: "No connection · retrying", loaded: true });
   }
 }
 
 export function start() {
   if (VIEW) {
-    poll(); setInterval(poll, 15000);
+    poll(); setInterval(poll, POLL_MS);
     document.addEventListener("visibilitychange", () => { if (!document.hidden) poll(); });
     return;
   }

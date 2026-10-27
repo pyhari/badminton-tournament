@@ -1,7 +1,7 @@
 import { Minus, Plus, X } from "lucide-react";
 import { GAME_LABELS, allMatches, busyCourts, courtCount, courtOf, pairOf, res, scoresOf, setCourt, setScore, tn, validGame } from "../lib/engine.js";
 import { update } from "../lib/store.js";
-import { Badge, Sheet } from "./ui.jsx";
+import { Badge, Sheet, buzz } from "./ui.jsx";
 
 export default function ScoreSheet({ S, id, onClose }) {
   const m = allMatches(S).find(x => x.id === id);
@@ -12,7 +12,7 @@ export default function ScoreSheet({ S, id, onClose }) {
     const mm = allMatches(n).find(x => x.id === id);
     setScore(n, mm, g, s, v === "" ? "" : Math.max(0, Math.min(40, Math.round(+v || 0))));
   });
-  const step = (g, s, d) => put(g, s, Math.max(0, (+val(g, s) || 0) + d));
+  const step = (g, s, d) => { buzz(); put(g, s, Math.max(0, (+val(g, s) || 0) + d)); };
 
   const stepper = (g, s) => {
     const won = r.gs[g] && r.gs[g].w === s;

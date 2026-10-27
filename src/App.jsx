@@ -1,15 +1,20 @@
-import { useCallback, useState } from "react";
+import { Suspense, lazy, useCallback, useState } from "react";
 import { CalendarDays, ListOrdered, Trophy, UserRound, Settings2, Sun, Moon } from "lucide-react";
 import { useStore, VIEW, LOGIN, lsGet, lsSet } from "./lib/store.js";
 import { NT } from "./lib/engine.js";
 import { Toaster } from "./components/ui.jsx";
 import ScoreSheet from "./components/ScoreSheet.jsx";
-import Login from "./screens/Login.jsx";
 import Me from "./screens/Me.jsx";
 import Matches from "./screens/Matches.jsx";
 import Tables from "./screens/Tables.jsx";
 import Playoffs from "./screens/Playoffs.jsx";
-import Setup from "./screens/Setup.jsx";
+
+// Organizer-only screens load separately, so players' phones never download them.
+// The organizer's copy starts loading at once, alongside the rest of the app.
+const loadSetup = () => import("./screens/Setup.jsx");
+const Setup = lazy(loadSetup);
+const Login = lazy(() => import("./screens/Login.jsx"));
+if (!VIEW && !LOGIN) loadSetup();
 
 const TABS = VIEW
   ? [["me", "Me", UserRound], ["sched", "Matches", CalendarDays], ["tables", "Tables", ListOrdered], ["po", "Playoffs", Trophy]]
@@ -51,7 +56,7 @@ export default function App() {
   const close = useCallback(() => setOpen(null), []);
   const flip = () => { const t = theme === "dark" ? "light" : "dark"; setTheme(t); lsSet("bt_theme", t); applyTheme(t); };
   const go = k => { setTab(k); window.scrollTo(0, 0); };
-  if (LOGIN) return <><Login /><Toaster /></>;
+  if (LOGIN) return <><Suspense fallback={null}><Login /></Suspense><Toaster /></>;
   const onOpen = m => setOpen(m.id);
   return (
     <div className="app">
@@ -62,7 +67,7 @@ export default function App() {
       </header>
       <main key={tab}>
         {tab === "me" && <Me S={S} />}
-        {tab === "setup" && <Setup S={S} live={live} />}
+        {tab === "setup" && <Suspense fallback={null}><Setup S={S} live={live} /></Suspense>}
         {tab === "sched" && <Matches S={S} admin={!VIEW} onOpen={onOpen} />}
         {tab === "tables" && <Tables S={S} />}
         {tab === "po" && <Playoffs S={S} admin={!VIEW} onOpen={onOpen} />}

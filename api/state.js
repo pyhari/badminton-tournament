@@ -55,7 +55,15 @@ module.exports = async (req, res) => {
   res.setHeader("Cache-Control", "no-store");
   if (!DB_URL || !DB_TOKEN) return res.status(500).json({ error: "Database is not connected" });
   try {
-    if (req.method === "GET") return res.status(200).json(await readState());
+    if (req.method === "GET") {
+      // Players' pages share one copy per second from Vercel's edge, so the
+      // database is read about once a second however many phones are watching.
+      // The organizer adds ?fresh=1 to read the database directly.
+      const fresh = req.query && req.query.fresh;
+      const data = await readState();
+      if (!fresh) res.setHeader("Cache-Control", "public, max-age=0, s-maxage=1, stale-while-revalidate=1");
+      return res.status(200).json(data);
+    }
 
     if (req.method === "POST") {
       const failKey = NS + "fails:" + clientIp(req);
