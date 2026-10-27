@@ -427,4 +427,35 @@ button.match:active { transform: scale(.98); }
 .rl-champs small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
 .rl-team { display: inline-flex; align-items: center; gap: 6px; }
 
+/* ---------- live updates ---------- */
+/* A score that just changed pops, and its card glows for a moment (also after the card moves section). */
+.pop { display: inline-block; animation: pop .6s cubic-bezier(.2, .9, .3, 1.4); }
+@keyframes pop { 0% { transform: scale(1.7); color: var(--accent-text); } 60% { color: var(--accent-text); } 100% { transform: none; } }
+.match.glow { animation: glow 1.4s ease-out; }
+@keyframes glow { 0%, 30% { box-shadow: 0 0 0 3px var(--accent-text); } 100% { box-shadow: 0 0 0 3px transparent; } }
+
+/* ---------- small phones ---------- */
+/* Team players wrap to a second line instead of being cut off, and the score columns are tighter. */
+@media (max-width: 380px) {
+  .row-team { gap: 8px; }
+  .row-team .nm small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+  .games span { width: 22px; font-size: 16px; }
+  .tie { width: 26px; font-size: 26px; }
+  .match { padding: 12px; }
+}
+
+/* ---------- tablets, laptops and big screens ---------- */
+/* Matches, Tables and Playoffs use the width: two columns of cards, and brackets
+   and groups side by side. Other pages stay a comfortable phone width. */
+@media (min-width: 760px) {
+  .app { max-width: 1120px; }
+  .page:not(.wide) { max-width: 640px; margin: 0 auto; }
+  .page.wide { padding: 8px 24px 32px; }
+  .cards, .pair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 20px; align-items: start; }
+  .cards .match { margin-bottom: 0; }
+  .wide .filters { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 20px; align-items: center; }
+  .wide .fteams { align-self: center; }
+  .wide .fteam-name { grid-column: 2; }
+}
+
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }

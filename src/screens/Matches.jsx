@@ -67,7 +67,7 @@ export default function Matches({ S, admin, onOpen }) {
   const finished = all.length > 0 && all.every(m => res(S, m).done);
   const card = m => <MatchCard key={m.id} S={S} m={m} onOpen={admin ? onOpen : null} />;
   return (
-    <div className="page">
+    <div className="page wide">
       <div className="title-row"><h1 className="page-title">Matches</h1>{filtered && <button className="btn sm" onClick={() => set({ team: null, status: "all" })}><X size={14} />Clear</button>}</div>
       {filters}
       {filtered && <p className="hint">{list.length} {list.length === 1 ? "tie" : "ties"}{team != null ? ` for ${tn(S, team)}` : ""}{f.status !== "all" ? ` · ${STATUS.find(s => s[0] === f.status)[1].toLowerCase()}` : ""}</p>}
@@ -76,7 +76,7 @@ export default function Matches({ S, admin, onOpen }) {
       {live.length > 0 && (
         <>
           <div className="section"><h2 className="live-h"><span className="dot live" />On court now</h2><span>{live.length} {live.length === 1 ? "tie" : "ties"}</span></div>
-          {live.map(card)}
+          <div className="cards">{live.map(card)}</div>
         </>
       )}
       {STAGES.map(stage => {
@@ -86,7 +86,7 @@ export default function Matches({ S, admin, onOpen }) {
         return (
           <div key={stage}>
             <div className="section"><h2>{stage}</h2><span>{done}/{inStage.length} played</span></div>
-            {ms.map(card)}
+            <div className="cards">{ms.map(card)}</div>
           </div>
         );
       })}

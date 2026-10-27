@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AlertTriangle } from "lucide-react";
 import { abbr, tn, tp, res, courtOf, onCourt } from "../lib/engine.js";
 
@@ -17,6 +17,22 @@ export function Empty({ icon: Icon, title, children }) {
   return <div className="empty">{Icon && <Icon size={40} strokeWidth={1.6} />}<b>{title}</b>{children}</div>;
 }
 
+// The last value shown under each key. Kept outside the components, because a tie's
+// card moves between sections (to "On court now" and back) as its scores change.
+const seen = new Map();
+// 0 if the value has not changed lately; otherwise a count that goes up with each change.
+function changed(key, v) {
+  const e = seen.get(key);
+  if (!e) { seen.set(key, { v, n: 0, at: 0 }); return 0; } // first time shown: no effect
+  if (e.v !== v) { e.v = v; e.n++; e.at = Date.now(); }
+  return Date.now() - e.at < 1500 ? e.n : 0;
+}
+// A number that pops when it changes, so new scores catch the eye.
+export function Pop({ id, v, className = "" }) {
+  const n = changed(id, v);
+  return <span key={n} className={`${className} ${n ? "pop" : ""}`}>{v}</span>;
+}
+
 // Match state for the card header: finished, on court, or not played yet.
 export function matchState(S, m) {
   const r = res(S, m);
@@ -27,20 +43,22 @@ export function matchState(S, m) {
 
 export function MatchCard({ S, m, onOpen, showStage = true }) {
   const r = res(S, m), ready = m.a != null && m.b != null, st = matchState(S, m);
+  // The card glows briefly when any score in it changes (two class names, so the glow restarts each time).
+  const bumps = changed(m.id, r.gs.map(g => g ? g.a + "-" + g.b : "").join() + ready);
   const side = (t, label, i) => {
     const won = r.done && r.winner === i, lost = r.done && r.winner !== i;
     return (
       <div className={`row-team ${won ? "win" : ""} ${lost ? "lose" : ""}`}>
         <Badge S={S} t={ready ? t : null} />
         <div className="nm"><b>{ready ? tn(S, t) : label}</b>{ready && <small>{tp(S, t)}</small>}</div>
-        <div className="games">{r.gs.map((g, k) => <span key={k} className={g && g.w === i ? "w" : ""}>{g ? (i === 0 ? g.a : g.b) : "–"}</span>)}</div>
-        <div className="tie">{r.played ? r.gw[i] : ""}</div>
+        <div className="games">{r.gs.map((g, k) => <Pop key={k} id={`${m.id}.${i}.${k}`} className={g && g.w === i ? "w" : ""} v={g ? (i === 0 ? g.a : g.b) : "–"} />)}</div>
+        <div className="tie"><Pop id={`${m.id}.${i}`} v={r.played ? r.gw[i] : ""} /></div>
       </div>
     );
   };
   const Tag = onOpen && ready ? "button" : "div";
   return (
-    <Tag className="match" onClick={onOpen && ready ? () => onOpen(m) : undefined}>
+    <Tag key={bumps} className={`match ${bumps ? "glow" : ""}`} onClick={onOpen && ready ? () => onOpen(m) : undefined}>
       <div className="match-head">
         <span className="grow">{showStage ? m.stage + (m.label ? " · " + m.label : "") : m.label || m.stage}</span>
         <span className={`state ${st.cls}`}>{st.dot && <span className="dot live" />}{st.text}</span>
@@ -56,15 +74,47 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
 }
 
 export function Sheet({ onClose, children }) {
+  const sheet = useRef(null), scrim = useRef(null);
   useEffect(() => {
     const k = e => e.key === "Escape" && onClose();
     document.addEventListener("keydown", k);
     document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", k); document.body.style.overflow = ""; };
   }, [onClose]);
+
+  // Drag down to close, like a phone's own sheets: from the top of the sheet's
+  // scroll only, so scrolling up through the games still works.
+  useEffect(() => {
+    const el = sheet.current, bg = scrim.current;
+    let y0 = null, t0 = 0, dy = 0, dragging = false;
+    const move = to => { el.style.transform = to ? `translateY(${to}px)` : ""; bg.style.backgroundColor = `rgba(0, 0, 0, ${0.55 * Math.max(0, 1 - to / el.offsetHeight)})`; };
+    const start = e => { if (el.scrollTop > 0 || e.touches.length > 1) { y0 = null; return; } y0 = e.touches[0].clientY; t0 = e.timeStamp; dy = 0; dragging = false; };
+    const drag = e => {
+      if (y0 == null) return;
+      dy = e.touches[0].clientY - y0;
+      if (!dragging && dy > 8 && el.scrollTop <= 0) { dragging = true; el.style.transition = "none"; }
+      if (!dragging) return;
+      e.preventDefault();
+      move(Math.max(0, dy - 8));
+    };
+    const end = e => {
+      if (!dragging) { y0 = null; return; }
+      const fast = dy / Math.max(1, e.timeStamp - t0) > 0.4; // px per ms: a flick
+      el.style.transition = "transform .22s cubic-bezier(.2, .9, .3, 1)";
+      if (dy > Math.min(140, el.offsetHeight / 3) || (fast && dy > 30)) { move(el.offsetHeight); setTimeout(onClose, 180); }
+      else move(0);
+      y0 = null; dragging = false;
+    };
+    el.addEventListener("touchstart", start, { passive: true });
+    el.addEventListener("touchmove", drag, { passive: false });
+    el.addEventListener("touchend", end);
+    el.addEventListener("touchcancel", end);
+    return () => { el.removeEventListener("touchstart", start); el.removeEventListener("touchmove", drag); el.removeEventListener("touchend", end); el.removeEventListener("touchcancel", end); };
+  }, [onClose]);
+
   return (
-    <div className="scrim" onClick={onClose}>
-      <div className="sheet" role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
+    <div className="scrim" ref={scrim} onClick={onClose}>
+      <div className="sheet" ref={sheet} role="dialog" aria-modal="true" onClick={e => e.stopPropagation()}>
         <div className="grab" />
         {children}
       </div>
