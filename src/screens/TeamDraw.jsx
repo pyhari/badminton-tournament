@@ -1,17 +1,22 @@
-import { useMemo, useRef, useState } from "react";
-import { X, Play, FastForward, Pause, Check, Volume2, VolumeX, SkipForward } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { X, Play, FastForward, Pause, Check, Volume2, VolumeX, SkipForward, Sparkles } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update } from "../lib/store.js";
-import { soundOn, setSound, unlock } from "../lib/sound.js";
+import { soundOn, setSound, unlock, beep, whoosh, drumroll, fanfare } from "../lib/sound.js";
 import { Badge, TEAM_COLORS, teamColor } from "../components/ui.jsx";
-import { ConfettiLayer } from "../components/Confetti.jsx";
+import { ConfettiLayer, confetti } from "../components/Confetti.jsx";
 import Wheel from "../components/Wheel.jsx";
 import { getApart, getTogether } from "../components/Together.jsx";
 
 const POTS = ["Pot 1 · Man 1", "Pot 2 · Man 2", "Women"];
 
+const AUTO_SPIN = 2600, MANUAL_SPIN = 4600, WIND = 320; // ms; the wheel winds back for WIND before spinning
+const POT_NOTE = ["The stronger half of the men", "The rest of the men", "One woman for each team"];
+
 // The draw ceremony. The balanced teams are worked out first; the wheel then
 // reveals them one pick at a time: all of Pot 1, then Pot 2, then the women.
+// The auto draw runs it as a show: a 3-2-1 countdown, a card for each pot, a drumroll
+// while the wheel spins and a fanfare with confetti at the end.
 export default function TeamDraw({ S, onClose }) {
   const plan = useMemo(() => {
     const cols = E.balancedTeams(S, undefined, getTogether(), getApart());
@@ -39,18 +44,51 @@ export default function TeamDraw({ S, onClose }) {
   const name = (t, f) => { const s = shown.find(x => x.t === t && x.f === f); return s ? s.p.name : ""; };
   const last = k > wk ? plan.steps[k - 1] : null; // result card after a landing
 
-  const go = () => { setWk(k); setSpinning(true); setSpinKey(x => x + 1); };
-  const spin = () => { if (spinning || done) return; unlock(); setAuto(false); go(); };
-  const startAuto = () => { if (done) return; unlock(); setAuto(true); if (!spinning) go(); };
+  const [count, setCount] = useState(null); // 3, 2, 1, "Go!" before the auto draw
+  const [intro, setIntro] = useState(null);  // pot shown on its intro card
+  const timers = useRef([]);
+  const later = (fn, ms) => timers.current.push(setTimeout(fn, ms));
+  const lock = useRef(null);
+  useEffect(() => () => { timers.current.forEach(clearTimeout); autoRef.current = false; if (lock.current) lock.current.release().catch(() => {}); }, []);
+
+  const spinAt = (nk, ms) => { setWk(nk); setSpinning(true); setSpinKey(x => x + 1); if (autoRef.current) drumroll(ms + WIND); };
+  // In the auto draw each pot opens with its own card.
+  const autoAt = nk => {
+    if (!autoRef.current) return;
+    if (nk === 0 || plan.steps[nk - 1].c !== plan.steps[nk].c) {
+      setWk(nk); setIntro(plan.steps[nk].c); whoosh();
+      later(() => { setIntro(null); if (autoRef.current) spinAt(nk, AUTO_SPIN); }, 1900);
+    } else spinAt(nk, AUTO_SPIN);
+  };
+  const spin = () => { if (spinning || done || count != null || intro != null) return; unlock(); setAuto(false); spinAt(k, MANUAL_SPIN); };
+  const startAuto = () => {
+    if (done || count != null) return;
+    unlock(); setAuto(true);
+    // Keep the screen on for the whole show.
+    if (navigator.wakeLock && !lock.current) navigator.wakeLock.request("screen").then(l => { lock.current = l; }, () => {});
+    if (spinning) return;
+    if (k > 0) { autoAt(k); return; }
+    [3, 2, 1, "Go!"].forEach((c, i) => later(() => { if (autoRef.current) { setCount(c); beep(c === "Go!"); } }, i * 800));
+    later(() => { setCount(null); autoAt(0); }, 3 * 800 + 650);
+  };
+  const pause = () => { setAuto(false); setCount(null); };
   const landed = () => {
     setSpinning(false);
     setPop(step.t + "-" + step.f);
     const nk = wk + 1;
     setK(x => Math.max(x, nk)); // "Reveal all" during a spin wins
-    if (autoRef.current && nk < total) setTimeout(() => { if (autoRef.current) { setWk(nk); setSpinning(true); setSpinKey(x => x + 1); } }, 1700);
+    if (autoRef.current && nk < total) later(() => autoAt(nk), 1500);
   };
+  // The finale: fanfare and confetti across the screen.
+  useEffect(() => {
+    if (!done) return;
+    fanfare();
+    if (navigator.vibrate) navigator.vibrate([60, 60, 60, 60, 200]);
+    [[0.5, 0.3, 0], [0.2, 0.45, 350], [0.8, 0.45, 650], [0.5, 0.2, 1000]].forEach(([x, y, t]) => later(() => confetti(innerWidth * x, innerHeight * y), t));
+    if (lock.current) { lock.current.release().catch(() => {}); lock.current = null; }
+  }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
   const save = () => { update(n => E.SLOTS.forEach((f, c) => n.teams.forEach((x, t) => { x[f] = plan.cols[c][t].name; }))); onClose(true); };
-  const skip = () => { setAuto(false); setSpinning(false); setK(total); setWk(total); };
+  const skip = () => { setAuto(false); setCount(null); setIntro(null); setSpinning(false); setK(total); setWk(total); };
   const toggleSound = () => { setSound(!sound); setSnd(!sound); };
   const pw = Array.from({ length: E.NT }, (_, t) => plan.cols.reduce((a, col) => a + col[t].lvl, 0));
 
@@ -70,7 +108,7 @@ export default function TeamDraw({ S, onClose }) {
             <div className="cer-pot">{POTS[up.c]}</div>
             <div className="cer-for">{spinning ? "Drawing for" : "Next up"} <Badge S={S} t={up.t} size="sm" /> <b>{E.tn(S, up.t)}</b></div>
           </div>
-          <Wheel items={items} target={target} spinKey={spinKey} duration={auto ? 2600 : 4600} onDone={landed} onHub={spin} />
+          <Wheel items={items} target={target} spinKey={spinKey} duration={auto ? AUTO_SPIN : MANUAL_SPIN} onDone={landed} onHub={auto ? undefined : spin} />
           <div className="cer-result" aria-live="polite">
             {last && !spinning ? (
               <div className="reveal" key={k} style={{ "--tc": teamColor(last.t) }}>
@@ -78,17 +116,24 @@ export default function TeamDraw({ S, onClose }) {
                 <b>{last.p.name}</b>
                 <div className="joins"><span>joins</span><Badge S={S} t={last.t} size="sm" /><span className="tname">{E.tn(S, last.t)}</span></div>
               </div>
-            ) : <span className="cer-wait">{spinning ? "Here we go…" : "Tap SPIN in the middle of the wheel"}</span>}
+            ) : <span className="cer-wait">{spinning ? (left.length === 1 ? "Last one in the pot…" : "Here we go…") : auto ? "Get ready…" : k === 0 ? "Start the auto draw, or spin one at a time" : "Tap SPIN in the middle of the wheel"}</span>}
           </div>
           <div className="btns cer-btns">
-            <button className="btn primary" onClick={spin} disabled={spinning}><Play size={16} />Spin</button>
-            {auto ? <button className="btn" onClick={() => setAuto(false)}><Pause size={16} />Pause</button>
-              : <button className="btn" onClick={startAuto} disabled={spinning}><FastForward size={16} />Auto</button>}
+            {auto ? <button className="btn primary" onClick={pause}><Pause size={16} />Pause</button>
+              : k === 0 ? <button className="btn primary cer-go" onClick={startAuto} disabled={spinning}><Sparkles size={16} />Start auto draw</button>
+              : <button className="btn primary" onClick={startAuto} disabled={spinning}><FastForward size={16} />Continue auto</button>}
+            {!auto && <button className="btn" onClick={spin} disabled={spinning}><Play size={16} />{k === 0 ? "Spin one" : "Spin"}</button>}
             <button className="btn" onClick={skip}><SkipForward size={16} />Reveal all</button>
           </div>
+          {count != null && <div className="cer-count" aria-live="assertive"><b key={count}>{count}</b></div>}
+          {intro != null && (
+            <div className="cer-intro" aria-live="assertive">
+              <div><small>Next up</small><b>{POTS[intro]}</b><span>{POT_NOTE[intro]}</span></div>
+            </div>
+          )}
         </>
       ) : (
-        <div className="cer-done">
+        <div className="cer-done finale">
           <div className="brand-mark"><Check size={30} strokeWidth={3} /></div>
           <b>Teams are drawn</b>
           <span>Strength {Math.min(...pw)} to {Math.max(...pw)}. You can still swap players before locking.</span>
