@@ -42,6 +42,7 @@ class Crash extends Component {
 createRoot(document.getElementById("root")).render(<StrictMode><Crash><App /></Crash></StrictMode>);
 start();
 startInsights();
+try { sessionStorage.removeItem("bt_boot"); } catch (e) {}
 
 // A page saved before a new version went live can ask for files that are gone: reload once
 // to get the new version, instead of failing.
