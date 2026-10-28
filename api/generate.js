@@ -83,7 +83,13 @@ function makeHandler(getClient) {
     } catch (e) {
       if (e instanceof Anthropic.AuthenticationError) return res.status(500).json({ error: "The ANTHROPIC_API_KEY on the server was not accepted." });
       if (e instanceof Anthropic.RateLimitError) return res.status(429).json({ error: "Too many AI requests right now. Wait a minute and try again." });
-      if (e instanceof Anthropic.APIError) return res.status(502).json({ error: `AI service error (${e.status || "no status"}). Try again.` });
+      if (e instanceof Anthropic.APIError) {
+        // The API's own message says what was wrong (such as no credit left). It holds no secrets,
+        // and only the organizer sees it.
+        const detail = (e.error && e.error.error && e.error.error.message) || e.message || "";
+        console.error("Claude API error", e.status, e.requestID || "", detail);
+        return res.status(502).json({ error: `AI service error (${e.status || "no status"}): ${detail}`.slice(0, 400) });
+      }
       return res.status(502).json({ error: "Could not reach the AI service. Try again." });
     }
   };
