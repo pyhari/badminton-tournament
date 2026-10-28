@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CalendarClock, PartyPopper, X, SearchX } from "lucide-react";
-import { STAGES, allMatches, courtOf, groups, onCourt, pickedTeam, res, tn } from "../lib/engine.js";
+import { STAGES, allMatches, courtOf, groups, onCourt, pickedTeam, prelimsDone, res, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, Empty, MatchCard, TeamName } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
@@ -18,6 +18,8 @@ const saved = () => { try { return JSON.parse(lsGet("bt_filter")) || {}; } catch
 export default function Matches({ S, admin, onOpen }) {
   const all = allMatches(S);
   const [f, setF] = useState(() => { const v = { team: null, status: "all", ...saved() }; if (!STATUS.some(s => s[0] === v.status)) v.status = "all"; return v; });
+  // Group stage or playoffs: the one being played, unless picked here.
+  const [stagePick, setStage] = useState(null);
   if (!groups(S)) return <div className="page"><Empty icon={CalendarClock} title="No matches yet">{admin ? "Draw the groups in Setup to build the fixtures." : "The groups have not been drawn. This page updates by itself."}</Empty></div>;
 
   const set = patch => { const n = { ...f, ...patch }; setF(n); lsSet("bt_filter", JSON.stringify(n)); };
@@ -25,14 +27,25 @@ export default function Matches({ S, admin, onOpen }) {
   const filtered = team != null || f.status !== "all";
   const mine = (() => { const me = pickedTeam(S, lsGet("bt_me")); return isNaN(me) ? null : me; })();
   const teamOrder = [...S.teams.keys()].sort((a, b) => (b === mine) - (a === mine));
-  const byTeam = team == null ? all : all.filter(m => m.a === team || m.b === team);
+  const stage = stagePick || (prelimsDone(S) ? "po" : "groups");
+  const inStage = st => all.filter(m => (st === "po") === !!m.br);
+  const shown = inStage(stage);
+  const byTeam = team == null ? shown : shown.filter(m => m.a === team || m.b === team);
   const nAll = byTeam.length * 3, nDone = byTeam.reduce((a, m) => a + gamesDone(S, m), 0);
   const nLive = byTeam.filter(m => { const d = gamesDone(S, m); return d > 0 && d < 3; }).length;
   const pct = nAll ? Math.round((nDone / nAll) * 100) : 0;
   const toggle = k => set({ status: f.status === k ? "all" : k });
 
+  const stageCount = st => { const ms = inStage(st); return `${ms.filter(m => res(S, m).done).length}/${ms.length}`; };
   const filters = (
     <div className="filters">
+      <div className="fseg stages" role="radiogroup" aria-label="Stage">
+        {[["groups", "Group stage"], ["po", "Playoffs"]].map(([k, n]) => (
+          <button key={k} role="radio" aria-checked={stage === k} className={stage === k ? "on" : ""} onClick={() => setStage(k)}>
+            <b>{n}</b><small className="num">{stageCount(k)} matches</small>
+          </button>
+        ))}
+      </div>
       <div className="progress">
         <div className="progress-top">
           <span><b className="num">{nDone}</b> of {nAll} {team != null ? "games played by " + tn(S, team) : "games played"}</span>
@@ -92,7 +105,8 @@ export default function Matches({ S, admin, onOpen }) {
           </div>
         );
       })}
-      {team != null && f.status !== "done" && <p className="hint">Playoff matches appear once a team qualifies.</p>}
+      {stage === "po" && !prelimsDone(S) && <p className="hint">The playoffs start once every group match is played. Teams fill in from the final standings.</p>}
+      {stage === "po" && team != null && f.status !== "done" && <p className="hint">Playoff matches appear once a team qualifies.</p>}
     </div>
   );
 }

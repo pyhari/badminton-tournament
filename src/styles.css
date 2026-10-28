@@ -712,3 +712,9 @@ button.match:active { transform: scale(.98); }
 .ge-pts { display: block; min-width: 58px; text-align: center; font-family: var(--score); font-size: 34px; font-weight: 800; line-height: 1.2; color: var(--text); }
 .ge-pts.won { color: var(--accent-text); }
 .game-edit .gl .muted { color: var(--muted); text-transform: none; letter-spacing: 0; }
+
+/* Matches: Group stage / Playoffs switch above the progress. */
+.fseg.stages { grid-template-columns: 1fr 1fr; margin-bottom: 10px; }
+.fseg.stages button { padding: 9px 4px 8px; gap: 3px; }
+.fseg.stages b { font-size: 15px; }
+.fseg.stages small { font-family: inherit; font-size: 12px; font-weight: 600; }

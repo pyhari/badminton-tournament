@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as E from "./engine.js";
-import { simulate, quickSetup, threeWayTie, clearScores, summary, allPlayed, MODES } from "./simulate.js";
+import { simulate, quickSetup, threeWayTie, clearScores, clearPlayoffs, summary, allPlayed, MODES } from "./simulate.js";
 
 const fresh = () => { const S = E.defaults(); S.players.forEach((p, i) => p.lvl = 1 + (i * 7) % 5); quickSetup(S); return S; };
 
@@ -90,5 +90,31 @@ describe("simulator", () => {
     expect(E.winnerTeam(S, m)).toBe(m.a);
     clearScores(S);
     expect(E.allMatches(S).some(x => E.res(S, x).played)).toBe(false);
+  });
+
+  it("plays the group stage and the playoffs separately, round by round", () => {
+    const S = fresh();
+    const done = ms => ms.filter(m => E.res(S, m).done).length;
+    expect(simulate(S, { upTo: "round" })).toBe(0); // no playoffs before the group stage
+    expect(simulate(S, { upTo: "groups-some" })).toBe(E.courtCount(S));
+    expect(done(E.playoffs(S))).toBe(0);
+    simulate(S, { upTo: "groups" });
+    expect(E.prelimsDone(S)).toBe(true);
+    expect(done(E.playoffs(S))).toBe(0);
+    const labels = () => E.playoffs(S).filter(m => E.res(S, m).done).map(m => m.label).sort();
+    expect(simulate(S, { upTo: "round" })).toBe(4);
+    expect(labels()).toEqual(["Eliminator", "Eliminator", "Qualifier 1", "Qualifier 1"]);
+    expect(simulate(S, { upTo: "round" })).toBe(2);
+    expect(labels().filter(l => l === "Qualifier 2")).toHaveLength(2);
+    expect(simulate(S, { upTo: "round" })).toBe(2);
+    expect(done(E.playoffs(S))).toBe(8);
+    expect(simulate(S, { upTo: "round" })).toBe(0);
+    // Clearing the playoffs keeps the group stage, and they can be played again.
+    const groupScores = JSON.stringify(E.prelims(S).map(m => S.scores[m.id]));
+    clearPlayoffs(S);
+    expect(done(E.playoffs(S))).toBe(0);
+    expect(JSON.stringify(E.prelims(S).map(m => S.scores[m.id]))).toBe(groupScores);
+    expect(simulate(S, { upTo: "playoffs" })).toBe(8);
+    checkPlayoffs(S);
   });
 });

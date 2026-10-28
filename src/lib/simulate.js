@@ -48,21 +48,24 @@ export function playTie(S, m, winner, { tight = false, rnd = E.cryptoRnd } = {})
 
 // Plays unfinished ties whose teams are known. Playoff ties become ready as earlier
 // results come in, so it keeps going until nothing is left to play.
-// upTo: "some" (up to 4 ties, like one turn of the courts), "groups" or "all".
+// upTo: "some" (one turn of the courts, any stage), "groups-some" (one turn of the courts,
+// group matches only), "groups" (the whole group stage), "round" (the playoff matches ready
+// now: Q1 and Eliminators, then Q2s, then Finals), "playoffs" or "all".
 // team: same as cl (the team that wins everything).
 export function simulate(S, { upTo = "all", mode = "random", team = null, cl = team, fpl = null, rnd = E.cryptoRnd } = {}) {
   if (!E.groups(S)) return 0;
   let played = 0;
   for (;;) {
     let todo = E.allMatches(S).filter(m => E.ready(m) && !E.res(S, m).done);
-    if (upTo === "groups") todo = todo.filter(m => m.stage.startsWith("Group"));
-    if (upTo === "some") todo = E.shuffle(todo, rnd).slice(0, Math.max(0, E.courtCount(S) - played));
+    if (upTo === "groups" || upTo === "groups-some") todo = todo.filter(m => !m.br);
+    if (upTo === "round" || upTo === "playoffs") todo = todo.filter(m => m.br);
+    if (upTo === "some" || upTo === "groups-some") todo = E.shuffle(todo, rnd).slice(0, Math.max(0, E.courtCount(S) - played));
     if (!todo.length) break;
     for (const m of todo) {
       playTie(S, m, pickWinner(S, m, mode, { cl, fpl: fpl === cl ? null : fpl }, rnd), { tight: mode === "tight", rnd });
       played++;
     }
-    if (upTo === "some") break;
+    if (upTo === "some" || upTo === "groups-some" || upTo === "round") break;
   }
   return played;
 }
@@ -80,6 +83,13 @@ export function threeWayTie(S, gk = "A") {
 }
 
 export function clearScores(S) { S.scores = {}; S.who = {}; S.court = {}; S.ok = {}; }
+// Clears the playoff scores only, keeping the group stage.
+export function clearPlayoffs(S) {
+  for (const m of E.playoffs(S)) {
+    delete S.scores[m.id]; delete S.who[m.id]; delete S.court[m.id];
+    Object.keys(S.ok).filter(k => k.startsWith(m.id + ".")).forEach(k => delete S.ok[k]);
+  }
+}
 
 // One tap from any state to drawn groups: picks 16 men and 8 women if the numbers are off,
 // draws balanced teams, locks them and draws the groups. Scores are cleared.

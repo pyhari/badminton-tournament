@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FlaskConical, Wand2, StepForward, Flag, Trophy, RotateCcw, Eraser, Shuffle, AlertTriangle } from "lucide-react";
 import * as E from "../lib/engine.js";
-import { MODES, simulate, quickSetup, threeWayTie, clearScores, summary, allPlayed } from "../lib/simulate.js";
+import { MODES, simulate, quickSetup, threeWayTie, clearScores, clearPlayoffs, summary, allPlayed } from "../lib/simulate.js";
 import { update, getState } from "../lib/store.js";
 import { Badge, toast } from "../components/ui.jsx";
 
@@ -21,6 +21,11 @@ export default function TestTools({ S }) {
   const [log, setLog] = useState([]);
   const g = E.groups(S);
   const hasScores = Object.keys(S.scores).length > 0;
+  const pre = g ? E.prelims(S) : [], po = g ? E.playoffs(S) : [];
+  const gDone = pre.filter(m => E.res(S, m).done).length, poDone = po.filter(m => E.res(S, m).done).length;
+  // The playoff round that is ready to play now, by its matches' names.
+  const ready = po.filter(m => E.ready(m) && !E.res(S, m).done).map(m => m.label);
+  const nextRound = !ready.length ? "" : ready.includes("Qualifier 1") || ready.includes("Eliminator") ? "Qualifier 1 & Eliminators" : ready.includes("Qualifier 2") ? "Qualifier 2s" : "Finals";
   const ok = msg => !IS_PROD || confirm("This is the LIVE tournament. " + msg + "\n\nContinue?");
 
   const record = label => {
@@ -34,7 +39,14 @@ export default function TestTools({ S }) {
     if (fresh && hasScores && !ok("All scores will be replaced.")) return;
     let n = 0;
     update(st => { if (fresh) clearScores(st); n = simulate(st, { upTo, mode, cl, fpl }); });
-    if (!n) { toast(allPlayed(getState()) ? "Everything is already played. Use Rerun." : "Nothing to play yet."); return; }
+    if (!n) {
+      const st = getState(), groupsDone = E.prelimsDone(st);
+      toast(allPlayed(st) ? "Everything is already played. Use Rerun."
+        : (upTo === "round" || upTo === "playoffs") && !groupsDone ? "Finish the group stage first."
+        : (upTo === "groups" || upTo === "groups-some") && groupsDone ? "The group stage is already played."
+        : "Nothing to play yet.");
+      return;
+    }
     // Scores already in place can stop a chosen team from winning: say so.
     const champ = summary(getState()).champ, missed = [[cl, champ.Cup, E.BR.Cup], [fpl, champ.Plate, E.BR.Plate]].filter(([t, w]) => t != null && w != null && w !== t);
     toast(missed.length ? missed.map(([t, , name]) => `${E.tn(getState(), t)} could not win the ${name}: earlier scores got in the way. Use Rerun.`).join("\n") : `${n} ${n === 1 ? "match" : "matches"} played`);
@@ -90,15 +102,35 @@ export default function TestTools({ S }) {
         {(cl != null || fpl != null) && <p className="hint" style={{ marginBottom: 0 }}>{[cl != null && `${E.tn(S, cl)} wins every match and the ${E.BR.Cup}.`, fpl != null && `${E.tn(S, fpl)} loses its group matches, so it finishes 3rd or 4th, then wins the ${E.BR.Plate}.`].filter(Boolean).join(" ")} Other matches follow "{MODES[mode]}". Use Rerun if some scores are already in.</p>}
       </div>
 
-      <div className="section"><h2>3 · Play</h2><span>{g ? (allPlayed(S) ? "All played" : `${E.allMatches(S).filter(m => E.res(S, m).done).length}/20 matches played`) : "Not set up"}</span></div>
+      <div className="section"><h2>3 · Group stage</h2><span>{g ? `${gDone}/${pre.length} matches played` : "Not set up"}</span></div>
       <div className="card">
         <div className="btns" style={{ marginTop: 0 }}>
-          <button className="btn" onClick={() => run("some", "A few matches")}><StepForward size={16} />Play a few matches</button>
-          <button className="btn" onClick={() => run("groups", "Group stage")}><Flag size={16} />Group stage</button>
-          <button className="btn" onClick={() => run("all", "Everything")}><Trophy size={16} />To the end</button>
+          <button className="btn" onClick={() => run("groups-some", "A few group matches")}><StepForward size={16} />Play a few group matches</button>
+          <button className="btn" onClick={() => run("groups", "Group stage")}><Flag size={16} />Play the whole group stage</button>
         </div>
         <div className="btns">
-          <button className="btn primary block" onClick={() => run("all", "Rerun", true)}><Shuffle size={16} />Rerun whole tournament</button>
+          <button className="btn danger" onClick={() => { if (hasScores && confirm("Clear every score, group stage and playoffs?") && ok("Every score will be cleared.")) { update(clearScores); toast("Scores cleared"); } }}><Eraser size={16} />Clear all scores</button>
+        </div>
+        <p className="hint" style={{ marginBottom: 0 }}>A few = one turn of the {E.courtCount(S)} courts. The playoffs open once all {pre.length} group matches are played.</p>
+      </div>
+
+      <div className="section"><h2>4 · Playoffs</h2><span>{!g ? "Not set up" : E.prelimsDone(S) ? `${poDone}/${po.length} matches played` : "After the group stage"}</span></div>
+      <div className="card">
+        <div className="btns" style={{ marginTop: 0 }}>
+          <button className="btn" onClick={() => run("round", nextRound || "Playoff round")} disabled={!nextRound}><StepForward size={16} />{nextRound ? "Play " + nextRound : E.prelimsDone(S) ? "Playoffs finished" : "Play the next round"}</button>
+          <button className="btn" onClick={() => run("playoffs", "Playoffs")}><Trophy size={16} />Play all playoffs</button>
+        </div>
+        <div className="btns">
+          <button className="btn danger" onClick={() => { if (poDone && confirm("Clear the playoff scores? The group stage stays.") && ok("Playoff scores will be cleared.")) { update(clearPlayoffs); toast("Playoff scores cleared"); } }} disabled={!poDone}><Eraser size={16} />Clear playoffs only</button>
+        </div>
+        <p className="hint" style={{ marginBottom: 0 }}>Both playoffs go round by round: Qualifier 1 and Eliminator, then Qualifier 2, then the Final. Clear playoffs only to replay them from the same group results.</p>
+      </div>
+
+      <div className="section"><h2>5 · Whole tournament</h2><span>{g ? (allPlayed(S) ? "All played" : `${gDone + poDone}/${pre.length + po.length} matches played`) : "Not set up"}</span></div>
+      <div className="card">
+        <div className="btns" style={{ marginTop: 0 }}>
+          <button className="btn primary" onClick={() => run("all", "Rerun", true)}><Shuffle size={16} />Rerun whole tournament</button>
+          <button className="btn" onClick={() => run("all", "Everything")}><Trophy size={16} />Play to the end</button>
         </div>
         <p className="hint" style={{ marginBottom: 0 }}>Scores you entered by hand are kept; only unplayed matches are filled. Rerun clears every score first, so each tap gives a new tournament with the same teams and groups.</p>
       </div>
@@ -107,7 +139,6 @@ export default function TestTools({ S }) {
       <div className="card">
         <div className="btns" style={{ marginTop: 0 }}>
           <button className="btn" onClick={() => { if (!g) return toast("Do the quick setup first."); if (!ok("Group A scores will be replaced.")) return; update(st => threeWayTie(st, "A")); toast("Group A: seats 1, 2 and 3 beat each other in a circle"); }}><RotateCcw size={16} />3 teams level in Group A</button>
-          <button className="btn danger" onClick={() => { if (hasScores && confirm("Clear every score?") && ok("Every score will be cleared.")) { update(clearScores); toast("Scores cleared"); } }}><Eraser size={16} />Clear scores</button>
         </div>
         <p className="hint" style={{ marginBottom: 0 }}>After this, check Standings: the three teams are level on everything, so they are ordered by team number.</p>
       </div>
