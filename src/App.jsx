@@ -76,7 +76,7 @@ export default function App() {
         <div className="tabbar-in">
           {TABS.map(([k, n, Icon]) => (
             <button key={k} className={`tab ${tab === k ? "on" : ""}`} onClick={() => go(k)} aria-current={tab === k ? "page" : undefined}>
-              <span className="pill"><Icon size={20} strokeWidth={tab === k ? 2.4 : 2} /></span>{n}
+              <span className="pill"><Icon size={24} strokeWidth={tab === k ? 2.4 : 2} /></span>{n}
             </button>
           ))}
         </div>
