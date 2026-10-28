@@ -21,8 +21,12 @@ export function Names({ list }) {
 }
 export const Players = ({ S, t }) => <Names list={roster(S, t)} />;
 export const Pair = ({ S, t, i }) => <Names list={pairPlayers(S, t, i)} />;
-// A team's name with its players underneath, the same way everywhere.
-export const TeamName = ({ S, t, className = "" }) => <span className={`tm-nm ${className}`}><b>{tn(S, t)}</b><small><Players S={S} t={t} /></small></span>;
+// A team's name with its players underneath, the same way everywhere: the men on one line,
+// the woman on the next.
+export function TeamName({ S, t, className = "" }) {
+  const list = roster(S, t), men = list.filter(p => p.g !== "F"), women = list.filter(p => p.g === "F");
+  return <span className={`tm-nm ${className}`}><b>{tn(S, t)}</b><small>{men.length > 0 && <Names list={men} />}{women.length > 0 && <Names list={women} />}</small></span>;
+}
 export const GenderKey = () => <span className="gkey"><span><i className="gd f" />Women</span><span><i className="gd m" />Men</span></span>;
 
 export function Empty({ icon: Icon, title, children }) {

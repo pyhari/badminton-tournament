@@ -235,7 +235,7 @@ button.match:active { transform: scale(.98); }
 .sheet-head h3 { flex: 1; margin: 0; font-size: 18px; }
 .vs-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; text-align: center; margin: 10px 0 6px; }
 .vs-head .side { display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; min-width: 0; }
-.vs-head .side .tm-nm { max-width: 100%; align-items: center; }
+.vs-head .side .tm-nm, .vs-head .side .tm-nm small { max-width: 100%; align-items: center; }
 .vs-head .names { justify-content: center; }
 .vs-head .big { font-family: var(--score); font-size: 44px; font-weight: 800; line-height: 1; }
 .game-edit { background: var(--surface-2); border-radius: 18px; padding: 12px; margin-top: 10px; }
@@ -265,11 +265,9 @@ button.match:active { transform: scale(.98); }
 /* Team name with its players underneath, in the tables and seed lists. */
 .tm-nm { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
 .tm-nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* A team's players under its name (TeamName), always on one line. */
-.tm-nm small { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 1px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tm-nm .names { display: inline; }
-.tm-nm .pn + .pn { margin-left: 7px; }
-@media (max-width: 420px) { .tm-nm small { font-size: 11.5px; letter-spacing: -.1px; } .tm-nm .pn + .pn { margin-left: 5px; } .tm-nm .gd { width: 6px; height: 6px; margin-right: 3px; } }
+/* A team's players under its name (TeamName): the men on one line, the woman on the next. */
+.tm-nm small { display: flex; flex-direction: column; font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 1px; line-height: 1.35; }
+.tm-nm .names { column-gap: 7px; }
 /* The team column takes all the room the numbers leave. */
 .standings td.team { width: 100%; max-width: 0; }
 .standings td.team .tm-nm { flex: 1; }
