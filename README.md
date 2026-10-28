@@ -10,6 +10,8 @@ A one-page app to run a one-day badminton tournament: 8 teams of 3, two groups o
 - `src/lib/engine.js`: the tournament rules (draws, fixtures, scoring, tables, playoffs), with tests in `engine.test.js`.
 - `src/lib/store.js`: saving on the device, server sync, organizer login.
 - `src/screens/`, `src/components/`: the React screens (Setup, Matches, Tables, Playoffs, Me, Login).
+- `api/generate.js`: a Vercel function that asks Claude to turn a description into a tournament format (schema in `api/_tournament-schema.json`). Organizer only.
+- `src/lib/format.js`: checks a tournament format, works out its fixtures and timing, and describes it, with tests in `format.test.js`.
 - `api/state.js`: a Vercel function that stores the tournament in Upstash Redis. Anyone can read it. Saving needs the admin PIN.
 - `vercel.json`: builds with Vite, sends `/watch` to the app and sets cache headers.
 - `public/sw.js`: keeps the app (not the scores) on each phone, so it opens at once and works with a weak signal. `public/manifest*.webmanifest`: lets players add the app to their home screen.
@@ -55,6 +57,16 @@ On preview and local builds, **Setup → Test** has tools to play the tournament
 4. **Scenarios**: a three-way tie in Group A to check the tiebreakers.
 
 Each run is added to a run log showing the group tables, both playoff brackets and the champions. `npm test` also plays 200 random tournaments and checks every playoff pairing.
+
+## AI format planner (preview)
+
+**Setup → AI** turns a description such as "12 teams of 2 men and 1 woman, 3 groups, top 2 into a knockout, games to 21, 5 courts from 8:30" into a tournament format, using Claude Opus 5.5 with structured outputs.
+
+- The app checks the format and shows what can't work (for example an IPL bracket without exactly 4 teams), what to check (uneven groups, not enough players ticked), and the assumptions Claude made. It lists the fixtures and estimates the finish time from the number of courts and minutes per game.
+- Teams, groups, courts, points and timing can be adjusted, and drafts are saved on the device.
+- **It doesn't change the current tournament.** Running a new format in the app is the next step; the running tournament still uses the club format.
+- Only the organizer can call it (the admin PIN is checked), because each call costs a few cents. If Claude declines a request, the API retries it on Anthropic's recommended fallback model.
+- Setup: add `ANTHROPIC_API_KEY` in Vercel (Preview first) and redeploy. Like the test tools, it shows on preview and local builds, and on the live site only with `?ai=1`. Local test mode has no server, so it offers sample formats instead.
 
 ## Setting up teams and groups
 

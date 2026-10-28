@@ -427,6 +427,35 @@ button.match:active { transform: scale(.98); }
 .rl-champs small { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
 .rl-team { display: inline-flex; align-items: center; gap: 6px; }
 
+/* ---------- AI format planner ---------- */
+.ai-text { resize: vertical; min-height: 96px; font: inherit; font-size: 15px; line-height: 1.4; }
+.ai-examples { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.ai-examples .chip { flex: 0 1 auto; max-width: 100%; white-space: normal; min-width: 0; font-size: 12.5px; font-weight: 600; color: var(--muted); padding: 7px 10px; }
+.ai-samples { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); }
+.ai-samples small { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--muted); margin-right: 2px; }
+.spinner { width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid currentColor; border-right-color: transparent; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.ai-name { width: 100%; border: 0; background: none; padding: 0; font-size: 22px; font-weight: 800; letter-spacing: -.4px; outline: none; }
+.ai-headline { font-family: var(--score); font-size: 17px; font-weight: 700; color: var(--accent-text); margin: 4px 0 10px; }
+.ai-lines { margin: 0 0 12px; padding-left: 18px; font-size: 14px; line-height: 1.5; }
+.ai-lines li { margin-bottom: 4px; }
+.ai-plan .banner b { display: block; margin-bottom: 2px; }
+.ai-edits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ai-edits label small { display: block; font-size: 11px; font-weight: 700; color: var(--muted); margin: 0 0 4px 2px; }
+.ai-edits .field { padding: 9px 10px; font-size: 16px; font-weight: 700; }
+.ai-fx summary { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; cursor: pointer; list-style: none; }
+.ai-fx summary::-webkit-details-marker { display: none; }
+.ai-fx summary span { font-size: 12px; color: var(--muted); font-weight: 600; }
+.ai-round { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; font-size: 13px; }
+.ai-round small { width: 100%; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+.ai-round span { background: var(--surface-2); border-radius: 8px; padding: 4px 8px; font-weight: 600; }
+.ai-json { margin: 10px 0 0; max-height: 320px; overflow: auto; font-size: 12px; background: var(--surface-2); border-radius: 12px; padding: 10px; }
+.ai-draft { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+.ai-draft:last-child { border-bottom: 0; }
+.ai-draft > button:first-child { flex: 1; min-width: 0; border: 0; background: none; padding: 0; text-align: left; }
+.ai-draft b { display: block; font-size: 15px; }
+.ai-draft small { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
 /* ---------- live updates ---------- */
 /* A score that just changed pops, and its card glows for a moment (also after the card moves section). */
 .pop { display: inline-block; animation: pop .6s cubic-bezier(.2, .9, .3, 1.4); }

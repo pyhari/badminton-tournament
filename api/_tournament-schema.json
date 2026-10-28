@@ -1,0 +1,116 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "teams", "tie", "game", "groups", "playoffs", "venue", "notes"],
+  "properties": {
+    "name": { "type": "string", "description": "Short tournament name." },
+    "teams": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "roster", "formation"],
+      "properties": {
+        "count": { "type": "integer", "description": "Number of teams (for singles or pairs events, one entry is one team)." },
+        "roster": {
+          "type": "array",
+          "description": "The player slots in every team, e.g. Man 1, Man 2, Woman. One slot for singles, two for a doubles pair.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["slot", "label", "gender"],
+            "properties": {
+              "slot": { "type": "string", "description": "Short id such as m1, m2, w1, p1." },
+              "label": { "type": "string", "description": "Name shown to people, such as Man 1." },
+              "gender": { "type": "string", "enum": ["M", "F", "any"] }
+            }
+          }
+        },
+        "formation": {
+          "type": "string",
+          "enum": ["balanced_draw", "random_draw", "organizer_picks"],
+          "description": "balanced_draw: players drawn from pots by level so teams are even. random_draw: fully random. organizer_picks: teams are entered as they are."
+        }
+      }
+    },
+    "tie": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["games", "ifLevel"],
+      "properties": {
+        "games": {
+          "type": "array",
+          "description": "The games played when two teams meet, in order. Each lists the roster slots who play it: one slot for singles, two for doubles.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["label", "players"],
+            "properties": {
+              "label": { "type": "string", "description": "Such as Men's doubles or Mixed doubles 1." },
+              "players": { "type": "array", "items": { "type": "string" } }
+            }
+          }
+        },
+        "ifLevel": {
+          "type": "string",
+          "enum": ["none", "decider_game", "total_points", "draw"],
+          "description": "What happens when both teams win the same number of games. none: cannot happen (odd number of games). decider_game: one extra game. total_points: more points across the games wins. draw: the tie is drawn (groups only)."
+        }
+      }
+    },
+    "game": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pointsTo", "winBy", "cap"],
+      "properties": {
+        "pointsTo": { "type": "integer", "description": "Points to win a game, such as 15 or 21." },
+        "winBy": { "type": "integer", "description": "1, or 2 for win by two clear points." },
+        "cap": { "type": "integer", "description": "Score at which the next point wins, such as 30 for games to 21. 0 means no cap." }
+      }
+    },
+    "groups": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count", "rounds"],
+      "properties": {
+        "count": { "type": "integer", "description": "Number of groups. 1 is a single league of everyone. 0 means no group stage (straight knockout)." },
+        "rounds": { "type": "integer", "description": "1: everyone in a group plays each other once. 2: twice (home and away). 0 when there are no groups." }
+      }
+    },
+    "playoffs": {
+      "type": "array",
+      "description": "Playoff brackets after the groups, such as a Cup for the top two of each group and a Plate for the rest. Empty if the league or groups decide everything.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "format", "positions"],
+        "properties": {
+          "name": { "type": "string" },
+          "format": {
+            "type": "string",
+            "enum": ["knockout", "ipl", "final_only"],
+            "description": "knockout: single elimination. ipl: 4 teams, Qualifier 1 (1v2), Eliminator (3v4), Qualifier 2, Final. final_only: the top 2 play one final."
+          },
+          "positions": {
+            "type": "array",
+            "items": { "type": "integer" },
+            "description": "Group finishing places that go into this bracket, such as [1, 2]. Empty when there is no group stage (all teams enter)."
+          }
+        }
+      }
+    },
+    "venue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["courts", "start", "minutesPerGame"],
+      "properties": {
+        "courts": { "type": "integer" },
+        "start": { "type": "string", "description": "Start time as HH:MM, 24-hour." },
+        "minutesPerGame": { "type": "integer", "description": "Typical minutes for one game including change-over." }
+      }
+    },
+    "notes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Each assumption made for something the description did not say, in one short sentence."
+    }
+  }
+}

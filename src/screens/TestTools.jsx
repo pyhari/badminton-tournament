@@ -9,6 +9,8 @@ import { Badge, toast } from "../components/ui.jsx";
 export const IS_PROD = __APP_ENV__ === "production";
 // Shown on preview and local builds; on the live site only with ?test=1.
 export const showTests = !IS_PROD || /[?&]test=1/.test(location.search);
+// The AI format planner: the same rule, with ?ai=1 on the live site.
+export const showAI = !IS_PROD || /[?&]ai=1/.test(location.search);
 
 export default function TestTools({ S }) {
   const [mode, setMode] = useState("random");

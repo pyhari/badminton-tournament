@@ -1,17 +1,18 @@
-import { useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Check, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, FastForward, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update, replaceAll, getState, getPin, sync, pullNow, logout, isDirty } from "../lib/store.js";
 import { Badge, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
-import TestTools, { showTests } from "./TestTools.jsx";
+import TestTools, { showTests, showAI } from "./TestTools.jsx";
+const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
 
 const firstStep = S => !S.locked ? (S.teams.some(x => x.m1) ? "teams" : "players") : S.drawn.length < E.NT ? "groups" : "more";
 
 export default function Setup({ S, live }) {
   const [seg, setSeg] = useState(() => firstStep(S));
   const done = { players: !E.poolIssues(S).length, teams: S.locked, groups: S.drawn.length >= E.NT };
-  const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]].concat(showTests ? [["test", "Test"]] : []);
+  const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]].concat(showTests ? [["test", "Test"]] : []).concat(showAI ? [["ai", "AI"]] : []);
   return (
     <div className="page">
       <h1 className="page-title">Setup</h1>
@@ -27,6 +28,7 @@ export default function Setup({ S, live }) {
       {seg === "groups" && <Groups S={S} back={() => setSeg("teams")} />}
       {seg === "more" && <More S={S} live={live} />}
       {seg === "test" && <TestTools S={S} />}
+      {seg === "ai" && <Suspense fallback={null}><AIPlanner S={S} /></Suspense>}
     </div>
   );
 }
