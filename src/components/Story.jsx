@@ -43,9 +43,11 @@ export default function Story({ S }) {
             const [label, Icon] = KIND[h.kind];
             return (
               <div key={h.key} className={`hl ${h.kind}`}>
-                <span className="hl-kind"><Icon size={12} strokeWidth={2.6} />{label}</span>
-                <div className="hl-score">
-                  <Badge S={S} t={h.match.win} size="sm" /><b className="num">{h.match.result}</b><Badge S={S} t={h.match.lose} size="sm" />
+                <div className="hl-head">
+                  <span className="hl-kind"><Icon size={12} strokeWidth={2.6} />{label}</span>
+                  <div className="hl-score">
+                    <Badge S={S} t={h.match.win} size="sm" /><b className="num">{h.match.result}</b><Badge S={S} t={h.match.lose} size="sm" />
+                  </div>
                 </div>
                 <small className="hl-names">{h.match.winner} beat {h.match.loser}</small>
                 <small className="hl-fact">{fact(h)}</small>

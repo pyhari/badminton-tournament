@@ -465,17 +465,19 @@ button.match:active { transform: scale(.98); }
 .story-champ .names { font-size: 12.5px; font-weight: 600; color: rgba(10, 12, 16, .75); }
 .story-champ .badge { margin-left: auto; background: rgba(255, 255, 255, .55) !important; }
 /* Highlight cards: swipe on phones, three across on wide screens. */
-.hl-row { display: flex; gap: 10px; overflow-x: auto; margin: 12px -16px 0; padding: 0 16px 4px; scroll-snap-type: x mandatory; scrollbar-width: none; }
-.hl-row::-webkit-scrollbar { display: none; }
-.hl { --k: #8b5cf6; flex: 0 0 72%; max-width: 260px; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--k); border-radius: 16px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+/* Highlights stack one under another on phones (no sideways scrolling), three across on wide screens. */
+.hl-row { display: grid; gap: 8px; margin-top: 12px; }
+.hl { --k: #8b5cf6; background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--k); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
 .hl.upset { --k: #ff5c7a; } .hl.thriller { --k: #ff9f1c; } .hl.comeback { --k: #2bb3a3; } .hl.sweep { --k: #6aa500; }
 .hl-kind { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--k); background: color-mix(in srgb, var(--k) 14%, transparent); padding: 3px 8px; border-radius: 99px; }
-.hl-score { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.hl-score b { font-family: var(--score); font-size: 26px; font-weight: 800; line-height: 1; }
+.hl-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+.hl-score { display: flex; align-items: center; gap: 6px; }
+.hl-score b { font-family: var(--score); font-size: 22px; font-weight: 800; line-height: 1; white-space: nowrap; }
+.hl-score .badge { width: 26px; height: 26px; font-size: 9.5px; border-radius: 8px; }
 .hl-names { font-size: 12.5px; font-weight: 700; }
 .hl-fact { font-size: 12px; color: var(--muted); font-weight: 600; }
 .hl p { margin: 4px 0 0; font-size: 13px; line-height: 1.4; font-style: italic; }
-@media (min-width: 760px) { .hl-row { margin: 12px 0 0; padding: 0; overflow: visible; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .hl { max-width: none; } }
+@media (min-width: 760px) { .hl-row { grid-template-columns: repeat(3, minmax(0, 1fr)); } .hl { border-left: 1px solid var(--line); border-top: 3px solid var(--k); } .hl-head { flex-direction: column; align-items: flex-start; gap: 8px; } }
 /* Group race: each group's teams in table order, ticked when through, crossed when out. */
 .race { margin-top: 14px; display: grid; gap: 8px; }
 .race-g { display: flex; align-items: center; gap: 10px; }
