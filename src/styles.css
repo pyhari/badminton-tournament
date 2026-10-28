@@ -668,7 +668,8 @@ button.match:active { transform: scale(.98); }
 @keyframes pd-glow { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--tc) 35%, transparent); } }
 .pd-q { flex: none; width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; font-family: var(--score); font-weight: 800; font-size: 18px; color: var(--muted); background: var(--surface-3); }
 .pd-teams { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
-@media (min-width: 760px) { .pd-teams { grid-template-columns: repeat(4, 1fr); } }
+@media (min-width: 760px) { .pd-teams { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); } }
+@media (max-width: 359px) { .pd-teams { grid-template-columns: 1fr; } }
 .pd-team { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 8px; padding: 12px 12px 12px; border-radius: 16px; background: linear-gradient(160deg, color-mix(in srgb, var(--tc) 22%, var(--surface)), var(--surface) 70%); border: 1px solid color-mix(in srgb, var(--tc) 45%, var(--line)); animation: pd-pop .4s calc(var(--i) * 60ms) both; }
 .pd-team::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--tc); }
 .pd-team-top { display: flex; align-items: center; gap: 8px; min-width: 0; }

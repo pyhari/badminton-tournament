@@ -9,6 +9,8 @@ import { ConfettiLayer, confetti } from "./Confetti.jsx";
 // The players' page before the groups are drawn: everyone who is playing, popping in one
 // by one, and the 8 teams as "?" until the team draw is done. A player can pick their name
 // now; once the teams are set, their team lights up (and stays picked on the Me tab).
+const asked = new Map(); // player|team -> the AI message (a promise)
+
 export default function PreDraw({ S, me, choose }) {
   const [q, setQ] = useState("");
   const [pep, setPep] = useState(null); // { name, text } for the pop-up after picking a name
@@ -34,9 +36,13 @@ export default function PreDraw({ S, me, choose }) {
     choose(who ? "|" + who : "");
     if (!who) return setPep(null);
     setPep({ name: who, text: null });
-    const plain = "Find your team here the moment it's drawn. Have a great day on court!";
+    const t = set ? S.teams.findIndex(x => [x.m1, x.m2, x.w].includes(who)) : -1;
+    const plain = t >= 0 ? "Have a great day on court with your team!" : "Find your team here the moment it's drawn. Have a great day on court!";
     if (!AI_INSIGHTS) return setPep({ name: who, text: plain });
-    fetch("/api/pep?name=" + encodeURIComponent(who)).then(r => r.json()).then(j => j.text || plain, () => plain)
+    // One request per player and team on this page, however often the name is tapped.
+    const k = who + "|" + t;
+    if (!asked.has(k)) asked.set(k, fetch("/api/pep?name=" + encodeURIComponent(who)).then(r => r.json()).then(j => j.text || null, () => null));
+    asked.get(k).then(text => { if (!text) asked.delete(k); return text || plain; })
       .then(text => setPep(p => p && p.name === who ? { name: who, text } : p));
   };
   useEffect(() => {
