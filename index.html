@@ -15,21 +15,33 @@
 <div id="root"><div id="boot" style="font:600 15px system-ui,sans-serif;color:#5b6170;text-align:center;padding:80px 24px">Loading…</div></div>
 <script>
 // If the app does not start (a saved old copy, or a file that failed to load), clear the
-// saved copy of the app once and reload, instead of leaving a blank page. Scores are not touched.
+// saved copy of the app once and load it again from the network, instead of leaving a blank
+// page. Scores are not touched. If it still fails, say what went wrong.
 (function () {
+  var errs = [];
   function fresh() {
-    var sw = navigator.serviceWorker, done = function () { location.reload(); };
+    var sw = navigator.serviceWorker, go = function () {
+      var u = new URL(location.href); u.searchParams.set("fresh", Date.now()); location.replace(u.href);
+    };
     var clear = function () { return window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }) : null; };
-    Promise.resolve(sw && sw.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })).then(clear).then(done, done);
+    Promise.resolve(sw && sw.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); })).then(clear).then(go, go);
   }
   function once() { try { if (sessionStorage.getItem("bt_boot")) return false; sessionStorage.setItem("bt_boot", "1"); } catch (e) {} return true; }
-  addEventListener("error", function (e) { var t = e.target; if (t && (t.tagName === "SCRIPT" || t.rel === "stylesheet") && document.getElementById("boot") && once()) fresh(); }, true);
+  addEventListener("error", function (e) {
+    var t = e.target;
+    if (t && (t.tagName === "SCRIPT" || t.rel === "stylesheet")) {
+      errs.push("Could not load " + (t.src || t.href));
+      if (document.getElementById("boot") && once()) fresh();
+    } else if (e.message) errs.push(e.message);
+  }, true);
+  addEventListener("unhandledrejection", function (e) { errs.push(String(e.reason && e.reason.message || e.reason)); });
   setTimeout(function () {
     var b = document.getElementById("boot");
     if (!b) return;
     if (once()) return fresh();
-    b.innerHTML = 'The app did not load. <br><br><button style="font:700 15px system-ui;padding:12px 18px;border-radius:12px;border:0;background:#0b0d12;color:#d4ff3a">Reload</button>';
-    b.querySelector("button").onclick = fresh;
+    b.innerHTML = 'The app did not load.<br><br><button style="font:700 15px system-ui;padding:12px 18px;border-radius:12px;border:0;background:#0b0d12;color:#d4ff3a">Reload</button><pre style="margin:20px auto 0;max-width:520px;text-align:left;white-space:pre-wrap;word-break:break-word;font:12px ui-monospace,monospace;color:#5b6170"></pre>';
+    b.querySelector("pre").textContent = errs.length ? errs.join("\n") : "No error was reported. Is a browser extension blocking the page?";
+    b.querySelector("button").onclick = function () { try { sessionStorage.removeItem("bt_boot"); } catch (e) {} fresh(); };
   }, 8000);
 })();
 </script>

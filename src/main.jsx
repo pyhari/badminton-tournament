@@ -44,6 +44,8 @@ createRoot(document.getElementById("root")).render(<StrictMode><Crash><App /></C
 start();
 startInsights();
 try { sessionStorage.removeItem("bt_boot"); } catch (e) {}
+// Tidy the address after a recovery (?fresh=...).
+if (/[?&]fresh=/.test(location.search)) { const u = new URL(location.href); u.searchParams.delete("fresh"); history.replaceState(null, "", u.pathname + u.search + u.hash); }
 
 // A page saved before a new version went live can ask for files that are gone: reload once
 // to get the new version, instead of failing.

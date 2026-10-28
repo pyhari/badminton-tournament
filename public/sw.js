@@ -1,7 +1,7 @@
 // Offline cache for the app itself (never for scores, which always come from /api).
 // Pages: from the network when it answers quickly, else the copy saved last time.
 // Built files (/assets/, with a hash in the name, so they never change): saved once, then read from the phone.
-const PAGES = "pages-v1", FILES = "files-v1";
+const PAGES = "pages-v2", FILES = "files-v2";
 
 self.addEventListener("install", () => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil((async () => {
@@ -12,6 +12,8 @@ self.addEventListener("activate", e => e.waitUntil((async () => {
 self.addEventListener("fetch", e => {
   const req = e.request, url = new URL(req.url);
   if (req.method !== "GET" || url.origin !== location.origin || url.pathname.startsWith("/api/")) return;
+  // ?fresh=1: the page is recovering from a failed start, so go straight to the network.
+  if (url.searchParams.has("fresh") || (req.referrer && new URL(req.referrer).searchParams.has("fresh"))) return;
   if (req.mode === "navigate") e.respondWith(page(req, e));
   else if (url.pathname.startsWith("/assets/") || /\.(png|svg|webmanifest)$/.test(url.pathname)) e.respondWith(file(req));
 });
