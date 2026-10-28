@@ -77,11 +77,10 @@ export default function PreDraw({ S, me, choose }) {
         <p><Sparkles size={14} />{set ? "Teams are set. The group draw is coming soon." : "The team draw is coming soon. Who will you team up with?"}</p>
       </div>
 
-      {name && (
-        <div className={`pd-you ${mine >= 0 ? "in" : ""}`} style={mine >= 0 ? { "--tc": teamColor(mine) } : undefined}>
-          {mine >= 0
-            ? <><Badge S={S} t={mine} /><div><small>That's you, {name}!</small><b>{tn(S, mine)}</b><span>with {[S.teams[mine].m1, S.teams[mine].m2, S.teams[mine].w].filter(x => x !== name).join(" and ")}</span></div></>
-            : <><span className="pd-q">?</span><div><small>You're {name}</small><b>Waiting for the draw</b><span>Your team lights up here the moment you're drawn.</span></div></>}
+      {/* Only once the player has a team; before that the banner above speaks to everyone. */}
+      {mine >= 0 && (
+        <div className="pd-you in" style={{ "--tc": teamColor(mine) }}>
+          <Badge S={S} t={mine} /><div><small>That's you, {name}!</small><b>{tn(S, mine)}</b><span>with {[S.teams[mine].m1, S.teams[mine].m2, S.teams[mine].w].filter(x => x !== name).join(" and ")}</span></div>
           <button className="icon-btn" onClick={() => pick("")} aria-label="Not me"><X size={16} /></button>
         </div>
       )}
