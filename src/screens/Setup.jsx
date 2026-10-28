@@ -4,6 +4,7 @@ import * as E from "../lib/engine.js";
 import { update, replaceAll, getState, getPin, sync, pullNow, logout, isDirty } from "../lib/store.js";
 import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
+import Together from "../components/Together.jsx";
 import TestTools, { showTests, showAI } from "./TestTools.jsx";
 const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
 
@@ -112,6 +113,14 @@ function AddPlayer({ S, g }) {
 function Teams({ S, next }) {
   const [sel, setSel] = useState(null); // slot picked for a swap: { t, f }
   const [show, setShow] = useState(false); // draw ceremony open
+  const [secret, setSecret] = useState(false); // "Always together" panel open
+  const taps = useRef([]);
+  // Five quick taps on "Balanced draw" open the hidden "Always together" panel.
+  const tapTitle = () => {
+    const now = Date.now();
+    taps.current = taps.current.filter(t => now - t < 2500).concat(now);
+    if (taps.current.length >= 5) { taps.current = []; setSecret(true); }
+  };
   const filled = S.teams.some(x => x.m1 || x.m2 || x.w), issues = E.teamIssues(S);
   const pw = S.teams.map((_, t) => E.power(S, t));
   const selG = sel && E.slotG(sel.f);
@@ -145,7 +154,7 @@ function Teams({ S, next }) {
           {!S.picks.length ? <div className="btns"><button className="btn sm" onClick={() => update(n => { n.locked = false; })}><LockOpen size={14} />Unlock teams</button></div> : <div className="hint" style={{ margin: "4px 0 0" }}>To change players, redo the group draw first.</div>}</div></div>
       ) : (
         <div className="card">
-          <b style={{ fontSize: 16 }}>Balanced draw</b>
+          <b style={{ fontSize: 16, userSelect: "none" }} onClick={tapTitle}>Balanced draw</b>
           <p className="hint" style={{ margin: "4px 0 0" }}>Each team gets one man from Pot 1 (the stronger half), one from Pot 2 and one woman, with team strengths kept as even as possible. Then tap two players to swap, or a player and a reserve to sub in.</p>
           <div className="btns">
             <button className="btn primary" onClick={draw}><Shuffle size={16} />{filled ? "Draw again" : "Draw balanced teams"}</button>
@@ -184,6 +193,7 @@ function Teams({ S, next }) {
           </div>
         </>
       )}
+      {secret && <Together S={S} onClose={() => setSecret(false)} />}
       {show && <TeamDraw S={S} onClose={saved => { setShow(false); if (saved) toast("Teams saved. Swap players if needed, then lock."); }} />}
       {sel && (
         <div className="float-hint">

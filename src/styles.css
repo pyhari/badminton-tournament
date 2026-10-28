@@ -580,3 +580,13 @@ button.match:active { transform: scale(.98); }
 }
 
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+
+/* ---------- always together (hidden) ---------- */
+.tg-list { display: grid; gap: 6px; }
+.tg-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 8px 8px 8px 12px; border-radius: 14px; background: var(--surface-2); font-weight: 700; font-size: 14px; }
+.tg-row svg { color: var(--accent-text); flex: none; }
+.tg-row .names { flex: 1; min-width: 0; }
+.tg-row .icon-btn { margin-left: auto; width: 30px; height: 30px; background: var(--surface); }
+.tg-row small { flex-basis: 100%; order: 3; font-size: 11.5px; color: var(--warn); font-weight: 600; }
+.tg-row.off .names { opacity: .5; }
+.tg-add { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }

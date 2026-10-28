@@ -101,6 +101,23 @@ describe("team draw", () => {
     expect(Math.min(...p1)).toBeGreaterThanOrEqual(Math.max(...p2));
   });
 
+  it("keeps chosen pairs in the same team and the teams still even", () => {
+    const together = [["M:Arjun", "M:Chandru"], ["M:Praveen", "F:Meenakshi"], ["M:Hari", "F:Nandhini"], ["M:Karan", "F:Hema"]]; // Karan is not playing
+    for (let run = 0; run < 10; run++) {
+      const S = ready();
+      E.drawTeams(S, undefined, together);
+      const team = (k) => E.teamOf(S, E.findP(S, k.slice(2), k[0]));
+      together.slice(0, 3).forEach(([x, y]) => expect(team(x)).toBe(team(y)));
+      expect(E.teamIssues(S)).toEqual([]);
+      const pw = S.teams.map((_, t) => E.power(S, t));
+      // Arjun and Chandru (both level 5) make one team at least 11 against an average of 9.
+      expect(Math.max(...pw) - Math.min(...pw)).toBeLessThanOrEqual(3);
+    }
+    expect(E.pairIssue([], "F:Hema", "F:Radha")).toMatch(/one woman/);
+    expect(E.pairIssue(together, "M:Arjun", "F:Radha")).toMatch(/one pair only/);
+    expect(E.pairIssue(together, "M:Sai", "F:Radha")).toBe(null);
+  });
+
   it("swaps, subs in reserves and flags duplicates", () => {
     const S = ready();
     E.drawTeams(S);

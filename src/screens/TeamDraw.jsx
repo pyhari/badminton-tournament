@@ -6,6 +6,7 @@ import { soundOn, setSound, unlock } from "../lib/sound.js";
 import { Badge, TEAM_COLORS, teamColor } from "../components/ui.jsx";
 import { ConfettiLayer } from "../components/Confetti.jsx";
 import Wheel from "../components/Wheel.jsx";
+import { getTogether } from "../components/Together.jsx";
 
 const POTS = ["Pot 1 · Man 1", "Pot 2 · Man 2", "Women"];
 
@@ -13,7 +14,7 @@ const POTS = ["Pot 1 · Man 1", "Pot 2 · Man 2", "Women"];
 // reveals them one pick at a time: all of Pot 1, then Pot 2, then the women.
 export default function TeamDraw({ S, onClose }) {
   const plan = useMemo(() => {
-    const cols = E.balancedTeams(S);
+    const cols = E.balancedTeams(S, undefined, getTogether());
     const order = E.shuffle([...Array(E.NT).keys()]); // teams are called in random order in each pot
     const steps = [];
     cols.forEach((col, c) => order.forEach(t => steps.push({ c, t, f: E.SLOTS[c], p: col[t] })));
