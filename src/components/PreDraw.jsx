@@ -69,12 +69,14 @@ export default function PreDraw({ S, me, choose }) {
     <div className="page">
       <ConfettiLayer />
       <div className="pd-hero">
+        <span className="pd-soon"><i />Coming soon</span>
+        <h1 className="pd-title">{set ? "The group draw" : "The team draw"}</h1>
+        <p><Sparkles size={15} />{set ? "Teams are set. Which group will yours land in?" : "Who will you team up with?"}</p>
         <div className="pd-stats">
           <div><b className="num">{playing.length}</b><small>players</small></div>
           <div><b className="num">{NT}</b><small>teams</small></div>
           <div><b className="num">2</b><small>trophies</small></div>
         </div>
-        <p><Sparkles size={14} />{set ? "Teams are set. The group draw is coming soon." : "The team draw is coming soon. Who will you team up with?"}</p>
       </div>
 
       {/* Only once the player has a team; before that the banner above speaks to everyone. */}

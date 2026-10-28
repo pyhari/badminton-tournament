@@ -653,11 +653,17 @@ button.match:active { transform: scale(.98); }
 .crash pre { white-space: pre-wrap; word-break: break-word; font-size: 12px; background: var(--surface-2); padding: 10px 12px; border-radius: 10px; color: var(--muted); }
 
 /* Players' page before the draw (PreDraw): counts, the 8 teams as "?", and everyone playing. */
-.pd-hero { margin-top: 14px; border-radius: 22px; padding: 18px 16px 14px; background: var(--accent); color: var(--accent-ink); }
-.pd-stats { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; }
-.pd-stats b { display: block; font-family: var(--score); font-size: 44px; font-weight: 800; line-height: 1; }
+.pd-hero { position: relative; overflow: hidden; margin-top: 14px; border-radius: 24px; padding: 22px 16px 16px; text-align: center; background: var(--accent); color: var(--accent-ink); }
+.pd-hero::after { content: ""; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 35%, color-mix(in srgb, var(--accent-ink) 14%, transparent) 50%, transparent 65%); transform: translateX(-100%); animation: pd-shine 3.2s ease-in-out infinite; pointer-events: none; }
+@keyframes pd-shine { 60%, 100% { transform: translateX(100%); } }
+.pd-soon { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 99px; font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--accent); background: var(--accent-ink); }
+.pd-soon i { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); animation: pd-blink 1.2s ease-in-out infinite; }
+@keyframes pd-blink { 50% { opacity: .25; transform: scale(.7); } }
+.pd-title { margin: 12px 0 0; font-family: var(--score); font-size: clamp(40px, 12vw, 60px); font-weight: 800; line-height: .95; text-transform: uppercase; letter-spacing: .5px; color: inherit; }
+.pd-stats { display: grid; grid-template-columns: repeat(3, 1fr); text-align: center; margin-top: 16px; padding-top: 14px; border-top: 1px solid color-mix(in srgb, var(--accent-ink) 18%, transparent); }
+.pd-stats b { display: block; font-family: var(--score); font-size: 30px; font-weight: 800; line-height: 1; }
 .pd-stats small { font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; opacity: .75; }
-.pd-hero p { margin: 14px 0 0; display: flex; gap: 8px; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; text-align: center; }
+.pd-hero p { margin: 10px 0 0; display: flex; gap: 8px; align-items: center; justify-content: center; font-weight: 700; font-size: 16px; text-align: center; }
 .pd-hero p svg { flex: none; }
 .pd-you { margin-top: 12px; display: flex; align-items: center; gap: 12px; padding: 12px 10px 12px 14px; border-radius: 18px; border: 1px dashed var(--line); background: var(--surface); }
 .pd-you > div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
@@ -700,4 +706,4 @@ button.match:active { transform: scale(.98); }
 .pd-chip.f i { background: var(--female); }
 .pd-chip.me { border: 2px solid var(--accent-text); background: color-mix(in srgb, var(--accent-text) 14%, var(--surface)); }
 @keyframes pd-pop { from { opacity: 0; transform: scale(.6) translateY(8px); } }
-@media (prefers-reduced-motion: reduce) { .pd-chip, .pd-team, .pd-team .pd-q, .pd-you.in, .pd-pep { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .pd-chip, .pd-team, .pd-team .pd-q, .pd-you.in, .pd-pep, .pd-hero::after, .pd-soon i { animation: none; } }
