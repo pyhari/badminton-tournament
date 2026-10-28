@@ -39,10 +39,10 @@ function Players({ S, next }) {
   const issues = E.poolIssues(S);
   const [secret, setSecret] = useState(false); // "Always together" panel open
   const taps = useRef([]);
-  // Five quick taps on the "Men" heading open the hidden "Always together" panel.
+  // Five quick taps or clicks on the "Men" header row open the hidden "Always together" panel.
   const tapTitle = () => {
     const now = Date.now();
-    taps.current = taps.current.filter(t => now - t < 2500).concat(now);
+    taps.current = taps.current.filter(t => now - t < 4000).concat(now);
     if (taps.current.length >= 5) { taps.current = []; setSecret(true); }
   };
   const list = g => {
@@ -50,7 +50,7 @@ function Players({ S, next }) {
     const on = rows.filter(([p]) => p.on).length, need = g === "M" ? 2 * E.NT : E.NT;
     return (
       <>
-        <div className="section"><h2 onClick={g === "M" ? tapTitle : undefined} style={{ userSelect: "none" }}>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
+        <div className="section" onClick={g === "M" ? tapTitle : undefined} style={{ userSelect: "none" }}><h2>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
         <div className="card flat">
           {rows.map(([p, i]) => <PlayerRow key={i} S={S} p={p} i={i} />)}
           {!S.locked && <AddPlayer S={S} g={g} />}
