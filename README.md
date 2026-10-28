@@ -58,6 +58,15 @@ On preview and local builds, **Setup → Test** has tools to play the tournament
 
 Each run is added to a run log showing the group tables, both playoff brackets and the champions. `npm test` also plays 200 random tournaments and checks every playoff pairing.
 
+## AI recaps and story (players' page)
+
+On `/watch`, finished ties get a 1–2 sentence recap, and a **Story so far** card sums up the day: standings, who is through or out, upsets, the closest games and champions.
+
+- `src/lib/insights.js` works out the facts from the scores: upsets (a win by a team at least 2 levels weaker), comebacks, extra-points games, and who is certainly through or out of the top 2. Claude (`api/insights.mjs`, Opus 5.5 at low effort, structured outputs) only writes them up, so it can't invent scores.
+- Players never trigger AI directly. When results change, the next player request starts one background write (at most one every 45 seconds); the words are saved in Redis and shared from Vercel's edge, so any number of players costs the same. A tournament day is a few dozen calls, well under $1.
+- A corrected score hides that tie's old recap until a new one is written. If a write fails (for example no credit), it waits 5 minutes before trying again.
+- Needs `ANTHROPIC_API_KEY`. Its own switch is `INSIGHTS_ON` in `api/insights.mjs`, separate from the AI planner.
+
 ## AI format planner (turned off)
 
 **Turned off for now:** the AI tab is hidden and `/api/generate` answers 503. To turn it back on, set `AI_ON` to `true` in `src/screens/TestTools.jsx` and `api/generate.js`.

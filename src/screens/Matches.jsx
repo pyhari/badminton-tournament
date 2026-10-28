@@ -3,6 +3,7 @@ import { CalendarClock, PartyPopper, X, SearchX } from "lucide-react";
 import { STAGES, allMatches, courtOf, groups, onCourt, res, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, Empty, MatchCard } from "../components/ui.jsx";
+import Story from "../components/Story.jsx";
 
 // Upcoming means not finished yet, so matches being played stay in view.
 const STATUS = [["all", "All"], ["up", "Not played"], ["done", "Played"]];
@@ -69,6 +70,7 @@ export default function Matches({ S, admin, onOpen }) {
   return (
     <div className="page wide">
       <div className="title-row"><h1 className="page-title">Matches</h1>{filtered && <button className="btn sm" onClick={() => set({ team: null, status: "all" })}><X size={14} />Clear</button>}</div>
+      {!admin && !filtered && <Story />}
       {filters}
       {filtered && <p className="hint">{list.length} {list.length === 1 ? "tie" : "ties"}{team != null ? ` for ${tn(S, team)}` : ""}{f.status !== "all" ? ` · ${STATUS.find(s => s[0] === f.status)[1].toLowerCase()}` : ""}</p>}
       {finished && <div className="banner ok"><PartyPopper size={18} /> Tournament finished. Congratulations to the winners!</div>}

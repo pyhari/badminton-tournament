@@ -3,6 +3,7 @@ import { Search, Users, Repeat2, MapPin } from "lucide-react";
 import { allMatches, courtOf, groups, onCourt, prelimsDone, ready, res, table, tn, tp } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, Empty, MatchCard, teamColor } from "../components/ui.jsx";
+import Story from "../components/Story.jsx";
 
 const ord = n => n + (["th", "st", "nd", "rd"][n] || "th");
 
@@ -23,6 +24,7 @@ export default function Me({ S }) {
       <div className="page">
         <h1 className="page-title">Find your team</h1>
         <p className="page-sub">Pick your name to see your next match, court and results.</p>
+        <Story />
         <div className="search"><Search size={18} /><input className="field" placeholder="Search your name" value={q} onChange={e => setQ(e.target.value)} /></div>
         <div className="namelist">
           {shown.map(([n, i]) => <button key={n + i} onClick={() => choose(i + "|" + n)}><Badge S={S} t={i} size="sm" />{n}</button>)}
@@ -67,6 +69,7 @@ export default function Me({ S }) {
       ) : (
         <div className="next"><div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />No tie waiting</div><p className="hint" style={{ marginBottom: 0 }}>{prelimsDone(S) ? "Check Playoffs for what comes next." : "Wait for the other group ties to finish."}</p></div>
       )}
+      <Story />
       <div className="section"><h2>Your ties</h2></div>
       {mine.map(m => <MatchCard key={m.id} S={S} m={m} />)}
       <p className="hint">Playoff matches appear here when your team qualifies.</p>

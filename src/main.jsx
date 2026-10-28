@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App, { applyTheme } from "./App.jsx";
 import { start, VIEW } from "./lib/store.js";
+import { startInsights } from "./lib/insightsFeed.js";
 // Fonts are bundled with the app, so the first screen needs no trip to another server.
 import "@fontsource-variable/inter/wght.css";
 import "@fontsource/barlow-condensed/600.css";
@@ -17,6 +18,7 @@ if (VIEW) {
 }
 createRoot(document.getElementById("root")).render(<StrictMode><App /></StrictMode>);
 start();
+startInsights();
 
 // Keeps the app on the phone, so it opens at once next time and still opens
 // with a weak signal at the venue. Not in development, where files change constantly.

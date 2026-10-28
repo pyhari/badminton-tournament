@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Sparkles } from "lucide-react";
+import { useRecap } from "../lib/insightsFeed.js";
 import { abbr, tn, tp, res, courtOf, onCourt } from "../lib/engine.js";
 
 // One colour per team, bright enough for dark text in both themes.
@@ -45,6 +46,7 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
   const r = res(S, m), ready = m.a != null && m.b != null, st = matchState(S, m);
   // The card glows briefly when any score in it changes (two class names, so the glow restarts each time).
   const bumps = changed(m.id, r.gs.map(g => g ? g.a + "-" + g.b : "").join() + ready);
+  const recap = useRecap(m.id);
   const side = (t, label, i) => {
     const won = r.done && r.winner === i, lost = r.done && r.winner !== i;
     return (
@@ -68,6 +70,7 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
       {side(m.b, m.lb, 1)}
       {!ready && <div className="match-foot">Waiting for earlier results</div>}
       {ready && r.bad.length > 0 && <div className="match-foot warn"><AlertTriangle size={14} /> Check game {r.bad.map(i => i + 1).join(" and ")}: not a finished score</div>}
+      {r.done && recap && <div className="recap"><Sparkles size={13} /><span>{recap}</span></div>}
       {ready && onOpen && !r.played && <div className="match-foot">{courtOf(S, m) ? "Tap to enter scores" : "Tap to call to a court or enter scores"}</div>}
     </Tag>
   );
