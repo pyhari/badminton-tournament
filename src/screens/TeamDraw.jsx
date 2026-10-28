@@ -6,7 +6,6 @@ import { soundOn, setSound, unlock, beep, whoosh, drumroll, fanfare } from "../l
 import { Badge, TEAM_COLORS, teamColor } from "../components/ui.jsx";
 import { ConfettiLayer, confetti } from "../components/Confetti.jsx";
 import Wheel from "../components/Wheel.jsx";
-import { getApart, getTogether } from "../components/Together.jsx";
 
 // Shown to everyone watching the draw, so nothing here hints at player levels.
 const POTS = ["Man 1", "Man 2", "Women"];
@@ -20,7 +19,7 @@ const POT_NOTE = ["One man for each team", "A second man for each team", "One wo
 // while the wheel spins and a fanfare with confetti at the end.
 export default function TeamDraw({ S, onClose }) {
   const plan = useMemo(() => {
-    const cols = E.balancedTeams(S, undefined, getTogether(), getApart());
+    const cols = E.balancedTeams(S);
     const order = E.shuffle([...Array(E.NT).keys()]); // teams are called in random order in each pot
     const steps = [];
     cols.forEach((col, c) => order.forEach(t => steps.push({ c, t, f: E.SLOTS[c], p: col[t] })));

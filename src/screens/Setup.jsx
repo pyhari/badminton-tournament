@@ -1,12 +1,10 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X, ExternalLink, MessageCircle, MessageSquare, Share2 } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
 import GroupDraw from "./GroupDraw.jsx";
-import Together, { DrawPin } from "../components/Together.jsx";
-import { isLocked } from "../lib/vault.js";
 import TestTools, { showTests, showAI } from "./TestTools.jsx";
 const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
 
@@ -39,14 +37,6 @@ export default function Setup({ S, live }) {
 /* ---------- players ---------- */
 function Players({ S, next }) {
   const issues = E.poolIssues(S);
-  const [secret, setSecret] = useState(false); // "Always together" panel open
-  const taps = useRef([]);
-  // Five quick taps or clicks on the "Men" header row open the hidden "Always together" panel.
-  const tapTitle = () => {
-    const now = Date.now();
-    taps.current = taps.current.filter(t => now - t < 4000).concat(now);
-    if (taps.current.length >= 5) { taps.current = []; setSecret(true); }
-  };
   const [q, setQ] = useState("");
   const [sort, setSortState] = useState(() => lsGet("bt_psort") || "az");
   const setSort = v => { setSortState(v); lsSet("bt_psort", v); };
@@ -64,7 +54,7 @@ function Players({ S, next }) {
     if (find && !shownOn.length && !shownOff.length) return null;
     return (
       <>
-        <div className="section" onClick={g === "M" ? tapTitle : undefined} style={{ userSelect: "none" }}><h2>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
+        <div className="section"><h2>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
         <div className="card flat">
           {shownOn.map(([p, i, n]) => <PlayerRow key={i} S={S} p={p} i={i} n={n} />)}
           {shownOff.length > 0 && <div className="prow-sub">Not playing · {shownOff.length}</div>}
@@ -103,7 +93,6 @@ function Players({ S, next }) {
       {find && !S.players.some(p => p.name.toLowerCase().includes(find)) && <p className="hint">No player called “{q.trim()}”.</p>}
       {issues.length > 0 && !S.locked && <div className="banner warn" style={{ marginTop: 12 }}><AlertTriangle size={18} /><div>{issues.map(x => <div key={x}>{x}</div>)}</div></div>}
       {!issues.length && !S.locked && <button className="btn primary block" style={{ marginTop: 12 }} onClick={next}>Next: make teams</button>}
-      {secret && <Together S={S} onClose={() => setSecret(false)} />}
     </>
   );
 }
@@ -159,7 +148,6 @@ function AddPlayer({ S, g }) {
 function Teams({ S, next }) {
   const [sel, setSel] = useState(null); // slot picked for a swap: { t, f }
   const [show, setShow] = useState(false); // draw ceremony open
-  const [ask, setAsk] = useState(false);   // asking for the secret pairs' PIN before the draw
   const filled = S.teams.some(x => x.m1 || x.m2 || x.w), issues = E.teamIssues(S);
   const pw = S.teams.map((_, t) => E.power(S, t));
   const selG = sel && E.slotG(sel.f);
@@ -168,8 +156,7 @@ function Teams({ S, next }) {
     const pi = E.poolIssues(S);
     if (pi.length) { toast(pi.join("\n")); return; }
     if (filled && !confirm("Replace the current teams with a new draw?")) return;
-    setSel(null);
-    if (isLocked()) setAsk(true); else setShow(true);
+    setSel(null); setShow(true);
   };
   const tap = (t, f) => {
     if (!sel || E.slotG(sel.f) !== E.slotG(f)) return setSel({ t, f });
@@ -233,7 +220,6 @@ function Teams({ S, next }) {
           </div>
         </>
       )}
-      {ask && <DrawPin onDone={() => { setAsk(false); setShow(true); }} onClose={() => setAsk(false)} />}
       {show && <TeamDraw S={S} onClose={saved => { setShow(false); if (saved) toast("Teams saved. Swap players if needed, then lock."); }} />}
       {sel && (
         <div className="float-hint">

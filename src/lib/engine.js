@@ -124,90 +124,31 @@ const byLevel = (ps, rnd) => shuffle(ps, rnd).sort((a, b) => b.lvl - a.lvl);
 // Pot 1 is the stronger half of the men and gives each team its Man 1; Pot 2 gives Man 2.
 // Many random draws are tried, each improved by swapping players inside a pot,
 // and the one with the most even team strengths is kept.
-// together: pairs of players who must be in the same team, as [["M:Arjun", "F:Hema"], ...]
-// (see pairIssue). Two men paired are put in different pots, so one can be Man 1 and the other Man 2.
-// apart: pairs of players who must be in different teams, in the same form (see apartIssue).
-export function balancedTeams(S, rnd = cryptoRnd, together = [], apart = []) {
-  const on = S.players.filter(p => p.on), key = p => p.g + ":" + p.name;
-  const byKey = Object.fromEntries(on.map(p => [key(p), p]));
-  const pairs = together.filter(([x, y]) => byKey[x] && byKey[y]).slice(0, NT);
-  const partner = new Map(pairs.flatMap(([x, y]) => [[byKey[x], byKey[y]], [byKey[y], byKey[x]]]));
-  const men = byLevel(on.filter(p => p.g === "M"), rnd);
-  const pots = [men.slice(0, NT), men.slice(NT), on.filter(p => p.g === "F")];
-  // Two paired men in the same pot: the weaker one (or the stronger, from Pot 2) swaps
-  // pots with the nearest-level man who has no partner.
-  for (const [x, y] of pairs) {
-    const a = byKey[x], b = byKey[y];
-    if (a.g !== "M" || b.g !== "M") continue;
-    const k = pots[0].includes(a) && pots[0].includes(b) ? 0 : pots[1].includes(a) && pots[1].includes(b) ? 1 : -1;
-    if (k < 0) continue;
-    const mover = k === 0 ? (a.lvl <= b.lvl ? a : b) : (a.lvl >= b.lvl ? a : b);
-    const other = pots[1 - k].filter(p => !partner.has(p)).sort((p, q) => Math.abs(p.lvl - mover.lvl) - Math.abs(q.lvl - mover.lvl))[0];
-    if (!other) continue;
-    pots[k][pots[k].indexOf(mover)] = other; pots[1 - k][pots[1 - k].indexOf(other)] = mover;
-  }
-  const colOf = p => pots.findIndex(c => c.includes(p));
-  const split = apart.filter(([x, y]) => byKey[x] && byKey[y]).map(([x, y]) => [byKey[x], byKey[y]].map(p => [colOf(p), p]));
-  // One random draw: each pair gets its own team, then everyone else fills the free places.
-  const deal = () => {
-    const cols = pots.map(() => Array(NT).fill(null)), teams = shuffle([...Array(NT).keys()], rnd);
-    pairs.forEach(([x, y], i) => { [byKey[x], byKey[y]].forEach(p => { cols[colOf(p)][teams[i]] = p; }); });
-    pots.forEach((pot, c) => {
-      const rest = shuffle(pot.filter(p => !partner.has(p)), rnd);
-      cols[c] = cols[c].map(p => p || rest.pop());
-    });
-    return cols;
-  };
-  // Swapping teams i and j in one pot also swaps the partners, so pairs stay together.
-  const linked = (cols, c, i, j) => {
-    const set = new Set([c]);
-    for (const k of set) for (const p of [cols[k][i], cols[k][j]]) if (partner.has(p)) set.add(colOf(partner.get(p)));
-    return [...set];
-  };
-  const swap = (cols, cs, i, j) => cs.forEach(c => { [cols[c][i], cols[c][j]] = [cols[c][j], cols[c][i]]; });
+export function balancedTeams(S, rnd = cryptoRnd) {
+  const men = byLevel(S.players.filter(p => p.on && p.g === "M"), rnd);
+  const pots = [men.slice(0, NT), men.slice(NT), S.players.filter(p => p.on && p.g === "F")];
   let best = null, bestCost = Infinity;
   for (let k = 0; k < 60; k++) {
-    const cols = deal(); // cols[pot][team]
+    const cols = pots.map(p => shuffle(p, rnd)); // cols[pot][team]
     const cost = () => {
       const s = Array.from({ length: NT }, (_, t) => cols[0][t].lvl + cols[1][t].lvl + cols[2][t].lvl);
-      // Two players kept apart but in the same team outweighs any difference in strength.
-      const clash = split.filter(([[c1, p1], [c2, p2]]) => cols[c1].indexOf(p1) === cols[c2].indexOf(p2)).length;
-      return clash * 1e9 + (Math.max(...s) - Math.min(...s)) * 1e6 + s.reduce((a, v) => a + v * v, 0);
+      return (Math.max(...s) - Math.min(...s)) * 1e6 + s.reduce((a, v) => a + v * v, 0);
     };
     let c = cost(), better = true;
     while (better) {
       better = false;
-      for (let col = 0; col < 3; col++) for (let i = 0; i < NT; i++) for (let j = i + 1; j < NT; j++) {
-        const cs = linked(cols, col, i, j);
-        swap(cols, cs, i, j);
+      for (const col of cols) for (let i = 0; i < NT; i++) for (let j = i + 1; j < NT; j++) {
+        [col[i], col[j]] = [col[j], col[i]];
         const c2 = cost();
-        if (c2 < c) { c = c2; better = true; } else swap(cols, cs, i, j);
+        if (c2 < c) { c = c2; better = true; } else [col[i], col[j]] = [col[j], col[i]];
       }
     }
     if (c < bestCost) { best = cols; bestCost = c; }
   }
   return best;
 }
-// Why two players cannot be kept together (null if they can).
-export function pairIssue(together, x, y, apart = []) {
-  if (x === y) return "Pick two different players.";
-  if (x[0] === "F" && y[0] === "F") return "Each team has one woman, so two women cannot be together.";
-  if (together.some(p => p.includes(x) || p.includes(y))) return "A player can be in one pair only.";
-  if (apart.some(p => p.includes(x) && p.includes(y))) return "These two are set to be kept apart. Remove that first.";
-  if (together.length >= NT) return `At most ${NT} pairs, one per team.`;
-  return null;
-}
-// Why two players cannot be kept apart (null if they can).
-export function apartIssue(together, apart, x, y) {
-  if (x === y) return "Pick two different players.";
-  if (x[0] === "F" && y[0] === "F") return "Two women are never in the same team anyway.";
-  const same = p => p.includes(x) && p.includes(y);
-  if (apart.some(same)) return "These two are already kept apart.";
-  if (together.some(same)) return "These two are set to be kept together. Remove that pair first.";
-  return null;
-}
-export function drawTeams(S, rnd = cryptoRnd, together = [], apart = []) {
-  const cols = balancedTeams(S, rnd, together, apart);
+export function drawTeams(S, rnd = cryptoRnd) {
+  const cols = balancedTeams(S, rnd);
   S.teams.forEach((x, t) => { x.m1 = cols[0][t].name; x.m2 = cols[1][t].name; x.w = cols[2][t].name; });
 }
 export function swapSlots(S, a, b) {
