@@ -1,5 +1,6 @@
 // The AI story and match recaps for the players' page, read from /api/insights.
-// Checked every 30 seconds while the page is open; the words change only when results do.
+// Checked every 30 seconds while the page is open, and every 10 seconds while the server
+// is still writing words for the latest results.
 import { useSyncExternalStore } from "react";
 import { VIEW } from "./store.js";
 
@@ -7,7 +8,7 @@ import { VIEW } from "./store.js";
 // The AI recaps, story and playoff race are on preview and local builds only, for now.
 export const AI_INSIGHTS = __APP_ENV__ !== "production";
 
-const POLL_MS = 30000;
+const POLL_MS = 30000, CATCH_UP_MS = 10000;
 let data = null, raw = "", timer = null;
 const listeners = new Set();
 
@@ -21,16 +22,25 @@ async function load() {
     raw = text;
     const j = JSON.parse(text);
     // Switched off on the server: stop asking.
-    if (j.off) { clearInterval(timer); return; }
+    if (j.off) { clearTimeout(timer); timer = "off"; return; }
     data = j;
     listeners.forEach(f => f());
+    schedule(j.current === false ? CATCH_UP_MS : POLL_MS);
   } catch (e) { /* no server (local test mode) or offline: show nothing */ }
+}
+
+// The next check; a reply that says the words are out of date brings it forward.
+let every = 0;
+function schedule(ms) {
+  if (timer === "off" || (timer && ms === every)) return;
+  clearTimeout(timer); every = ms;
+  timer = setTimeout(function next() { load(); timer = setTimeout(next, every); }, ms);
 }
 
 export function startInsights() {
   if (!VIEW || !AI_INSIGHTS || timer) return;
   load();
-  timer = setInterval(load, POLL_MS);
+  schedule(POLL_MS);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
 }
 

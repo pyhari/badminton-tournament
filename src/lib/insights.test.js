@@ -117,11 +117,11 @@ describe("insights endpoint", () => {
     expect(t.calls).toHaveLength(1); // nothing changed, no new call
     expect(second.headers["Cache-Control"]).toMatch(/s-maxage=10/);
 
-    // Another result within 45 seconds waits; after that, one call writes only the new recap.
+    // Another result within 20 seconds waits; after that, one call writes only the new recap.
     play(t.S, m2, [[15, 9], [15, 9], [15, 9]]); t.save();
     await t.get();
     expect(t.calls).toHaveLength(1);
-    t.tick(46000);
+    t.tick(21000);
     t.setReply(p => ({ stop_reason: "end_turn", model: "claude-opus-5-5", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Two down", lede: "Two in.", captions: [{ key: "sweep:" + m2.id, caption: "Total control. " }] }, recaps: [{ id: m2.id, text: "A sweep." }] }) }] }));
     await t.get();
     expect(t.calls).toHaveLength(2);
@@ -134,7 +134,7 @@ describe("insights endpoint", () => {
     // A corrected score hides that tie's old recap until a new one is written.
     play(t.S, m1, [[9, 15], [9, 15], [9, 15]]); t.save();
     t.setReply(() => { throw Object.assign(new Error("credit"), { status: 400 }); });
-    t.tick(46000);
+    t.tick(21000);
     const fourth = await t.get();
     expect(fourth.out.recaps[m1.id]).toBeUndefined();
     expect(fourth.out.current).toBe(false);

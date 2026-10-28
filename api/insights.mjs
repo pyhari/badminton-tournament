@@ -15,7 +15,7 @@ const MODEL = "claude-opus-5-5";
 // Bump when the wording rules change, so saved words are written again.
 const VERSION = "7:";
 const recapKey = t => VERSION + tieKey(t);
-const MIN_GAP = 45 * 1000, RETRY_AFTER = 5 * 60 * 1000, LOCK_SECS = 120;
+const MIN_GAP = 20 * 1000, RETRY_AFTER = 5 * 60 * 1000, LOCK_SECS = 120;
 
 const DB_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const DB_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
@@ -145,9 +145,11 @@ export function makeHandler({ enabled, db, getClient, background, now = () => Da
           } finally { await db(["DEL", KEYS.lock]); }
         })());
       }
-      // Shared from Vercel's edge for 10 seconds, so phones polling it cost almost nothing.
-      res.setHeader("Cache-Control", "public, max-age=0, s-maxage=10, stale-while-revalidate=20");
-      return res.status(200).json(S && key ? view(S, saved, key) : { story: null, recaps: {} });
+      // Shared from Vercel's edge for 10 seconds, so phones polling it cost almost nothing;
+      // for 3 seconds while new words are being written, so they show up soon after.
+      const out = S && key ? view(S, saved, key) : { story: null, recaps: {} };
+      res.setHeader("Cache-Control", out.current === false ? "public, max-age=0, s-maxage=3, stale-while-revalidate=5" : "public, max-age=0, s-maxage=10, stale-while-revalidate=20");
+      return res.status(200).json(out);
     } catch (e) {
       console.error("Insights error:", e.message);
       res.setHeader("Cache-Control", "no-store");
