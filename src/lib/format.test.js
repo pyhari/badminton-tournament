@@ -15,7 +15,7 @@ describe("tournament formats", () => {
     expect(p.games).toBe(60);
     // 3 group rounds + 3 playoff rounds, 36 minutes a tie, from 09:00.
     expect(p.finish).toBe("12:36");
-    expect(headline(CLUB_FORMAT, p)).toMatch(/8 teams · 2 groups · 20 ties, 60 games · 4 courts/);
+    expect(headline(CLUB_FORMAT, p)).toMatch(/8 teams · 2 groups · 20 matches, 60 games · 4 courts/);
     expect(p.brackets[0].first[0]).toEqual(["1st Group A", "1st Group B", "Qualifier 1"]);
     expect(isClubFormat(CLUB_FORMAT)).toBe(true);
   });
@@ -60,7 +60,7 @@ describe("tournament formats", () => {
     const p = plan(c);
     expect(p.ties).toBe(5);
     expect(p.brackets[0].first).toEqual([["Seed 3", "Seed 6", ""], ["Seed 4", "Seed 5", ""]]);
-    expect(words(c, p).join(" ")).toMatch(/Cup: all teams, knockout: 5 ties/);
+    expect(words(c, p).join(" ")).toMatch(/Cup: all teams, knockout: 5 matches/);
   });
 
   it("warns when there are not enough players", () => {

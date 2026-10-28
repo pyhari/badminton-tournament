@@ -304,7 +304,7 @@ function More({ S, live }) {
         <div className="courts" style={{ marginTop: 0 }}>
           {[1, 2, 3, 4, 5, 6].map(c => <button key={c} className={`cpick ${E.courtCount(S) === c ? "on" : ""}`} onClick={() => update(n => { n.settings = { ...n.settings, courts: c }; })}>{c}</button>)}
         </div>
-        <p className="hint" style={{ marginBottom: 0 }}>Ties are played in any order on any free court. When you open a tie, pick the court it goes to.</p>
+        <p className="hint" style={{ marginBottom: 0 }}>Matches are played in any order on any free court. When you open a match, pick the court it goes to.</p>
       </div>
 
       <div className="section"><h2>Backup</h2></div>

@@ -1,6 +1,6 @@
 # Badminton Tournament
 
-A one-page app to run a one-day badminton tournament: 8 teams of 3, two groups of 4, then IPL-style playoffs ("Champions League" for the top two of each group, "FPL" for the rest). Each tie has 3 games to 15 points: men's doubles and two mixed doubles.
+A one-page app to run a one-day badminton tournament: 8 teams of 3, two groups of 4, then IPL-style playoffs ("Champions League" for the top two of each group, "FPL" for the rest). Each match (team v team) has 3 games to 15 points: men's doubles and two mixed doubles.
 
 - `/`: organizer page. Set up teams, draw the groups, and enter scores.
 - `/watch`: player page. It is read-only, updates every 3 seconds, and shows each player their next match and court.
@@ -52,19 +52,19 @@ npm run build   # production build in dist/
 On preview and local builds, **Setup → Test** has tools to play the tournament through quickly. They are hidden on the live site (add `?test=1` to the URL to show them there, with a warning).
 
 1. **Quick setup** draws balanced teams and the groups in one tap.
-2. **Who wins**: Random, Favourites (stronger team wins 8 in 10), Upsets, or Tight (every tie 2–1). Or pick one team to win every tie it plays.
-3. **Play**: a few ties (one per court), the group stage, or to the end. **Rerun whole tournament** clears scores and plays again, for a new result each tap.
-4. **Scenarios**: a three-way tie in Group A to check the tiebreakers.
+2. **Who wins**: Random, Favourites (stronger team wins 8 in 10), Upsets, or Tight (every match 2–1). Or pick one team to win every match it plays.
+3. **Play**: a few matches (one per court), the group stage, or to the end. **Rerun whole tournament** clears scores and plays again, for a new result each tap.
+4. **Scenarios**: three teams level in Group A, to check the tiebreakers.
 
 Each run is added to a run log showing the group tables, both playoff brackets and the champions. `npm test` also plays 200 random tournaments and checks every playoff pairing.
 
 ## AI recaps and story (players' page)
 
-On `/watch`, finished ties get a 1–2 sentence recap, and a **Story so far** card sums up the day: standings, who is through or out, upsets, the closest games and champions.
+On `/watch`, finished matches get a 1–2 sentence recap, and a **Story so far** card sums up the day: standings, who is through or out, upsets, the closest games and champions.
 
 - `src/lib/insights.js` works out the facts from the scores: upsets (a win by a team at least 2 levels weaker), comebacks, extra-points games, and who is certainly through or out of the top 2. Claude (`api/insights.mjs`, Opus 5.5 at low effort, structured outputs) only writes them up, so it can't invent scores.
 - Players never trigger AI directly. When results change, the next player request starts one background write (at most one every 45 seconds); the words are saved in Redis and shared from Vercel's edge, so any number of players costs the same. A tournament day is a few dozen calls, well under $1.
-- A corrected score hides that tie's old recap until a new one is written. If a write fails (for example no credit), it waits 5 minutes before trying again.
+- A corrected score hides that match's old recap until a new one is written. If a write fails (for example no credit), it waits 5 minutes before trying again.
 - Needs `ANTHROPIC_API_KEY`. Its own switch is `INSIGHTS_ON` in `api/insights.mjs`, separate from the AI planner.
 
 ## AI format planner (turned off)
@@ -90,7 +90,7 @@ The **Setup** tab has three steps: Players, Teams and Groups. **More** holds the
 
 ## On the day
 
-- There are no rounds or fixed times. When a court is free, open any tie that is ready on the Matches tab and tap the court it goes to. It moves to **On court now**, and those players see their court on their phones. Playoff ties become ready once their teams are known.
+- There are no rounds or fixed times. When a court is free, open any match that is ready on the Matches tab and tap the court it goes to. It moves to **On court now**, and those players see their court on their phones. Playoff ties become ready once their teams are known.
 
 - On the organizer phone, open `/` and log in with the admin PIN. The server checks it, so this needs Upstash and `ADMIN_PIN` set up. The phone stays logged in until **Log out**, even if the server goes down later. Anyone else who opens `/` sees only the login card and a link to live scores.
 - For testing on your own computer, run `npm run dev`, open `http://127.0.0.1:5173/` and choose **Local test mode**. Nothing is sent to a server, and `/watch` shows the tournament saved on that computer.

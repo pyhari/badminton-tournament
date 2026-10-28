@@ -33,7 +33,7 @@ export default function TestTools({ S }) {
     let n = 0;
     update(st => { if (fresh) clearScores(st); n = simulate(st, { upTo, mode, team }); });
     if (!n) { toast(allPlayed(getState()) ? "Everything is already played. Use Rerun." : "Nothing to play yet."); return; }
-    toast(`${n} ${n === 1 ? "tie" : "ties"} played`);
+    toast(`${n} ${n === 1 ? "match" : "matches"} played`);
     record(label);
   };
   const setup = () => {
@@ -63,11 +63,11 @@ export default function TestTools({ S }) {
             <button key={k} role="radio" aria-checked={mode === k && team == null} className={mode === k && team == null ? "on" : ""} onClick={() => { setMode(k); setTeam(null); }}><b>{n}</b></button>
           ))}
         </div>
-        <p className="hint">{team != null ? `${E.tn(S, team)} wins every tie it plays. Other ties follow "${MODES[mode]}".` : {
-          random: "Every tie is a coin toss.",
+        <p className="hint">{team != null ? `${E.tn(S, team)} wins every match it plays. Other matches follow "${MODES[mode]}".` : {
+          random: "Every match is a coin toss.",
           favourites: "The stronger team (sum of levels) wins 8 times in 10.",
           upsets: "The weaker team wins 8 times in 10.",
-          tight: "Every tie ends 2–1 with close games, to test the tiebreakers."
+          tight: "Every match ends 2–1 with close games, to test the tiebreakers."
         }[mode]}</p>
         <label className="lbl">Make one team win everything</label>
         <div className={`fteams ${team != null ? "picked" : ""}`} role="radiogroup" aria-label="Team to win">
@@ -80,26 +80,26 @@ export default function TestTools({ S }) {
         </div>
       </div>
 
-      <div className="section"><h2>3 · Play</h2><span>{g ? (allPlayed(S) ? "All played" : `${E.allMatches(S).filter(m => E.res(S, m).done).length}/20 ties played`) : "Not set up"}</span></div>
+      <div className="section"><h2>3 · Play</h2><span>{g ? (allPlayed(S) ? "All played" : `${E.allMatches(S).filter(m => E.res(S, m).done).length}/20 matches played`) : "Not set up"}</span></div>
       <div className="card">
         <div className="btns" style={{ marginTop: 0 }}>
-          <button className="btn" onClick={() => run("some", "A few ties")}><StepForward size={16} />Play a few ties</button>
+          <button className="btn" onClick={() => run("some", "A few matches")}><StepForward size={16} />Play a few matches</button>
           <button className="btn" onClick={() => run("groups", "Group stage")}><Flag size={16} />Group stage</button>
           <button className="btn" onClick={() => run("all", "Everything")}><Trophy size={16} />To the end</button>
         </div>
         <div className="btns">
           <button className="btn primary block" onClick={() => run("all", "Rerun", true)}><Shuffle size={16} />Rerun whole tournament</button>
         </div>
-        <p className="hint" style={{ marginBottom: 0 }}>Scores you entered by hand are kept; only unplayed ties are filled. Rerun clears every score first, so each tap gives a new tournament with the same teams and groups.</p>
+        <p className="hint" style={{ marginBottom: 0 }}>Scores you entered by hand are kept; only unplayed matches are filled. Rerun clears every score first, so each tap gives a new tournament with the same teams and groups.</p>
       </div>
 
       <div className="section"><h2>Scenarios</h2></div>
       <div className="card">
         <div className="btns" style={{ marginTop: 0 }}>
-          <button className="btn" onClick={() => { if (!g) return toast("Do the quick setup first."); if (!ok("Group A scores will be replaced.")) return; update(st => threeWayTie(st, "A")); toast("Group A: seats 1, 2 and 3 beat each other in a circle"); }}><RotateCcw size={16} />3-way tie in Group A</button>
+          <button className="btn" onClick={() => { if (!g) return toast("Do the quick setup first."); if (!ok("Group A scores will be replaced.")) return; update(st => threeWayTie(st, "A")); toast("Group A: seats 1, 2 and 3 beat each other in a circle"); }}><RotateCcw size={16} />3 teams level in Group A</button>
           <button className="btn danger" onClick={() => { if (hasScores && confirm("Clear every score?") && ok("Every score will be cleared.")) { update(clearScores); toast("Scores cleared"); } }}><Eraser size={16} />Clear scores</button>
         </div>
-        <p className="hint" style={{ marginBottom: 0 }}>After the 3-way tie, check Tables: the three teams are level on everything, so they are ordered by team number.</p>
+        <p className="hint" style={{ marginBottom: 0 }}>After this, check Tables: the three teams are level on everything, so they are ordered by team number.</p>
       </div>
 
       {log.length > 0 && (

@@ -50,7 +50,7 @@ export default function Me({ S }) {
         <div className="hero-top"><Badge S={S} t={idx} size="lg" /><div><b>{tn(S, idx)}</b><span>{tp(S, idx)}</span></div></div>
         <div className="hero-stats">
           <div><b>{ord(pos + 1)}</b><small>Group {gk}</small></div>
-          <div><b>{rec.w}–{rec.l}</b><small>Ties W–L</small></div>
+          <div><b>{rec.w}–{rec.l}</b><small>W–L</small></div>
           <div><b>{rec.pd > 0 ? "+" : ""}{rec.pd}</b><small>Pt diff</small></div>
         </div>
       </div>
@@ -64,13 +64,13 @@ export default function Me({ S }) {
         <div className="next">
           <div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />Still to play · {todo.length}</div>
           <div className="todo">{todo.map(m => <div key={m.id}><span className="hint" style={{ margin: 0, width: 22 }}>vs</span><Badge S={S} t={opp(m)} size="sm" />{tn(S, opp(m))}<span className="hint" style={{ margin: "0 0 0 auto" }}>{m.label || m.stage}</span></div>)}</div>
-          <p className="hint" style={{ marginBottom: 0 }}>Ties are called to a free court in any order. This page shows your court as soon as you are called.</p>
+          <p className="hint" style={{ marginBottom: 0 }}>Matches are called to a free court in any order. This page shows your court as soon as you are called.</p>
         </div>
       ) : (
-        <div className="next"><div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />No tie waiting</div><p className="hint" style={{ marginBottom: 0 }}>{prelimsDone(S) ? "Check Playoffs for what comes next." : "Wait for the other group ties to finish."}</p></div>
+        <div className="next"><div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />No match waiting</div><p className="hint" style={{ marginBottom: 0 }}>{prelimsDone(S) ? "Check Playoffs for what comes next." : "Wait for the other group matches to finish."}</p></div>
       )}
       <Story />
-      <div className="section"><h2>Your ties</h2></div>
+      <div className="section"><h2>Your matches</h2></div>
       {mine.map(m => <MatchCard key={m.id} S={S} m={m} />)}
       <p className="hint">Playoff matches appear here when your team qualifies.</p>
     </div>

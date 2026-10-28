@@ -11,7 +11,7 @@ export default function Playoffs({ S, admin, onOpen }) {
     <div className="page wide">
       <h1 className="page-title">Playoffs</h1>
       <p className="page-sub">IPL format: 1 v 2 in Qualifier 1, 3 v 4 in the Eliminator, then Qualifier 2 and the Final.</p>
-      {!prelimsDone(S) && <div className="banner">Teams fill in when every group tie is scored.</div>}
+      {!prelimsDone(S) && <div className="banner">Teams fill in when every group match is scored.</div>}
       <div className="pair">
         {["Cup", "Plate"].map(br => {
           const ms = po.filter(m => m.br === br), f = ms.find(m => m.label === "Final"), w = winnerTeam(S, f);

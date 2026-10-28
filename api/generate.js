@@ -14,7 +14,7 @@ const SYSTEM = `You design badminton tournaments for a club organizer. Turn thei
 
 How the club runs things today, for anything the description leaves open:
 - 8 teams of 3 (Man 1, Man 2, Woman), drawn from pots by level so teams are even.
-- A tie between two teams is 3 games: men's doubles (Man 1 + Man 2), mixed doubles 1 (Man 1 + Woman), mixed doubles 2 (Man 2 + Woman). Games to 15, win by 2, no cap.
+- A match between two teams is 3 games: men's doubles (Man 1 + Man 2), mixed doubles 1 (Man 1 + Woman), mixed doubles 2 (Man 2 + Woman). Games to 15, win by 2, no cap.
 - 2 groups of 4, everyone in a group plays each other once.
 - IPL-style playoffs: "Champions League" for places 1-2 of each group, "FPL" for places 3-4.
 - 4 courts, starting 09:00, about 12 minutes per game.
@@ -22,7 +22,7 @@ How the club runs things today, for anything the description leaves open:
 Rules for the config:
 - Follow the description wherever it is clear. Use the club's way only for what it does not say.
 - Every game's players must be roster slots, and no slot plays twice in the same game.
-- With an even number of games in a tie, choose ifLevel deliberately (decider_game unless the description says otherwise).
+- With an even number of games in a match, choose ifLevel deliberately (decider_game unless the description says otherwise).
 - Playoff positions must exist in every group. An "ipl" bracket takes exactly 4 teams, "final_only" exactly 2.
 - If the description asks for something impossible (such as 10 teams in groups of 4), make the closest sensible config and say what you changed in notes.
 - Write each assumption you made in notes as one short sentence. Leave notes empty if you made none.`;

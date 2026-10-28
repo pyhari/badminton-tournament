@@ -34,7 +34,7 @@ export const CLUB_FORMAT = {
 };
 
 const FORMATION = { balanced_draw: "balanced draw from pots by level", random_draw: "random draw", organizer_picks: "teams picked by the organizer" };
-const IF_LEVEL = { none: "", decider_game: "a decider game if level", total_points: "total points decide if level", draw: "level ties are draws" };
+const IF_LEVEL = { none: "", decider_game: "a decider game if level", total_points: "total points decide if level", draw: "level matches are draws" };
 const ORD = n => n + (n % 10 === 1 && n % 100 !== 11 ? "st" : n % 10 === 2 && n % 100 !== 12 ? "nd" : n % 10 === 3 && n % 100 !== 13 ? "rd" : "th");
 const plural = (n, one, many = one + "s") => `${n} ${n === 1 ? one : many}`;
 
@@ -60,15 +60,15 @@ export function check(c, players) {
   if (!slots.length) errors.push("Each team needs at least one player.");
   if (new Set(slots).size !== slots.length) errors.push("Two player slots in a team have the same id.");
 
-  if (!c.tie.games.length) errors.push("A tie needs at least one game.");
+  if (!c.tie.games.length) errors.push("A match needs at least one game.");
   c.tie.games.forEach(g => {
     if (g.players.length < 1 || g.players.length > 2) errors.push(`${g.label}: a game is singles (1 player) or doubles (2).`);
     g.players.filter(p => !slots.includes(p)).forEach(p => errors.push(`${g.label}: "${p}" is not a player in the team.`));
     if (new Set(g.players).size !== g.players.length) errors.push(`${g.label}: the same player is listed twice.`);
   });
   const nGames = c.tie.games.length;
-  if (nGames % 2 === 0 && c.tie.ifLevel === "none") warnings.push(`With ${nGames} games a tie can end ${nGames / 2}–${nGames / 2}, and nothing decides it.`);
-  if (c.tie.ifLevel === "draw" && c.playoffs.length) warnings.push("Playoff ties cannot be draws. They need a decider game or total points.");
+  if (nGames % 2 === 0 && c.tie.ifLevel === "none") warnings.push(`With ${nGames} games a match can end ${nGames / 2}–${nGames / 2}, and nothing decides it.`);
+  if (c.tie.ifLevel === "draw" && c.playoffs.length) warnings.push("Playoff matches cannot be draws. They need a decider game or total points.");
 
   const { pointsTo, winBy, cap } = c.game;
   if (!(pointsTo >= 5 && pointsTo <= 50)) errors.push("Games should be played to between 5 and 50 points.");
@@ -78,7 +78,7 @@ export function check(c, players) {
   const G = c.groups.count, sizes = groupSizes(T, G);
   if (G < 0 || (G > 0 && T / G < 2)) errors.push(`${plural(T, "team")} cannot make ${plural(G, "group")} of at least 2.`);
   if (G > 0 && c.groups.rounds !== 1 && c.groups.rounds !== 2) errors.push("Group teams play each other once or twice.");
-  if (G > 0 && sizes.length && sizes[0] !== sizes[sizes.length - 1]) warnings.push(`Groups are uneven (${sizes.join(", ")} teams), so some teams play more group ties than others.`);
+  if (G > 0 && sizes.length && sizes[0] !== sizes[sizes.length - 1]) warnings.push(`Groups are uneven (${sizes.join(", ")} teams), so some teams play more group matches than others.`);
 
   const smallest = G ? Math.min(...sizes) : T;
   const used = new Set();
@@ -195,7 +195,7 @@ export function headline(c, p) {
   if (c.groups.count === 1) parts.push("one league");
   else if (c.groups.count > 1) parts.push(`${plural(c.groups.count, "group")}`);
   else parts.push("straight knockout");
-  parts.push(`${p.ties} ties, ${p.games} games`);
+  parts.push(`${p.ties} matches, ${p.games} games`);
   parts.push(plural(c.venue.courts, "court"));
   parts.push(`${c.venue.start}–${p.finish} (≈${Math.floor(p.minutes / 60)}h ${String(p.minutes % 60).padStart(2, "0")}m)`);
   return parts.join(" · ");
@@ -212,15 +212,15 @@ export function describe(c, p) {
   ];
   if (c.groups.count) {
     const sizes = groupSizes(c.teams.count, c.groups.count);
-    lines.push(`${c.groups.count === 1 ? "One league" : plural(c.groups.count, "group")} of ${[...new Set(sizes)].join(" or ")}, playing each other ${c.groups.rounds === 2 ? "twice" : "once"}: ${plural(p.groupTies, "tie")}.`);
+    lines.push(`${c.groups.count === 1 ? "One league" : plural(c.groups.count, "group")} of ${[...new Set(sizes)].join(" or ")}, playing each other ${c.groups.rounds === 2 ? "twice" : "once"}: ${plural(p.groupTies, "match", "matches")}.`);
   }
   p.brackets.forEach(b => {
     const places = `place${b.positions.length > 1 ? "s" : ""} ${b.positions.join(" and ")}`;
     const from = !c.groups.count ? "all teams" : c.groups.count === 1 ? places : `${places} from each group`;
     const fmt = b.format === "ipl" ? "IPL style (Qualifier 1, Eliminator, Qualifier 2, Final)" : b.format === "final_only" ? "a single final" : "knockout";
-    lines.push(`${b.name}: ${from}, ${fmt}: ${plural(b.ties, "tie")}.`);
+    lines.push(`${b.name}: ${from}, ${fmt}: ${plural(b.ties, "match", "matches")}.`);
   });
-  lines.push(`With ${plural(c.venue.courts, "court")} and ~${c.venue.minutesPerGame} min a game (${p.tieMin} min a tie), starting ${c.venue.start} it finishes around ${p.finish}.`);
+  lines.push(`With ${plural(c.venue.courts, "court")} and ~${c.venue.minutesPerGame} min a game (${p.tieMin} min a match), starting ${c.venue.start} it finishes around ${p.finish}.`);
   return lines;
 }
 

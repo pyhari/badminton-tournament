@@ -33,7 +33,7 @@ export default function Tables({ S }) {
         ))}
       </div>
       <div className="legend"><span><i style={{ background: "var(--accent-text)" }} />Top 2: {BR.Cup}</span><span><i style={{ background: "var(--surface-3)" }} />3rd and 4th: {BR.Plate}</span></div>
-      <p className="hint">P played · W ties won · GW games won · PD point difference. Ranked by ties won, then games won, then point difference, then results between the level teams.</p>
+      <p className="hint">P matches played · W matches won · GW games won · PD point difference. Ranked by matches won, then games won, then point difference, then results between the level teams.</p>
       <div className="pair">
         {sd && ["Cup", "Plate"].map(br => (
           <div key={br}>

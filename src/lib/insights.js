@@ -64,7 +64,7 @@ export function dayFacts(S) {
     if (w != null) champions[BR[br]] = { team: tn(S, w), players: tp(S, w) };
   }
   return {
-    progress: `${ties.length} of ${pre.length + 8} ties played`,
+    progress: `${ties.length} of ${pre.length + 8} matches played`,
     groups: { "Group A": groupStatus(S, "A"), "Group B": groupStatus(S, "B") },
     upsets: ties.filter(t => t.upset).map(t => `${t.winner} beat ${t.loser} ${t.result} (${t.stage})`),
     closestGames: allGames.sort((a, b) => a.margin - b.margin || b.score.localeCompare(a.score)).slice(0, 3)

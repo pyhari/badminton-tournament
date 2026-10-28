@@ -11,6 +11,9 @@ import { dayFacts, tieFacts, factsKey, tieKey } from "../src/lib/insights.js";
 // The on/off switch for this feature (separate from the AI planner).
 const INSIGHTS_ON = true;
 const MODEL = "claude-opus-5-5";
+// Bump when the wording rules change, so saved words are written again.
+const VERSION = "2:";
+const recapKey = t => VERSION + tieKey(t);
 const MIN_GAP = 45 * 1000, RETRY_AFTER = 5 * 60 * 1000, LOCK_SECS = 120;
 
 const DB_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
@@ -21,7 +24,8 @@ export const KEYS = { state: NS + "state", insights: NS + "insights", lock: NS +
 
 const SYSTEM = `You write short, lively updates for players at a club badminton tournament, read on their phones between matches.
 Use only the facts given. Never invent scores, players, shots or events. Name teams and players exactly as given.
-Recaps: 1–2 sentences per tie, under 45 words. Lead with what made it interesting: an upset, a comeback, a close or extra-points game, a clean sweep.
+A match is one team against another, made of 3 games. Always say "match" for it, never "tie".
+Recaps: 1–2 sentences per match, under 45 words. Lead with what made it interesting: an upset, a comeback, a close or extra-points game, a clean sweep.
 Story so far: a headline under 10 words, then 2–4 short paragraphs on the standings, who is through or out, the upsets and the tightest games, and champions if decided. Under 160 words in all.
 Warm and fun, never mocking the losing side. No hashtags or emoji.`;
 
@@ -49,7 +53,7 @@ async function upstash(cmd) {
 // Writes recaps for finished ties that have none (or whose score changed) and a fresh story.
 export async function write(client, S, saved) {
   const ties = allMatches(S).filter(m => m.a != null && m.b != null).map(m => tieFacts(S, m)).filter(Boolean);
-  const need = ties.filter(t => !saved.recaps[t.id] || saved.recaps[t.id].key !== tieKey(t));
+  const need = ties.filter(t => !saved.recaps[t.id] || saved.recaps[t.id].key !== recapKey(t));
   const response = await client.beta.messages.create({
     model: MODEL,
     max_tokens: 16000,
@@ -59,7 +63,7 @@ export async function write(client, S, saved) {
     system: SYSTEM,
     messages: [{
       role: "user",
-      content: `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<ties_needing_recaps>\n${JSON.stringify(need)}\n</ties_needing_recaps>\nWrite the story so far, and one recap for each tie needing one, using its id.`
+      content: `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<matches_needing_recaps>\n${JSON.stringify(need)}\n</matches_needing_recaps>\nWrite the story so far, and one recap for each match needing one, using its id.`
     }]
   });
   if (response.stop_reason !== "end_turn") throw new Error("Claude stopped early: " + response.stop_reason);
@@ -67,20 +71,20 @@ export async function write(client, S, saved) {
   const recaps = { ...saved.recaps };
   for (const r of out.recaps) {
     const t = need.find(x => x.id === r.id);
-    if (t && r.text) recaps[t.id] = { key: tieKey(t), text: r.text.trim() };
+    if (t && r.text) recaps[t.id] = { key: recapKey(t), text: r.text.trim() };
   }
   return { story: out.story, recaps, model: response.model };
 }
 
 // What players see: the story and the recaps that still match the scores.
-function view(S, saved) {
+function view(S, saved, key) {
   if (!saved.story) return { story: null, recaps: {}, at: null };
   const recaps = {};
   allMatches(S).filter(m => m.a != null && m.b != null).forEach(m => {
     const t = tieFacts(S, m), r = t && saved.recaps[m.id];
-    if (r && r.key === tieKey(t)) recaps[m.id] = r.text;
+    if (r && r.key === recapKey(t)) recaps[m.id] = r.text;
   });
-  return { story: saved.story, recaps, at: saved.at, current: saved.key === factsKey(S) };
+  return { story: saved.story, recaps, at: saved.at, current: saved.key === key };
 }
 
 export function makeHandler({ enabled, db, getClient, background, now = () => Date.now() }) {
@@ -91,7 +95,7 @@ export function makeHandler({ enabled, db, getClient, background, now = () => Da
       const [text, savedText] = await db(["MGET", KEYS.state, KEYS.insights]);
       const S = text ? fix(JSON.parse(text)) : null;
       const saved = (savedText && JSON.parse(savedText)) || { recaps: {} };
-      const key = S ? factsKey(S) : "";
+      const key = S && factsKey(S) ? VERSION + factsKey(S) : "";
       const client = getClient();
       // Results changed since the last write: start one in the background, if it is time.
       const due = key && key !== saved.key && client && now() - (saved.at || 0) > MIN_GAP && now() - (saved.failAt || 0) > RETRY_AFTER;
@@ -108,7 +112,7 @@ export function makeHandler({ enabled, db, getClient, background, now = () => Da
       }
       // Shared from Vercel's edge for 10 seconds, so phones polling it cost almost nothing.
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=10, stale-while-revalidate=20");
-      return res.status(200).json(S && key ? view(S, saved) : { story: null, recaps: {} });
+      return res.status(200).json(S && key ? view(S, saved, key) : { story: null, recaps: {} });
     } catch (e) {
       console.error("Insights error:", e.message);
       res.setHeader("Cache-Control", "no-store");

@@ -7,8 +7,8 @@ import Story from "../components/Story.jsx";
 
 // Upcoming means not finished yet, so matches being played stay in view.
 const STATUS = [["all", "All"], ["up", "Not played"], ["done", "Played"]];
-// Each tie has 3 games. A tie shows under Played if any game is finished
-// and under Not played if any game is left, so a half-played tie is in both.
+// Each match has 3 games. A match shows under Played if any game is finished
+// and under Not played if any game is left, so a half-played match is in both.
 const gamesDone = (S, m) => m.a == null || m.b == null ? 0 : res(S, m).gs.filter(Boolean).length;
 const inStatus = (S, m, s) => s === "all" || (s === "done" ? gamesDone(S, m) > 0 : gamesDone(S, m) < 3);
 
@@ -46,7 +46,7 @@ export default function Matches({ S, admin, onOpen }) {
             <b className="num">{nDone}</b><span>Played</span>
           </button>
           <button className={f.status === "up" ? "on" : ""} aria-pressed={f.status === "up"} onClick={() => toggle("up")}>
-            <b className="num">{nAll - nDone}</b><span>Not played{nLive > 0 && <small><span className="dot live" />{nLive} {nLive === 1 ? "tie" : "ties"} on court</small>}</span>
+            <b className="num">{nAll - nDone}</b><span>Not played{nLive > 0 && <small><span className="dot live" />{nLive} {nLive === 1 ? "match" : "matches"} on court</small>}</span>
           </button>
         </div>
       </div>
@@ -72,12 +72,12 @@ export default function Matches({ S, admin, onOpen }) {
       <div className="title-row"><h1 className="page-title">Matches</h1>{filtered && <button className="btn sm" onClick={() => set({ team: null, status: "all" })}><X size={14} />Clear</button>}</div>
       {!admin && !filtered && <Story />}
       {filters}
-      {filtered && <p className="hint">{list.length} {list.length === 1 ? "tie" : "ties"}{team != null ? ` for ${tn(S, team)}` : ""}{f.status !== "all" ? ` · ${STATUS.find(s => s[0] === f.status)[1].toLowerCase()}` : ""}</p>}
+      {filtered && <p className="hint">{list.length} {list.length === 1 ? "match" : "matches"}{team != null ? ` for ${tn(S, team)}` : ""}{f.status !== "all" ? ` · ${STATUS.find(s => s[0] === f.status)[1].toLowerCase()}` : ""}</p>}
       {finished && <div className="banner ok"><PartyPopper size={18} /> Tournament finished. Congratulations to the winners!</div>}
       {!list.length && <Empty icon={SearchX} title="Nothing here">{f.status === "up" ? "Every game has been played." : "No games played yet."}</Empty>}
       {live.length > 0 && (
         <>
-          <div className="section"><h2 className="live-h"><span className="dot live" />On court now</h2><span>{live.length} {live.length === 1 ? "tie" : "ties"}</span></div>
+          <div className="section"><h2 className="live-h"><span className="dot live" />On court now</h2><span>{live.length} {live.length === 1 ? "match" : "matches"}</span></div>
           <div className="cards">{live.map(card)}</div>
         </>
       )}
@@ -92,7 +92,7 @@ export default function Matches({ S, admin, onOpen }) {
           </div>
         );
       })}
-      {team != null && f.status !== "done" && <p className="hint">Playoff ties appear once a team qualifies.</p>}
+      {team != null && f.status !== "done" && <p className="hint">Playoff matches appear once a team qualifies.</p>}
     </div>
   );
 }

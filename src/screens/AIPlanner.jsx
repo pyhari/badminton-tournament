@@ -16,7 +16,7 @@ const DRAFTS = "bt_ai_drafts";
 const SAMPLES = (() => {
   const a = structuredClone(CLUB_FORMAT);
   a.name = "Club Championship · 10 teams"; a.teams.count = 10;
-  a.notes = ["Kept the club's 3-player teams, games and IPL playoffs.", "Groups of 5 mean each team plays 4 group ties."];
+  a.notes = ["Kept the club's 3-player teams, games and IPL playoffs.", "Groups of 5 mean each team plays 4 group matches."];
   const b = structuredClone(CLUB_FORMAT);
   Object.assign(b, {
     name: "Singles Open", teams: { count: 16, roster: [{ slot: "p1", label: "Player", gender: "any" }], formation: "random_draw" },
@@ -173,11 +173,11 @@ function Review({ cfg, setCfg, source, players, onSave, onAgain, busy }) {
 
       {p && (
         <>
-          <div className="section"><h2>Fixtures</h2><span>{p.ties} ties</span></div>
+          <div className="section"><h2>Fixtures</h2><span>{p.ties} matches</span></div>
           <div className={p.groups.length > 1 ? "pair" : ""}>
             {p.groups.map(g => (
               <details key={g.name} className="card ai-fx" open={p.groups.length <= 2}>
-                <summary><b>{g.name}</b><span>{g.teams.length} teams · {g.ties} {g.ties === 1 ? "tie" : "ties"}</span></summary>
+                <summary><b>{g.name}</b><span>{g.teams.length} teams · {g.ties} {g.ties === 1 ? "match" : "matches"}</span></summary>
                 <p className="hint">{g.teams.join(", ")}</p>
                 {g.rounds.map((r, i) => (
                   <div key={i} className="ai-round"><small>Round {i + 1}</small>{r.map(([a, b]) => <span key={a + b}>{a} v {b}</span>)}</div>
@@ -187,7 +187,7 @@ function Review({ cfg, setCfg, source, players, onSave, onAgain, busy }) {
           </div>
           {p.brackets.map(b => (
             <details key={b.name} className="card ai-fx" open>
-              <summary><b>{b.name}</b><span>{b.n} teams · {b.ties} {b.ties === 1 ? "tie" : "ties"}</span></summary>
+              <summary><b>{b.name}</b><span>{b.n} teams · {b.ties} {b.ties === 1 ? "match" : "matches"}</span></summary>
               <div className="ai-round"><small>First round</small>{b.first.map(([x, y, l]) => <span key={x + y}>{l ? l + ": " : ""}{x} v {y}</span>)}</div>
             </details>
           ))}
