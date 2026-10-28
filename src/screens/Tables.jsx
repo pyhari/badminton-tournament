@@ -6,11 +6,11 @@ import { VIEW } from "../lib/store.js";
 import { AI_INSIGHTS } from "../lib/insightsFeed.js";
 
 export default function Tables({ S }) {
-  if (!groups(S)) return <div className="page"><Empty icon={ListOrdered} title="No tables yet">Tables appear once the groups are drawn.</Empty></div>;
+  if (!groups(S)) return <div className="page"><Empty icon={ListOrdered} title="No standings yet">Standings appear once the groups are drawn.</Empty></div>;
   const sd = seeds(S);
   return (
     <div className="page wide">
-      <h1 className="page-title">Tables</h1>
+      <h1 className="page-title">Standings</h1>
       {VIEW && AI_INSIGHTS && <Outlook S={S} />}
       <div className="pair">
         {["A", "B"].map(gk => (

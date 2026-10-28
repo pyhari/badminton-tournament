@@ -17,8 +17,8 @@ const Login = lazy(() => import("./screens/Login.jsx"));
 if (!VIEW && !LOGIN) loadSetup();
 
 const TABS = VIEW
-  ? [["me", "Me", UserRound], ["sched", "Matches", CalendarDays], ["tables", "Tables", ListOrdered], ["po", "Playoffs", Trophy]]
-  : [["setup", "Setup", Settings2], ["sched", "Matches", CalendarDays], ["tables", "Tables", ListOrdered], ["po", "Playoffs", Trophy]];
+  ? [["me", "Me", UserRound], ["sched", "Matches", CalendarDays], ["tables", "Standings", ListOrdered], ["po", "Playoffs", Trophy]]
+  : [["setup", "Setup", Settings2], ["sched", "Matches", CalendarDays], ["tables", "Standings", ListOrdered], ["po", "Playoffs", Trophy]];
 
 function Shuttle(props) {
   return (

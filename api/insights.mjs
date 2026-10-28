@@ -27,7 +27,7 @@ const SYSTEM = `You write short, lively updates for players at a club badminton 
 Use only the facts given. Never invent scores, players, shots or events. Name teams and players exactly as given.
 A match is one team against another, made of 3 games. Always say "match" for it, never "tie".
 Recaps: 1–2 sentences per match, under 45 words. Lead with what made it interesting: an upset, a comeback, a close or extra-points game, a clean sweep.
-Story so far: the app already shows the tables, who is through or out, the champions and a card for each highlight with its teams and score, so do not repeat numbers it shows. Write:
+Story so far: the app already shows the standings, who is through or out, the champions and a card for each highlight with its teams and score, so do not repeat numbers it shows. Write:
 - headline: under 9 words, the big story of the day so far.
 - lede: one sentence, under 28 words, setting the scene.
 - one caption per highlight, under 16 words, saying why that match mattered.

@@ -5,7 +5,7 @@ import { predict } from "../lib/insights.js";
 import { useForecast, useReasons } from "../lib/insightsFeed.js";
 import { Badge, TeamName } from "./ui.jsx";
 
-// "Race for the FFBC Champions League" on the players' Tables tab: for each group, the 2 teams
+// "Race for the FFBC Champions League" on the players. Standings tab: for each group, the 2 teams
 // likely to go to the Champions League and the 2 likely to go to the Premier League, worked out by the
 // app (confirmed once the group is finished). The AI adds a one-line summary per unfinished
 // group and a reason per team. It shows once the first group match is finished.

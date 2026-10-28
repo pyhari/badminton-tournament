@@ -109,7 +109,7 @@ export default function TestTools({ S }) {
           <button className="btn" onClick={() => { if (!g) return toast("Do the quick setup first."); if (!ok("Group A scores will be replaced.")) return; update(st => threeWayTie(st, "A")); toast("Group A: seats 1, 2 and 3 beat each other in a circle"); }}><RotateCcw size={16} />3 teams level in Group A</button>
           <button className="btn danger" onClick={() => { if (hasScores && confirm("Clear every score?") && ok("Every score will be cleared.")) { update(clearScores); toast("Scores cleared"); } }}><Eraser size={16} />Clear scores</button>
         </div>
-        <p className="hint" style={{ marginBottom: 0 }}>After this, check Tables: the three teams are level on everything, so they are ordered by team number.</p>
+        <p className="hint" style={{ marginBottom: 0 }}>After this, check Standings: the three teams are level on everything, so they are ordered by team number.</p>
       </div>
 
       {log.length > 0 && (
