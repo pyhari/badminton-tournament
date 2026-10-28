@@ -21,6 +21,8 @@ export function Names({ list }) {
 }
 export const Players = ({ S, t }) => <Names list={roster(S, t)} />;
 export const Pair = ({ S, t, i }) => <Names list={pairPlayers(S, t, i)} />;
+// A team's name with its players underneath, the same way everywhere.
+export const TeamName = ({ S, t, className = "" }) => <span className={`tm-nm ${className}`}><b>{tn(S, t)}</b><small><Players S={S} t={t} /></small></span>;
 export const GenderKey = () => <span className="gkey"><span><i className="gd f" />Women</span><span><i className="gd m" />Men</span></span>;
 
 export function Empty({ icon: Icon, title, children }) {
@@ -61,7 +63,7 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
     return (
       <div className={`row-team ${won ? "win" : ""} ${lost ? "lose" : ""}`}>
         <Badge S={S} t={ready ? t : null} />
-        <div className="nm"><b>{ready ? tn(S, t) : label}</b>{ready && <small><Players S={S} t={t} /></small>}</div>
+        {ready ? <TeamName S={S} t={t} className="nm" /> : <div className="nm"><b>{label}</b></div>}
         <div className="games">{r.gs.map((g, k) => <Pop key={k} id={`${m.id}.${i}.${k}`} className={g && g.w === i ? "w" : ""} v={g ? (i === 0 ? g.a : g.b) : "–"} />)}</div>
         <div className="tie"><Pop id={`${m.id}.${i}`} v={r.played ? r.gw[i] : ""} /></div>
       </div>

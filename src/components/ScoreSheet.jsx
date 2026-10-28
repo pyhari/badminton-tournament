@@ -1,7 +1,7 @@
 import { Minus, Plus, X } from "lucide-react";
 import { GAME_LABELS, allMatches, busyCourts, courtCount, courtOf, pairOf, res, scoresOf, setCourt, setScore, tn, validGame } from "../lib/engine.js";
 import { update } from "../lib/store.js";
-import { Badge, Sheet, buzz, Pair } from "./ui.jsx";
+import { Badge, Sheet, buzz, Pair, TeamName } from "./ui.jsx";
 
 export default function ScoreSheet({ S, id, onClose }) {
   const m = allMatches(S).find(x => x.id === id);
@@ -34,9 +34,9 @@ export default function ScoreSheet({ S, id, onClose }) {
         <button className="icon-btn" onClick={onClose} aria-label="Close"><X size={18} /></button>
       </div>
       <div className="vs-head">
-        <div className="side"><Badge S={S} t={m.a} size="lg" /><span>{tn(S, m.a)}</span></div>
+        <div className="side"><Badge S={S} t={m.a} size="lg" /><TeamName S={S} t={m.a} /></div>
         <div className="big num">{r.gw[0]}<span style={{ color: "var(--muted)" }}> : </span>{r.gw[1]}</div>
-        <div className="side"><Badge S={S} t={m.b} size="lg" /><span>{tn(S, m.b)}</span></div>
+        <div className="side"><Badge S={S} t={m.b} size="lg" /><TeamName S={S} t={m.b} /></div>
       </div>
       {!r.done && <CourtPicker S={S} m={m} />}
       {GAME_LABELS.map((label, g) => {

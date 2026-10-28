@@ -2,7 +2,7 @@ import { Sparkles, Trophy, Zap, Flame, TrendingUp, Check, X } from "lucide-react
 import { BR, tn } from "../lib/engine.js";
 import { highlights, groupRace, champions } from "../lib/insights.js";
 import { useInsights } from "../lib/insightsFeed.js";
-import { Badge, teamColor } from "./ui.jsx";
+import { Badge, Players, teamColor } from "./ui.jsx";
 
 const hhmm = t => new Date(t).toTimeString().slice(0, 5);
 const KIND = { upset: ["Upset", Zap], thriller: ["Thriller", Flame], comeback: ["Comeback", TrendingUp], sweep: ["Clean sweep", Sparkles] };
@@ -32,7 +32,7 @@ export default function Story({ S }) {
       {champs.map(c => (
         <div key={c.name} className="story-champ" style={{ background: teamColor(c.t) }}>
           <Trophy size={22} strokeWidth={2.4} />
-          <div><small>{c.name} champions</small><b>{tn(S, c.t)}</b></div>
+          <div><small>{c.name} champions</small><b>{tn(S, c.t)}</b><Players S={S} t={c.t} /></div>
           <Badge S={S} t={c.t} />
         </div>
       ))}

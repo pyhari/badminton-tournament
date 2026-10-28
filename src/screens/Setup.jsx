@@ -2,7 +2,7 @@ import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Check, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, FastForward, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update, replaceAll, getState, getPin, sync, pullNow, logout, isDirty } from "../lib/store.js";
-import { Badge, toast } from "../components/ui.jsx";
+import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
 import TestTools, { showTests, showAI } from "./TestTools.jsx";
 const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
@@ -263,7 +263,7 @@ function Groups({ S, back }) {
             {[0, 1, 2, 3].map(s => {
               const t = col(k)[s];
               return t != null
-                ? <div className="gitem" key={s}><span className="seat">{s + 1}</span><Badge S={S} t={t} size="sm" /><span>{E.tn(S, t)}</span></div>
+                ? <div className="gitem" key={s}><span className="seat">{s + 1}</span><Badge S={S} t={t} size="sm" /><TeamName S={S} t={t} /></div>
                 : <div className="gitem ph" key={s}><span className="seat">{s + 1}</span>Pot {s + 1}</div>;
             })}
           </div>

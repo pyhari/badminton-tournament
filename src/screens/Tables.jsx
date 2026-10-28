@@ -1,6 +1,6 @@
 import { ListOrdered } from "lucide-react";
-import { BR, groups, seeds, table, tn } from "../lib/engine.js";
-import { Badge, Empty, Players, GenderKey } from "../components/ui.jsx";
+import { BR, groups, seeds, table } from "../lib/engine.js";
+import { Badge, Empty, GenderKey, TeamName } from "../components/ui.jsx";
 import Outlook from "../components/Outlook.jsx";
 import { VIEW } from "../lib/store.js";
 import { AI_INSIGHTS } from "../lib/insightsFeed.js";
@@ -23,7 +23,7 @@ export default function Tables({ S }) {
                   {table(S, gk).map((x, i) => (
                     <tr key={x.t} className={i < 2 ? "q" : ""}>
                       <td className="l pos">{i + 1}</td>
-                      <td className="l"><div className="tm"><Badge S={S} t={x.t} size="sm" /><div className="tm-nm"><b>{tn(S, x.t)}</b><small><Players S={S} t={x.t} /></small></div></div></td>
+                      <td className="l"><div className="tm"><Badge S={S} t={x.t} size="sm" /><TeamName S={S} t={x.t} /></div></td>
                       <td>{x.p}</td>
                       <td className="pts">{x.w}</td>
                       <td>{x.gw}</td>
@@ -43,7 +43,7 @@ export default function Tables({ S }) {
           <div key={br}>
             <div className="section"><h2>{BR[br]} seeds</h2></div>
             <div className="card">
-              {sd[br].map((t, i) => <div key={t} className="gitem"><span className="seat">{i + 1}</span><Badge S={S} t={t} size="sm" /><div className="tm-nm"><b>{tn(S, t)}</b><small><Players S={S} t={t} /></small></div></div>)}
+              {sd[br].map((t, i) => <div key={t} className="gitem"><span className="seat">{i + 1}</span><Badge S={S} t={t} size="sm" /><TeamName S={S} t={t} /></div>)}
             </div>
           </div>
         ))}

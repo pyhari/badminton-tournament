@@ -2,7 +2,7 @@ import { useState } from "react";
 import { CalendarClock, PartyPopper, X, SearchX } from "lucide-react";
 import { STAGES, allMatches, courtOf, groups, onCourt, res, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
-import { Badge, Empty, MatchCard } from "../components/ui.jsx";
+import { Badge, Empty, MatchCard, TeamName } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
 
 // Upcoming means not finished yet, so matches being played stay in view.
@@ -59,7 +59,7 @@ export default function Matches({ S, admin, onOpen }) {
           </button>
         ))}
       </div>
-      {team != null && <div className="fteam-name"><Badge S={S} t={team} size="sm" /><b>{tn(S, team)}</b>{team === mine && <span>My team</span>}</div>}
+      {team != null && <div className="fteam-name"><Badge S={S} t={team} size="sm" /><TeamName S={S} t={team} />{team === mine && <span>My team</span>}</div>}
     </div>
   );
 

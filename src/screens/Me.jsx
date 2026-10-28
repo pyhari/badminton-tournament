@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Search, Users, Repeat2, MapPin } from "lucide-react";
 import { allMatches, courtOf, groups, onCourt, prelimsDone, ready, res, table, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
-import { Badge, Empty, MatchCard, teamColor, Players } from "../components/ui.jsx";
+import { Badge, Empty, MatchCard, teamColor, Players, TeamName } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
 
 const ord = n => n + (["th", "st", "nd", "rd"][n] || "th");
@@ -31,7 +31,7 @@ export default function Me({ S }) {
           {!shown.length && <p className="hint">No player called “{q}”.</p>}
         </div>
         <div className="section"><h2>Or pick a team</h2></div>
-        <div className="namelist">{S.teams.map((t, i) => <button key={i} onClick={() => choose(i + "|")}><Badge S={S} t={i} size="sm" />{tn(S, i)}</button>)}</div>
+        <div className="namelist teams">{S.teams.map((t, i) => <button key={i} onClick={() => choose(i + "|")}><Badge S={S} t={i} size="sm" /><TeamName S={S} t={i} /></button>)}</div>
       </div>
     );
   }
@@ -58,12 +58,12 @@ export default function Me({ S }) {
         <div className="next">
           <div className="k"><span className="dot live" />On court now · {now.stage}{now.label ? " · " + now.label : ""}</div>
           <div className="big"><b>{courtOf(S, now) ? "Court " + courtOf(S, now) : "Playing"}</b></div>
-          <div className="opp"><span className="hint" style={{ margin: 0 }}>vs</span><Badge S={S} t={opp(now)} /><span>{tn(S, opp(now))}</span></div>
+          <div className="opp"><span className="hint" style={{ margin: 0 }}>vs</span><Badge S={S} t={opp(now)} /><TeamName S={S} t={opp(now)} /></div>
         </div>
       ) : todo.length ? (
         <div className="next">
           <div className="k" style={{ color: "var(--muted)" }}><MapPin size={12} />Still to play · {todo.length}</div>
-          <div className="todo">{todo.map(m => <div key={m.id}><span className="hint" style={{ margin: 0, width: 22 }}>vs</span><Badge S={S} t={opp(m)} size="sm" />{tn(S, opp(m))}<span className="hint" style={{ margin: "0 0 0 auto" }}>{m.label || m.stage}</span></div>)}</div>
+          <div className="todo">{todo.map(m => <div key={m.id}><span className="hint" style={{ margin: 0, width: 22 }}>vs</span><Badge S={S} t={opp(m)} size="sm" /><TeamName S={S} t={opp(m)} /><span className="hint" style={{ margin: "0 0 0 auto" }}>{m.label || m.stage}</span></div>)}</div>
           <p className="hint" style={{ marginBottom: 0 }}>Matches are called to a free court in any order. This page shows your court as soon as you are called.</p>
         </div>
       ) : (

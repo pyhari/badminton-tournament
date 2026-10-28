@@ -185,7 +185,7 @@ label.lbl { display: block; font-size: 12px; font-weight: 700; color: var(--mute
 .fteams button.mine::after { content: ""; position: absolute; bottom: -1px; left: 50%; width: 6px; height: 6px; margin-left: -3px; border-radius: 50%; background: var(--accent-text); }
 @media (max-width: 360px) { .fteams { gap: 2px; } .fteams button { padding: 1px; border-width: 1.5px; } .fteams button .badge { width: 26px; height: 26px; font-size: 10px; } .fteams button.all { padding: 0 8px; } }
 .fteam-name { display: flex; align-items: center; gap: 8px; font-size: 14px; padding: 0 2px; animation: rise .2s; }
-.fteam-name span { font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--accent-text); }
+.fteam-name > span:not(.tm-nm) { font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--accent-text); }
 .section h2.live-h { display: flex; align-items: center; gap: 8px; color: var(--live); }
 .title-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .title-row .btn { margin-top: 10px; }
@@ -216,8 +216,6 @@ button.match:active { transform: scale(.98); }
 .row-team { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 5px 0; }
 .row-team .nm { min-width: 0; }
 .row-team .nm b { display: block; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-/* Players wrap between names (never inside one), so all three always show. */
-.row-team .nm small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; }
 .row-team.lose { opacity: .5; }
 .games { display: flex; gap: 2px; }
 .games span { width: 26px; text-align: center; font-family: var(--score); font-size: 17px; font-weight: 600; color: var(--muted); }
@@ -237,7 +235,8 @@ button.match:active { transform: scale(.98); }
 .sheet-head h3 { flex: 1; margin: 0; font-size: 18px; }
 .vs-head { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 10px; text-align: center; margin: 10px 0 6px; }
 .vs-head .side { display: flex; flex-direction: column; align-items: center; gap: 6px; font-weight: 800; min-width: 0; }
-.vs-head .side span:not(.badge) { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vs-head .side .tm-nm { max-width: 100%; align-items: center; }
+.vs-head .names { justify-content: center; }
 .vs-head .big { font-family: var(--score); font-size: 44px; font-weight: 800; line-height: 1; }
 .game-edit { background: var(--surface-2); border-radius: 18px; padding: 12px; margin-top: 10px; }
 .game-edit .gl { display: flex; justify-content: space-between; font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 8px; }
@@ -266,7 +265,8 @@ button.match:active { transform: scale(.98); }
 /* Team name with its players underneath, in the tables and seed lists. */
 .tm-nm { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
 .tm-nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tm-nm small { font-size: 11.5px; font-weight: 600; color: var(--muted); margin-top: 1px; line-height: 1.35; }
+/* A team's players under its name (TeamName). They wrap between names, never inside one, so all three always show. */
+.tm-nm small { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 1px; line-height: 1.35; }
 .standings .tm-nm { max-width: 36vw; }
 @media (min-width: 760px) { .standings .tm-nm { max-width: 240px; } }
 /* Phones: players wrap to a second line rather than pushing the numbers off the edge. */
@@ -308,6 +308,8 @@ button.match:active { transform: scale(.98); }
 .search .field { padding-left: 42px; }
 .namelist { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .namelist button { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 9px 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 8px; }
+.namelist.teams { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.namelist.teams button { border-radius: 16px; padding: 10px 12px; text-align: left; }
 
 /* ---------- setup ---------- */
 .prow { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--line); }
@@ -368,7 +370,7 @@ button.match:active { transform: scale(.98); }
 .glist { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 12px; }
 .glist h4 { margin: 0 0 8px; font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--muted); }
 .gitem { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-weight: 700; font-size: 14px; min-height: 38px; animation: rise .3s; }
-.gitem span:not(.badge) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gitem > span:not(.badge) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gitem.ph { color: var(--muted); font-weight: 600; opacity: .5; animation: none; }
 .gitem .seat { width: 16px; font-family: var(--score); color: var(--muted); font-weight: 800; }
 
@@ -460,6 +462,7 @@ button.match:active { transform: scale(.98); }
 .story-champ { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; color: #0a0c10; }
 .story-champ small { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; opacity: .7; }
 .story-champ b { display: block; font-size: 18px; font-weight: 900; }
+.story-champ .names { font-size: 12.5px; font-weight: 600; color: rgba(10, 12, 16, .75); }
 .story-champ .badge { margin-left: auto; background: rgba(255, 255, 255, .55) !important; }
 /* Highlight cards: swipe on phones, three across on wide screens. */
 .hl-row { display: flex; gap: 10px; overflow-x: auto; margin: 12px -16px 0; padding: 0 16px 4px; scroll-snap-type: x mandatory; scrollbar-width: none; }
@@ -493,8 +496,8 @@ button.match:active { transform: scale(.98); }
 .ol-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
 .ol-row:first-of-type { border-top: 0; }
 .ol-main { flex: 1; min-width: 0; }
-.ol-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-.ol-top b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ol-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
+.ol-top .tm-nm b { font-size: 15px; }
 .ol-pct { display: inline-flex; align-items: center; gap: 3px; flex: none; font-family: var(--score); font-size: 20px; font-weight: 800; }
 .ol-row.through .ol-pct { color: var(--accent-text); font-size: 16px; }
 .ol-row.out .ol-pct { color: var(--muted); font-size: 14px; }

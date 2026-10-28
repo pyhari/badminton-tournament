@@ -1,9 +1,9 @@
 import { useMemo } from "react";
 import { Sparkles, Check } from "lucide-react";
-import { BR, tn } from "../lib/engine.js";
+import { BR } from "../lib/engine.js";
 import { top2Odds } from "../lib/insights.js";
 import { useReasons } from "../lib/insightsFeed.js";
-import { Badge } from "./ui.jsx";
+import { Badge, TeamName } from "./ui.jsx";
 
 // "Race for the Champions League" on the players' Tables tab: each team's chance of a
 // top-2 place, worked out by the app, with a one-line reason from the AI.
@@ -25,7 +25,7 @@ export default function Outlook({ S }) {
               <Badge S={S} t={r.t} size="sm" />
               <div className="ol-main">
                 <div className="ol-top">
-                  <b>{tn(S, r.t)}</b>
+                  <TeamName S={S} t={r.t} />
                   <span className="ol-pct num">{r.status === "through" ? <><Check size={13} strokeWidth={3.5} />In</> : r.status === "out" ? BR.Plate : r.pct === 1 ? "<1%" : r.pct === 99 ? ">99%" : r.pct + "%"}</span>
                 </div>
                 <div className="ol-bar" aria-hidden="true"><span style={{ width: r.pct + "%" }} /></div>
