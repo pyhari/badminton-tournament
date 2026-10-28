@@ -23,7 +23,7 @@ export default function Tables({ S }) {
                   {table(S, gk).map((x, i) => (
                     <tr key={x.t} className={i < 2 ? "q" : ""}>
                       <td className="l pos">{i + 1}</td>
-                      <td className="l"><div className="tm"><Badge S={S} t={x.t} size="sm" /><TeamName S={S} t={x.t} /></div></td>
+                      <td className="l team"><div className="tm"><Badge S={S} t={x.t} size="sm" /><TeamName S={S} t={x.t} /></div></td>
                       <td>{x.p}</td>
                       <td className="pts">{x.w}</td>
                       <td>{x.gw}</td>

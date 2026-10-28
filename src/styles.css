@@ -265,11 +265,15 @@ button.match:active { transform: scale(.98); }
 /* Team name with its players underneath, in the tables and seed lists. */
 .tm-nm { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
 .tm-nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* A team's players under its name (TeamName). They wrap between names, never inside one, so all three always show. */
-.tm-nm small { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 1px; line-height: 1.35; }
-.standings .tm-nm { max-width: 36vw; }
-@media (min-width: 760px) { .standings .tm-nm { max-width: 240px; } }
-/* Phones: players wrap to a second line rather than pushing the numbers off the edge. */
+/* A team's players under its name (TeamName), always on one line. */
+.tm-nm small { font-size: 12px; font-weight: 600; color: var(--muted); margin-top: 1px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tm-nm .names { display: inline; }
+.tm-nm .pn + .pn { margin-left: 7px; }
+@media (max-width: 420px) { .tm-nm small { font-size: 11.5px; letter-spacing: -.1px; } .tm-nm .pn + .pn { margin-left: 5px; } .tm-nm .gd { width: 6px; height: 6px; margin-right: 3px; } }
+/* The team column takes all the room the numbers leave. */
+.standings td.team { width: 100%; max-width: 0; }
+.standings td.team .tm-nm { flex: 1; }
+@media (max-width: 420px) { .standings th, .standings td { padding-left: 3px; padding-right: 3px; } .standings .tm { gap: 7px; } }
 
 .standings td.pts { font-family: var(--score); font-size: 18px; font-weight: 800; }
 .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); font-weight: 600; margin: 4px 2px; }
