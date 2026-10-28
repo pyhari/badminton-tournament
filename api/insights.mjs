@@ -9,7 +9,8 @@ import { fix, allMatches } from "../src/lib/engine.js";
 import { dayFacts, tieFacts, factsKey, tieKey, highlights, outlookFacts } from "../src/lib/insights.js";
 
 // The on/off switch for this feature (separate from the AI planner).
-const INSIGHTS_ON = true;
+// For now it runs on preview and local builds only, never on the live site.
+const INSIGHTS_ON = process.env.VERCEL_ENV !== "production";
 const MODEL = "claude-opus-5-5";
 // Bump when the wording rules change, so saved words are written again.
 const VERSION = "5:";

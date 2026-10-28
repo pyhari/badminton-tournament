@@ -60,6 +60,8 @@ Each run is added to a run log showing the group tables, both playoff brackets a
 
 ## AI recaps and story (players' page)
 
+**Preview and local builds only, for now:** `api/insights.mjs` is off when `VERCEL_ENV` is `production`, and the app hides these features in production builds (`AI_INSIGHTS` in `src/lib/insightsFeed.js`).
+
 On `/watch`, finished matches get a tag (Upset, Comeback, 18–16 thriller, Clean sweep) and a 1–2 sentence recap. A **Story so far** card shows champions, up to 3 highlight cards (upset, thriller, comeback or sweep, each with teams, score and the key fact) and the group race (which teams are certain of the Champions League or FPL). The app draws all of that from the scores; Claude adds only the headline, one line and a caption per card.
 - **Race for the Champions League** (Tables on `/watch`, while a group is unfinished): each team's chance of a top-2 place. `top2Odds` in `src/lib/insights.js` plays the remaining group matches 2,000 times, the stronger team (by player levels) winning more often, with a fixed seed so every phone shows the same numbers. Claude adds a one-line reason per team from its record and remaining opponents; reasons are hidden while they are out of date.
 

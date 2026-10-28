@@ -3,6 +3,7 @@ import { BR, groups, seeds, table, tn, tp } from "../lib/engine.js";
 import { Badge, Empty } from "../components/ui.jsx";
 import Outlook from "../components/Outlook.jsx";
 import { VIEW } from "../lib/store.js";
+import { AI_INSIGHTS } from "../lib/insightsFeed.js";
 
 export default function Tables({ S }) {
   if (!groups(S)) return <div className="page"><Empty icon={ListOrdered} title="No tables yet">Tables appear once the groups are drawn.</Empty></div>;
@@ -10,7 +11,7 @@ export default function Tables({ S }) {
   return (
     <div className="page wide">
       <h1 className="page-title">Tables</h1>
-      {VIEW && <Outlook S={S} />}
+      {VIEW && AI_INSIGHTS && <Outlook S={S} />}
       <div className="pair">
         {["A", "B"].map(gk => (
           <div key={gk}>

@@ -3,6 +3,10 @@
 import { useSyncExternalStore } from "react";
 import { VIEW } from "./store.js";
 
+/* global __APP_ENV__ */
+// The AI recaps, story and playoff race are on preview and local builds only, for now.
+export const AI_INSIGHTS = __APP_ENV__ !== "production";
+
 const POLL_MS = 30000;
 let data = null, raw = "", timer = null;
 const listeners = new Set();
@@ -24,7 +28,7 @@ async function load() {
 }
 
 export function startInsights() {
-  if (!VIEW || timer) return;
+  if (!VIEW || !AI_INSIGHTS || timer) return;
   load();
   timer = setInterval(load, POLL_MS);
   document.addEventListener("visibilitychange", () => { if (!document.hidden) load(); });
