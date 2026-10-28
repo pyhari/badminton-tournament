@@ -28,7 +28,8 @@ export const defaults = () => ({
   drawn: [],     // final seats: Group A seats 1-4, then Group B seats 1-4
   scores: {},
   who: {},
-  court: {}      // tie id -> court it was called to; ties are played on any free court in any order
+  court: {},     // tie id -> court it was called to; ties are played on any free court in any order
+  ok: {}         // "tie id.game" -> score the organizer confirmed although it is not a finished score
 });
 
 // Fill in fields that older saved states do not have.
@@ -246,7 +247,7 @@ export function pickNext(S, rnd = cryptoRnd) {
   return t;
 }
 export function clearDraw(S) {
-  S.drawn = []; S.picks = []; S.pots = []; S.scores = {}; S.who = {}; S.court = {};
+  S.drawn = []; S.picks = []; S.pots = []; S.scores = {}; S.who = {}; S.court = {}; S.ok = {};
 }
 
 /* ---------- fixtures ---------- */
@@ -294,12 +295,21 @@ export function validGame(g) {
   const hi = Math.max(g.a, g.b), lo = Math.min(g.a, g.b);
   return hi === 15 ? lo <= 13 : hi > 15 && hi - lo === 2;
 }
+// The organizer can confirm a game that is not a finished score (say, stopped for time).
+// The confirmation holds for that exact score only: changing the score asks again.
+const okKey = (m, i) => m.id + "." + i;
+export const isConfirmed = (S, m, i, g) => !!g && !!S.ok && S.ok[okKey(m, i)] === g.a + "-" + g.b;
+export function confirmScore(S, m, i, yes = true) {
+  const g = game(S, m, i);
+  S.ok = S.ok || {};
+  if (yes && g) S.ok[okKey(m, i)] = g.a + "-" + g.b; else delete S.ok[okKey(m, i)];
+}
 export function res(S, m) {
   const gs = [0, 1, 2].map(i => game(S, m, i));
   const gw = [0, 0], pt = [0, 0];
   gs.forEach(g => { if (g) { gw[g.w]++; pt[0] += g.a; pt[1] += g.b; } });
   const done = gs.every(Boolean);
-  const bad = gs.map((g, i) => g && !validGame(g) ? i : -1).filter(i => i >= 0);
+  const bad = gs.map((g, i) => g && !validGame(g) && !isConfirmed(S, m, i, g) ? i : -1).filter(i => i >= 0);
   return { gs, done, gw, pt, bad, winner: done ? (gw[0] > gw[1] ? 0 : 1) : null, played: gs.filter(Boolean).length };
 }
 export function winnerTeam(S, m) { if (m.a == null || m.b == null) return null; const r = res(S, m); return r.done ? (r.winner === 0 ? m.a : m.b) : null; }

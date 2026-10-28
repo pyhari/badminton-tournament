@@ -1,5 +1,5 @@
-import { Minus, Plus, X } from "lucide-react";
-import { GAME_LABELS, allMatches, busyCourts, courtCount, courtOf, pairOf, res, scoresOf, setCourt, setScore, tn, validGame } from "../lib/engine.js";
+import { Check, Minus, Plus, X } from "lucide-react";
+import { GAME_LABELS, allMatches, busyCourts, confirmScore, courtCount, courtOf, isConfirmed, res, scoresOf, setCourt, setScore, tn, validGame } from "../lib/engine.js";
 import { update } from "../lib/store.js";
 import { Badge, Sheet, buzz, Pair, TeamName } from "./ui.jsx";
 
@@ -12,6 +12,7 @@ export default function ScoreSheet({ S, id, onClose }) {
     const mm = allMatches(n).find(x => x.id === id);
     setScore(n, mm, g, s, v === "" ? "" : Math.max(0, Math.min(40, Math.round(+v || 0))));
   });
+  const confirmGame = (g, yes) => update(n => confirmScore(n, allMatches(n).find(x => x.id === id), g, yes));
   const step = (g, s, d) => { buzz(); put(g, s, Math.max(0, (+val(g, s) || 0) + d)); };
 
   const stepper = (g, s) => {
@@ -43,12 +44,15 @@ export default function ScoreSheet({ S, id, onClose }) {
         const gm = r.gs[g];
         return (
           <div className="game-edit" key={g}>
-            <div className="gl"><span>Game {g + 1} · {label}</span>{gm && !validGame(gm) && <span className="warn">Not a finished score</span>}</div>
+            <div className="gl"><span>Game {g + 1} · {label}</span>{gm && !validGame(gm) && !isConfirmed(S, m, g, gm) && <span className="warn">Not a finished score</span>}{isConfirmed(S, m, g, gm) && <span className="okd"><Check size={12} strokeWidth={3} />Confirmed</span>}</div>
             <div className="ge-row">
               <div className="ge-side"><small><Pair S={S} t={m.a} i={g} /></small>{stepper(g, 0)}</div>
               <span className="ge-colon">:</span>
               <div className="ge-side r"><small><Pair S={S} t={m.b} i={g} /></small>{stepper(g, 1)}</div>
             </div>
+            {gm && !validGame(gm) && (isConfirmed(S, m, g, gm)
+              ? <div className="ge-ok"><span>Counted as entered.</span><button className="btn sm" onClick={() => confirmGame(g, false)}>Undo</button></div>
+              : <div className="ge-ok"><span>If the game really ended {Math.max(gm.a, gm.b)}–{Math.min(gm.a, gm.b)} (say, stopped for time), confirm it.</span><button className="btn sm" onClick={() => confirmGame(g, true)}><Check size={14} />Confirm score</button></div>)}
           </div>
         );
       })}

@@ -72,7 +72,7 @@ export function threeWayTie(S, gk = "A") {
   }
 }
 
-export function clearScores(S) { S.scores = {}; S.who = {}; S.court = {}; }
+export function clearScores(S) { S.scores = {}; S.who = {}; S.court = {}; S.ok = {}; }
 
 // One tap from any state to drawn groups: picks 16 men and 8 women if the numbers are off,
 // draws balanced teams, locks them and draws the groups. Scores are cleared.

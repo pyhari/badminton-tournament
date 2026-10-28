@@ -210,4 +210,24 @@ describe("misc", () => {
     expect(E.onCourt(S, m1)).toBe(false);
     expect(E.busyCourts(S)).toEqual({});
   });
+
+  it("lets the organizer confirm a score that is not a finished one, for that score only", () => {
+    const S = E.defaults();
+    S.teams.forEach((x, i) => { x.m1 = E.MEN[i]; x.m2 = E.MEN[i + 8]; x.w = E.WOMEN[i]; });
+    S.drawn = [0, 1, 2, 3, 4, 5, 6, 7];
+    const m = E.prelims(S)[0];
+    [[15, 9], [12, 10], [15, 7]].forEach((g, i) => { E.setScore(S, m, i, 0, g[0]); E.setScore(S, m, i, 1, g[1]); });
+    expect(E.res(S, m).bad).toEqual([1]);
+    E.confirmScore(S, m, 1);
+    expect(E.res(S, m).bad).toEqual([]);
+    expect(E.res(S, m).done).toBe(true);
+    E.setScore(S, m, 1, 0, 13); // a new score needs confirming again
+    expect(E.res(S, m).bad).toEqual([1]);
+    E.setScore(S, m, 1, 0, 12);
+    expect(E.res(S, m).bad).toEqual([]);
+    E.confirmScore(S, m, 1, false);
+    expect(E.res(S, m).bad).toEqual([1]);
+    E.clearDraw(S);
+    expect(S.ok).toEqual({});
+  });
 });
