@@ -658,3 +658,8 @@ button.match:active { transform: scale(.98); }
 .share .btn { text-decoration: none; justify-content: center; padding-left: 8px; padding-right: 8px; gap: 6px; }
 .share .btn.wa { background: #25d366; color: #0a0c10; border-color: #25d366; }
 .share .btn svg { flex: none; }
+
+/* ---------- secret PIN ---------- */
+.pinform { display: grid; gap: 8px; }
+.field.pin { font-size: 22px; letter-spacing: 6px; text-align: center; }
+.linkbtn { border: 0; background: none; padding: 8px 0 0; color: var(--muted); font-size: 13px; font-weight: 700; text-decoration: underline; }

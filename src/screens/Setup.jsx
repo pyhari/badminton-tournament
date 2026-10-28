@@ -5,7 +5,8 @@ import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSe
 import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
 import GroupDraw from "./GroupDraw.jsx";
-import Together from "../components/Together.jsx";
+import Together, { DrawPin } from "../components/Together.jsx";
+import { isLocked } from "../lib/vault.js";
 import TestTools, { showTests, showAI } from "./TestTools.jsx";
 const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
 
@@ -158,6 +159,7 @@ function AddPlayer({ S, g }) {
 function Teams({ S, next }) {
   const [sel, setSel] = useState(null); // slot picked for a swap: { t, f }
   const [show, setShow] = useState(false); // draw ceremony open
+  const [ask, setAsk] = useState(false);   // asking for the secret pairs' PIN before the draw
   const filled = S.teams.some(x => x.m1 || x.m2 || x.w), issues = E.teamIssues(S);
   const pw = S.teams.map((_, t) => E.power(S, t));
   const selG = sel && E.slotG(sel.f);
@@ -166,7 +168,8 @@ function Teams({ S, next }) {
     const pi = E.poolIssues(S);
     if (pi.length) { toast(pi.join("\n")); return; }
     if (filled && !confirm("Replace the current teams with a new draw?")) return;
-    setSel(null); setShow(true);
+    setSel(null);
+    if (isLocked()) setAsk(true); else setShow(true);
   };
   const tap = (t, f) => {
     if (!sel || E.slotG(sel.f) !== E.slotG(f)) return setSel({ t, f });
@@ -230,6 +233,7 @@ function Teams({ S, next }) {
           </div>
         </>
       )}
+      {ask && <DrawPin onDone={() => { setAsk(false); setShow(true); }} onClose={() => setAsk(false)} />}
       {show && <TeamDraw S={S} onClose={saved => { setShow(false); if (saved) toast("Teams saved. Swap players if needed, then lock."); }} />}
       {sel && (
         <div className="float-hint">
