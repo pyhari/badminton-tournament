@@ -1,9 +1,10 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, FastForward, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X } from "lucide-react";
+import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X } from "lucide-react";
 import * as E from "../lib/engine.js";
-import { update, replaceAll, getState, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
+import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
+import GroupDraw from "./GroupDraw.jsx";
 import Together from "../components/Together.jsx";
 import TestTools, { showTests, showAI } from "./TestTools.jsx";
 const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
@@ -242,52 +243,28 @@ function Teams({ S, next }) {
 
 /* ---------- group draw ---------- */
 function Groups({ S, back }) {
-  const [spin, setSpin] = useState(null); // team shown while the draw animates
-  const [last, setLast] = useState(null);
-  const timer = useRef(null);
-  useEffect(() => () => clearInterval(timer.current), []);
+  const [show, setShow] = useState(false); // group draw ceremony open
   const done = S.drawn.length >= E.NT, g = E.groups(S);
 
   if (!S.locked) return (
     <div className="banner"><Lock size={18} /><div style={{ flex: 1 }}>Lock the teams before the group draw.<div className="btns"><button className="btn sm" onClick={back}>Go to Teams</button></div></div></div>
   );
 
-  const next = () => {
-    if (spin != null || done) return;
-    if (!S.pots.length) update(n => { n.pots = E.makePots(n); });
-    let k = 0;
-    timer.current = setInterval(() => {
-      const rem = E.potLeft(getState());
-      setSpin(rem[E.cryptoRnd(rem.length)]);
-      if (++k >= 14) {
-        clearInterval(timer.current);
-        let t = null;
-        update(n => { if (n.picks.length < E.NT) t = E.pickNext(n); });
-        setSpin(null); setLast(t);
-      }
-    }, 80);
-  };
-  const all = () => { if (spin == null) { update(n => { while (n.picks.length < E.NT) E.pickNext(n); }); setLast(null); } };
   const redo = () => {
     if (!confirm("Redo the group draw? This clears the groups and all scores.")) return;
-    update(n => E.clearDraw(n)); setLast(null);
+    update(n => E.clearDraw(n));
   };
-  const lastSeat = last != null && S.picks.includes(last) ? E.seatOf(S.picks.indexOf(last)) : null;
-  const shown = spin != null ? spin : last;
   const col = k => g ? g["AB"[k]] : S.picks.filter((_, i) => i % E.NG === k);
 
   return (
     <>
       <div className="machine">
-        <div className="k">{done ? "Draw complete" : `Pick ${S.picks.length + 1} of ${E.NT}`}</div>
-        <div className={`slotname ${spin != null ? "spin" : ""}`}>
-          {shown != null ? <><Badge S={S} t={shown} size="lg" />{E.tn(S, shown)}</> : done ? <Check size={44} strokeWidth={2} /> : <Dices size={44} strokeWidth={1.6} />}
-        </div>
-        <div className="where">{spin == null && lastSeat ? `Group ${lastSeat.g} · seat ${lastSeat.seat + 1}` : done && last == null ? "Fixtures are ready in Matches" : ""}</div>
+        <div className="k">{done ? "Draw complete" : S.picks.length ? `${S.picks.length} of ${E.NT} teams drawn` : "Group draw"}</div>
+        <div className="slotname">{done ? <Check size={44} strokeWidth={2} /> : <Dices size={44} strokeWidth={1.6} />}</div>
+        <div className="where">{done ? "Fixtures are ready in Matches" : "Each pot sends one team to Group A and one to Group B"}</div>
         <div className="btns">
-          {!done && <button className="btn primary" onClick={next} disabled={spin != null}><Dices size={16} />Draw next team</button>}
-          {!done && <button className="btn" onClick={all} disabled={spin != null}><FastForward size={16} />Draw all</button>}
-          {(S.picks.length > 0 || done) && <button className="btn danger" onClick={redo} disabled={spin != null}><RotateCcw size={16} />Redo draw</button>}
+          {!done && <button className="btn primary" onClick={() => setShow(true)}><Dices size={16} />{S.picks.length ? "Continue group draw" : "Start group draw"}</button>}
+          {(S.picks.length > 0 || done) && <button className="btn danger" onClick={redo}><RotateCcw size={16} />Redo draw</button>}
         </div>
       </div>
       {S.pots.length > 0 && (
@@ -315,6 +292,7 @@ function Groups({ S, back }) {
         ))}
       </div>
       <p className="hint">{E.NT / E.NG} pots of {E.NG} teams. Each pot sends one team to each group.</p>
+      {show && <GroupDraw S={S} onClose={() => setShow(false)} />}
     </>
   );
 }

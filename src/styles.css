@@ -633,3 +633,20 @@ button.match:active { transform: scale(.98); }
 .cer-done.finale .brand-mark { animation: finalein .7s cubic-bezier(.2, 1.6, .4, 1) both; }
 @keyframes finalein { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .cer-count b, .cer-intro > div, .cer-go, .cer-done.finale b, .cer-done.finale .brand-mark { animation: none; } }
+
+/* ---------- group draw show ---------- */
+.gd-pot { display: flex; justify-content: center; gap: 8px; margin-top: 10px; min-height: 34px; }
+.gd-pot .gone { opacity: .2; transition: opacity .3s; }
+.gd-pot small { color: var(--muted); font-weight: 600; align-self: center; }
+.gd-reel { margin: 22px auto 0; width: min(320px, 88%); min-height: 150px; border-radius: 26px; background: var(--surface); border: 3px solid var(--tc); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 0 0 8px color-mix(in srgb, var(--tc) 16%, transparent), var(--shadow); transition: border-color .08s, box-shadow .08s; color: var(--muted); }
+.gd-reel b { font-size: 28px; font-weight: 900; letter-spacing: -.6px; color: var(--text); }
+.gd-reel.rolling { animation: reelshake .12s linear infinite; }
+@keyframes reelshake { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+.gd-reel.landed { animation: revealin .55s cubic-bezier(.2, 1.5, .4, 1); box-shadow: 0 0 0 10px color-mix(in srgb, var(--tc) 28%, transparent), 0 0 40px color-mix(in srgb, var(--tc) 50%, transparent); }
+.gd-to { display: flex; flex-direction: column; align-items: center; animation: revealin .55s cubic-bezier(.2, 1.5, .4, 1); }
+.gd-to span { font-size: 13px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); }
+.gd-to b { font-size: 40px; font-weight: 900; letter-spacing: -1px; color: var(--accent-text); line-height: 1.1; }
+.gd-intro-teams { display: flex !important; justify-content: center; gap: 8px; margin: 8px 0 6px; opacity: 1 !important; }
+.gd-groups { margin-top: 22px; }
+.gitem.just { padding-left: 6px; animation: popin .6s cubic-bezier(.2, 1.6, .4, 1); background: color-mix(in srgb, var(--tc) 20%, transparent); border-radius: 10px; }
+@media (prefers-reduced-motion: reduce) { .gd-reel.rolling, .gd-reel.landed, .gd-to, .gitem.just { animation: none; } }
