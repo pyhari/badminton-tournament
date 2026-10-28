@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { Search, Users, Repeat2, MapPin } from "lucide-react";
-import { allMatches, courtOf, groups, onCourt, prelimsDone, ready, res, table, tn } from "../lib/engine.js";
+import { Search, Repeat2, MapPin } from "lucide-react";
+import { allMatches, courtOf, groups, onCourt, pickedTeam, prelimsDone, ready, res, table, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
-import { Badge, Empty, MatchCard, teamColor, Players, TeamName } from "../components/ui.jsx";
+import { Badge, MatchCard, teamColor, Players, TeamName } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
+import PreDraw from "../components/PreDraw.jsx";
 
 const ord = n => n + (["th", "st", "nd", "rd"][n] || "th");
 
@@ -11,9 +12,9 @@ export default function Me({ S }) {
   const [me, setMe] = useState(lsGet("bt_me") || "");
   const [q, setQ] = useState("");
   const g = groups(S);
-  if (!g) return <div className="page"><Empty icon={Users} title="Teams not drawn yet">This page updates by itself. Check back soon.</Empty></div>;
   const choose = v => { lsSet("bt_me", v); setMe(v); setQ(""); };
-  const idx = me ? parseInt(me.split("|")[0], 10) : NaN;
+  if (!g) return <PreDraw S={S} me={me} choose={choose} />;
+  const idx = pickedTeam(S, me);
 
   if (isNaN(idx) || !S.teams[idx]) {
     const names = [];

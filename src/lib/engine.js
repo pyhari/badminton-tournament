@@ -189,6 +189,14 @@ export function pickNext(S, rnd = cryptoRnd) {
   addPick(S, t);
   return t;
 }
+// The team a player picked on their phone ("team|name", or "|name" before the teams were
+// drawn): found by name first, so it follows the player, else by the team number.
+export function pickedTeam(S, v) {
+  const [i, name] = (v || "").split("|");
+  if (name) { const t = S.teams.findIndex(x => [x.m1, x.m2, x.w].includes(name)); if (t >= 0) return t; }
+  const t = parseInt(i, 10);
+  return S.teams[t] ? t : NaN;
+}
 export function clearDraw(S) {
   S.drawn = []; S.picks = []; S.pots = []; S.scores = {}; S.who = {}; S.court = {}; S.ok = {};
 }

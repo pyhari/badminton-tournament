@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { CalendarClock, PartyPopper, X, SearchX } from "lucide-react";
-import { STAGES, allMatches, courtOf, groups, onCourt, res, tn } from "../lib/engine.js";
+import { STAGES, allMatches, courtOf, groups, onCourt, pickedTeam, res, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, Empty, MatchCard, TeamName } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
@@ -23,7 +23,7 @@ export default function Matches({ S, admin, onOpen }) {
   const set = patch => { const n = { ...f, ...patch }; setF(n); lsSet("bt_filter", JSON.stringify(n)); };
   const team = f.team != null && S.teams[f.team] ? f.team : null;
   const filtered = team != null || f.status !== "all";
-  const mine = (() => { const me = parseInt((lsGet("bt_me") || "").split("|")[0], 10); return isNaN(me) ? null : me; })();
+  const mine = (() => { const me = pickedTeam(S, lsGet("bt_me")); return isNaN(me) ? null : me; })();
   const teamOrder = [...S.teams.keys()].sort((a, b) => (b === mine) - (a === mine));
   const byTeam = team == null ? all : all.filter(m => m.a === team || m.b === team);
   const nAll = byTeam.length * 3, nDone = byTeam.reduce((a, m) => a + gamesDone(S, m), 0);
