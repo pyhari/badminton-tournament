@@ -1,6 +1,6 @@
 {
-  "name": "Badminton Live",
-  "short_name": "Badminton Live",
+  "name": "FFBC Fall Fun Tournament",
+  "short_name": "FFBC Fall Fun",
   "start_url": "/watch",
   "scope": "/",
   "display": "standalone",

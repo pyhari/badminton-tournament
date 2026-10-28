@@ -290,7 +290,7 @@ function Groups({ S, back }) {
 /* ---------- more ---------- */
 function More({ S, live }) {
   const link = location.origin + "/watch";
-  const invite = "Follow the badminton tournament live: your next match, court and all the scores.\n" + link;
+  const invite = `${E.EVENT}: ${E.TAGLINE}\nFollow it live: your team, your next match and court, and all the scores.\n` + link;
   const copy = (text, msg) => navigator.clipboard ? navigator.clipboard.writeText(text).then(() => toast(msg), () => prompt("Copy this:", text)) : prompt("Copy this:", text);
   const restore = () => {
     const t = prompt("Paste your backup here:");
@@ -307,7 +307,7 @@ function More({ S, live }) {
         <div className="share">
           <a className="btn wa" href={`https://wa.me/?text=${encodeURIComponent(invite)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} />WhatsApp</a>
           <a className="btn" href={`sms:?&body=${encodeURIComponent(invite)}`}><MessageSquare size={16} />Message</a>
-          {navigator.share && <button className="btn" onClick={() => navigator.share({ title: "Badminton Day: live scores", text: invite.replace(link, "").trim(), url: link }).catch(() => {})}><Share2 size={16} />Share</button>}
+          {navigator.share && <button className="btn" onClick={() => navigator.share({ title: E.EVENT, text: invite.replace(link, "").trim(), url: link }).catch(() => {})}><Share2 size={16} />Share</button>}
         </div>
         <div className="btns">
           <button className="btn primary" onClick={() => copy(link, "Link copied")}><Copy size={16} />Copy link</button>

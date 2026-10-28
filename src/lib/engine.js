@@ -9,6 +9,9 @@ const OLD_LIST = "M:Arjun,Bharani,Chandru,Dinesh,Harikumar,Praveen,Shankar,Haris
 const listSig = ps => ["M", "F"].map(g => g + ":" + ps.filter(p => p.g === g).map(p => p.name).join(",")).join("|");
 export const isOldList = S => listSig(S.players) === OLD_LIST && S.players.every(p => p.lvl === 3);
 // The two playoff brackets: short names for tight spots, full names for headings.
+// The event, as shown in the header, the page title and shared links.
+export const EVENT = "FFBC Fall Fun Tournament", TAGLINE = "Smash. Rally. Celebrate.";
+
 export const BR = { Cup: "Champions League", Plate: "Premier League" };
 export const BR_FULL = { Cup: "FFBC Champions League", Plate: "FFBC Premier League" };
 export const GAME_LABELS = ["Men's doubles", "Mixed doubles 1", "Mixed doubles 2"];

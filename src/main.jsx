@@ -2,6 +2,7 @@ import { Component, StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App, { applyTheme } from "./App.jsx";
 import { start, VIEW } from "./lib/store.js";
+import { EVENT } from "./lib/engine.js";
 import { startInsights } from "./lib/insightsFeed.js";
 // Fonts are bundled with the app, so the first screen needs no trip to another server.
 import "@fontsource-variable/inter/wght.css";
@@ -12,7 +13,7 @@ import "./styles.css";
 
 applyTheme((() => { try { return localStorage.getItem("bt_theme") || "light"; } catch (e) { return "light"; } })());
 if (VIEW) {
-  document.title = "Live scores · Badminton Day";
+  document.title = EVENT;
   // Added to a home screen from the player page, the app opens on the player page.
   document.querySelector('link[rel="manifest"]').href = "/manifest-watch.webmanifest";
 }

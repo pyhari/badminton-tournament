@@ -1,7 +1,7 @@
 import { Suspense, lazy, useCallback, useState } from "react";
 import { CalendarDays, ListOrdered, Trophy, UserRound, Settings2, Sun, Moon } from "lucide-react";
 import { useStore, VIEW, LOGIN, lsGet, lsSet } from "./lib/store.js";
-import { NT } from "./lib/engine.js";
+import { EVENT, NT, TAGLINE, allMatches, onCourt } from "./lib/engine.js";
 import { Toaster } from "./components/ui.jsx";
 import ScoreSheet from "./components/ScoreSheet.jsx";
 import Me from "./screens/Me.jsx";
@@ -34,10 +34,14 @@ const STATUS = [
   [/saving/i, "Saving", ""], [/not sent/i, "Unsaved", ""], [/waiting/i, "Waiting", ""], [/connecting/i, "Connecting", ""],
   [/^updated (.*)/i, "Live $1", "live"], [/^live|loaded|saved/i, "Live", "ok"]
 ];
-function Status({ live, updated }) {
+// Players see "Live" only while a match is on court; when all is well and nothing is being
+// played, there is no pill. Problems (offline, connecting) always show.
+function Status({ S, live, updated }) {
   const text = VIEW ? updated || "Connecting…" : live || "Not connected";
   const hit = STATUS.find(([re]) => re.test(text)) || [null, "Offline", ""];
-  const label = hit[1].includes("$") ? text.replace(hit[0], hit[1]) : hit[1];
+  if (VIEW && hit[2] === "live" && !allMatches(S).some(m => onCourt(S, m))) return null;
+  // Players see just "Live"; the time of the last update is in the tooltip.
+  const label = VIEW && hit[2] === "live" ? "Live" : hit[1].includes("$") ? text.replace(hit[0], hit[1]) : hit[1];
   return <span className={`status ${hit[2] ? "live" : ""}`} title={text}><span className={`dot ${hit[2]}`} />{label}</span>;
 }
 
@@ -61,8 +65,8 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand"><span className="brand-mark"><Shuttle /></span><div>Badminton Day<small>{VIEW ? "Live scores" : "Organizer"}</small></div></div>
-        <Status live={live} updated={updated} />
+        <div className="brand"><span className="brand-mark"><Shuttle /></span><div>{EVENT}<small>{VIEW ? TAGLINE : "Organizer"}</small></div></div>
+        <Status S={S} live={live} updated={updated} />
         <button className="icon-btn" onClick={flip} aria-label="Switch light or dark">{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button>
       </header>
       <main key={tab}>
