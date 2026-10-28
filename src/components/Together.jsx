@@ -12,7 +12,7 @@ const setTogether = v => lsSet(KEY, JSON.stringify(v));
 
 const label = (S, k) => { const p = E.findP(S, k.slice(2), k[0]); return p ? { name: p.name, g: p.g } : null; };
 
-// The hidden "Always together" panel, opened by tapping "Balanced draw" five times.
+// The hidden "Always together" panel, opened by tapping the "Men" heading in Setup → Players five times.
 export default function Together({ S, onClose }) {
   const [list, setList] = useState(getTogether);
   const [x, setX] = useState(""), [y, setY] = useState("");

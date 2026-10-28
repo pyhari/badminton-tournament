@@ -37,12 +37,20 @@ export default function Setup({ S, live }) {
 /* ---------- players ---------- */
 function Players({ S, next }) {
   const issues = E.poolIssues(S);
+  const [secret, setSecret] = useState(false); // "Always together" panel open
+  const taps = useRef([]);
+  // Five quick taps on the "Men" heading open the hidden "Always together" panel.
+  const tapTitle = () => {
+    const now = Date.now();
+    taps.current = taps.current.filter(t => now - t < 2500).concat(now);
+    if (taps.current.length >= 5) { taps.current = []; setSecret(true); }
+  };
   const list = g => {
     const rows = S.players.map((p, i) => [p, i]).filter(([p]) => p.g === g);
     const on = rows.filter(([p]) => p.on).length, need = g === "M" ? 2 * E.NT : E.NT;
     return (
       <>
-        <div className="section"><h2>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
+        <div className="section"><h2 onClick={g === "M" ? tapTitle : undefined} style={{ userSelect: "none" }}>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
         <div className="card flat">
           {rows.map(([p, i]) => <PlayerRow key={i} S={S} p={p} i={i} />)}
           {!S.locked && <AddPlayer S={S} g={g} />}
@@ -59,6 +67,7 @@ function Players({ S, next }) {
       {list("F")}
       {issues.length > 0 && !S.locked && <div className="banner warn" style={{ marginTop: 12 }}><AlertTriangle size={18} /><div>{issues.map(x => <div key={x}>{x}</div>)}</div></div>}
       {!issues.length && !S.locked && <button className="btn primary block" style={{ marginTop: 12 }} onClick={next}>Next: make teams</button>}
+      {secret && <Together S={S} onClose={() => setSecret(false)} />}
     </>
   );
 }
@@ -113,14 +122,6 @@ function AddPlayer({ S, g }) {
 function Teams({ S, next }) {
   const [sel, setSel] = useState(null); // slot picked for a swap: { t, f }
   const [show, setShow] = useState(false); // draw ceremony open
-  const [secret, setSecret] = useState(false); // "Always together" panel open
-  const taps = useRef([]);
-  // Five quick taps on "Balanced draw" open the hidden "Always together" panel.
-  const tapTitle = () => {
-    const now = Date.now();
-    taps.current = taps.current.filter(t => now - t < 2500).concat(now);
-    if (taps.current.length >= 5) { taps.current = []; setSecret(true); }
-  };
   const filled = S.teams.some(x => x.m1 || x.m2 || x.w), issues = E.teamIssues(S);
   const pw = S.teams.map((_, t) => E.power(S, t));
   const selG = sel && E.slotG(sel.f);
@@ -154,7 +155,7 @@ function Teams({ S, next }) {
           {!S.picks.length ? <div className="btns"><button className="btn sm" onClick={() => update(n => { n.locked = false; })}><LockOpen size={14} />Unlock teams</button></div> : <div className="hint" style={{ margin: "4px 0 0" }}>To change players, redo the group draw first.</div>}</div></div>
       ) : (
         <div className="card">
-          <b style={{ fontSize: 16, userSelect: "none" }} onClick={tapTitle}>Balanced draw</b>
+          <b style={{ fontSize: 16 }}>Balanced draw</b>
           <p className="hint" style={{ margin: "4px 0 0" }}>Each team gets one man from Pot 1 (the stronger half), one from Pot 2 and one woman, with team strengths kept as even as possible. Then tap two players to swap, or a player and a reserve to sub in.</p>
           <div className="btns">
             <button className="btn primary" onClick={draw}><Shuffle size={16} />{filled ? "Draw again" : "Draw balanced teams"}</button>
@@ -193,7 +194,6 @@ function Teams({ S, next }) {
           </div>
         </>
       )}
-      {secret && <Together S={S} onClose={() => setSecret(false)} />}
       {show && <TeamDraw S={S} onClose={saved => { setShow(false); if (saved) toast("Teams saved. Swap players if needed, then lock."); }} />}
       {sel && (
         <div className="float-hint">
