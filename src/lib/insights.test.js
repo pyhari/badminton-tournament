@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as E from "./engine.js";
-import { tieFacts, dayFacts, factsKey, highlights, matchTag, groupRace, champions } from "./insights.js";
+import { tieFacts, dayFacts, factsKey, highlights, matchTag, groupRace, champions, top2Odds } from "./insights.js";
 import { makeHandler, KEYS } from "../../api/insights.mjs";
 
 const full = () => {
@@ -158,5 +158,22 @@ describe("insights endpoint", () => {
     expect(factsKey(S)).toBe(k0);
     play(S, E.prelims(S)[0], [[15, 9], [15, 9], [15, 9]]);
     expect(factsKey(S)).not.toBe(k0);
+  });
+});
+
+describe("top-2 odds", () => {
+  it("are the same every time, sum to 200% per group, and follow results", () => {
+    const S = full();
+    S.players.forEach((p, i) => { p.lvl = 1 + (i % 5); });
+    const a = top2Odds(S), b = top2Odds(S);
+    expect(a).toEqual(b); // seeded: every phone shows the same numbers
+    a.forEach(g => expect(g.rows.reduce((n, r) => n + r.pct, 0)).toBeGreaterThanOrEqual(196));
+    const strongest = a[0].rows.reduce((x, y) => (E.power(S, y.t) > E.power(S, x.t) ? y : x));
+    expect(Math.max(...a[0].rows.map(r => r.pct))).toBe(strongest.pct);
+    // Play all of Group A: the odds become certain and the group is settled.
+    E.prelims(S).filter(m => m.stage === "Group A").forEach(m => play(S, m, [[15, 9], [15, 9], [15, 9]]));
+    const g = top2Odds(S)[0];
+    expect(g.settled).toBe(true);
+    expect(g.rows.map(r => r.pct).sort((x, y) => y - x)).toEqual([100, 100, 0, 0]);
   });
 });

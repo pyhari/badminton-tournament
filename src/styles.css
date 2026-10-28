@@ -468,6 +468,27 @@ button.match:active { transform: scale(.98); }
 .race-t.out svg { background: var(--muted); color: #fff; }
 .race-key { display: flex; gap: 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
 .race-key span { display: inline-flex; align-items: center; gap: 4px; }
+/* Race for the Champions League (Tables, players' page). */
+.outlook { border-radius: 22px; padding: 14px 16px 6px; margin: 4px 0 6px; background: linear-gradient(135deg, color-mix(in srgb, #d4ff3a 18%, var(--surface)), var(--surface) 60%); border: 1px solid color-mix(in srgb, var(--accent-text) 22%, var(--line)); }
+.outlook-sub { margin: 4px 0 6px; font-size: 12px; color: var(--muted); font-weight: 500; }
+.ol-group { padding: 4px 0; }
+.ol-name { display: block; margin: 8px 0 2px; font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.ol-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
+.ol-row:first-of-type { border-top: 0; }
+.ol-main { flex: 1; min-width: 0; }
+.ol-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.ol-top b { font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ol-pct { display: inline-flex; align-items: center; gap: 3px; flex: none; font-family: var(--score); font-size: 20px; font-weight: 800; }
+.ol-row.through .ol-pct { color: var(--accent-text); font-size: 16px; }
+.ol-row.out .ol-pct { color: var(--muted); font-size: 14px; }
+.ol-bar { height: 6px; border-radius: 9px; background: var(--surface-3); overflow: hidden; margin: 5px 0 2px; }
+.ol-bar span { display: block; height: 100%; border-radius: 9px; background: var(--accent-text); transition: width .6s ease; }
+.ol-row.out .ol-bar span { background: var(--muted); }
+.ol-main p { margin: 5px 0 0; font-size: 13px; line-height: 1.4; font-style: italic; }
+.ol-left { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.ol-left small { font-size: 11px; font-weight: 700; color: var(--muted); margin-right: 2px; }
+.ol-left .badge { width: 24px; height: 24px; font-size: 9px; border-radius: 7px; }
+@media (min-width: 760px) { .outlook .ol-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; } }
 .recap-tag { display: inline-block; margin-right: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--accent-text); }
 .recap { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45; color: var(--text); }
 .recap svg { flex: none; margin-top: 2px; color: var(--accent-text); }

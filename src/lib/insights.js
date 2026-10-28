@@ -36,6 +36,59 @@ export function tieFacts(S, m) {
   };
 }
 
+// Seeded random numbers, so every phone and the server get exactly the same odds.
+function seeded(seed) {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+    return ((x ^ (x >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+// Chance of each team finishing in its group's top 2 (the Champions League), by playing the
+// remaining group matches many times. Each match goes to the stronger team (sum of player
+// levels) more often: 3 levels stronger wins about 80% of the time, level teams 50%.
+export function top2Odds(S, runs = 2000) {
+  if (!groups(S)) return [];
+  const rnd = seeded(20261028);
+  return groupRace(S).map(({ name, rows }) => {
+    const gk = name.slice(-1);
+    const left = prelims(S).filter(m => m.stage === name && !res(S, m).done);
+    const base = Object.fromEntries(table(S, gk).map(x => [x.t, x]));
+    const top2 = Object.fromEntries(rows.map(r => [r.t, 0]));
+    for (let i = 0; i < runs && left.length; i++) {
+      const st = Object.fromEntries(rows.map(r => [r.t, { t: r.t, w: base[r.t].w, gw: base[r.t].gw, pd: base[r.t].pd, tb: rnd() }]));
+      for (const m of left) {
+        const pA = 1 / (1 + 10 ** (-(power(S, m.a) - power(S, m.b)) / 5));
+        const [win, lose] = rnd() < pA ? [m.a, m.b] : [m.b, m.a];
+        const sweep = rnd() < 0.45, margin = sweep ? 8 + Math.floor(rnd() * 18) : Math.floor(rnd() * 16) - 3;
+        st[win].w++; st[win].gw += 2; st[lose].gw += sweep ? 0 : 1;
+        st[win].pd += margin; st[lose].pd -= margin;
+      }
+      Object.values(st).sort((x, y) => y.w - x.w || y.gw - x.gw || y.pd - x.pd || y.tb - x.tb).slice(0, 2).forEach(x => top2[x.t]++);
+    }
+    return {
+      name, settled: !left.length,
+      rows: rows.map(r => ({
+        ...r,
+        pct: r.status === "through" ? 100 : r.status === "out" ? 0 : Math.max(1, Math.min(99, Math.round((100 * top2[r.t]) / runs))),
+        opponents: left.filter(m => m.a === r.t || m.b === r.t).map(m => (m.a === r.t ? m.b : m.a))
+      }))
+    };
+  });
+}
+
+// What the AI needs to explain each unsettled team's chances.
+export function outlookFacts(S) {
+  return top2Odds(S).filter(g => !g.settled).flatMap(g => g.rows.map(r => ({
+    t: r.t, team: tn(S, r.t), group: g.name, top2Chance: r.pct + "%", position: r.pos,
+    played: r.played, won: r.won, gamesWon: r.gamesWon, pointDiff: r.pointDiff,
+    strength: power(S, r.t),
+    stillToPlay: r.opponents.map(o => `${tn(S, o)} (strength ${power(S, o)})`)
+  })));
+}
+
 // Every finished match, groups first, then the playoffs in order.
 function finished(S) {
   return prelims(S).concat(playoffs(S)).filter(m => m.a != null && m.b != null).map(m => tieFacts(S, m)).filter(Boolean);
