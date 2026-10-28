@@ -77,6 +77,8 @@ export function clearScores(S) { S.scores = {}; S.who = {}; S.court = {}; }
 // One tap from any state to drawn groups: picks 16 men and 8 women if the numbers are off,
 // draws balanced teams, locks them and draws the groups. Scores are cleared.
 export function quickSetup(S, rnd = E.cryptoRnd) {
+  // Teams are redrawn anyway, so placeholder names can give way to the club's real list.
+  if (E.isOldList(S)) S.players = E.defaults().players;
   if (E.poolIssues(S).length) {
     let men = 0, women = 0;
     S.players.forEach(p => { p.on = p.g === "M" ? men++ < 2 * E.NT : women++ < E.NT; });

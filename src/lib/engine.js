@@ -1,8 +1,13 @@
 // Tournament rules: teams, draws, fixtures, results, tables and playoffs.
 // Every function takes the tournament state S and has no UI or storage code.
 
-export const MEN = ["Arjun", "Bharani", "Chandru", "Dinesh", "Harikumar", "Praveen", "Shankar", "Harish", "Prabhu", "Justin", "Manoj", "Prem", "Rupesh", "Sai", "Shashank", "Karthik", "Yuvaraj", "Karan"];
-export const WOMEN = ["Bharani", "Meenakshi", "Nandhini", "Hema", "Radha", "Vidhu", "Pradhu", "Nandini"];
+export const MEN = ["Arjun", "Chandru", "Dinesh R", "Shankar", "Harish", "Prabhu", "Justin", "Manoj", "Prem", "Hari", "Dinesh B", "Sai", "Sashank", "Kartik", "Yuvaraj", "Praveen"];
+export const WOMEN = ["Meenakshi", "Nandhini", "Hema", "Radha", "Nivedita", "Shobi", "Vidhu", "Pradhu"];
+// The placeholder list the app started with. A saved list still exactly like it (never edited)
+// is swapped for the club's real names above.
+const OLD_LIST = "M:Arjun,Bharani,Chandru,Dinesh,Harikumar,Praveen,Shankar,Harish,Prabhu,Justin,Manoj,Prem,Rupesh,Sai,Shashank,Karthik,Yuvaraj,Karan|F:Bharani,Meenakshi,Nandhini,Hema,Radha,Vidhu,Pradhu,Nandini";
+const listSig = ps => ["M", "F"].map(g => g + ":" + ps.filter(p => p.g === g).map(p => p.name).join(",")).join("|");
+export const isOldList = S => listSig(S.players) === OLD_LIST && S.players.every(p => p.lvl === 3);
 export const BR = { Cup: "Champions League", Plate: "FPL" };
 export const GAME_LABELS = ["Men's doubles", "Mixed doubles 1", "Mixed doubles 2"];
 export const NT = 8, NG = 2; // teams, groups
@@ -38,6 +43,8 @@ export function fix(o) {
     if (full) s.players.forEach(p => p.on = named.has(p.g + p.name));
   }
   if (o.locked === undefined) s.locked = full || s.drawn.length > 0;
+  // Never-edited placeholder names and no team made yet: use the club's real list.
+  if (isOldList(s) && !s.teams.some(x => x.m1 || x.m2 || x.w)) s.players = defaults().players;
   return s;
 }
 

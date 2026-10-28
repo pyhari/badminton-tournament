@@ -53,17 +53,30 @@ describe("migration", () => {
     expect(S.locked).toBe(true);
     expect(S.players.find(p => p.name === "Guest" && p.g === "M").on).toBe(true);
     expect(S.players.filter(p => p.on && p.g === "M")).toHaveLength(16);
-    expect(S.players.find(p => p.name === "Karan").on).toBe(false);
+    expect(S.players.find(p => p.name === E.MEN[0]).on).toBe(false); // replaced by Guest
     expect(E.groups(S).A).toEqual([3, 1, 2, 0]);
     expect(E.teamIssues(S)).toEqual([]);
+  });
+});
+
+describe("club player list", () => {
+  it("replaces the never-edited placeholder list, and nothing else", () => {
+    const oldMen = ["Arjun", "Bharani", "Chandru", "Dinesh", "Harikumar", "Praveen", "Shankar", "Harish", "Prabhu", "Justin", "Manoj", "Prem", "Rupesh", "Sai", "Shashank", "Karthik", "Yuvaraj", "Karan"];
+    const oldWomen = ["Bharani", "Meenakshi", "Nandhini", "Hema", "Radha", "Vidhu", "Pradhu", "Nandini"];
+    const old = () => ({ ...E.defaults(), players: oldMen.map(n => E.player(n, "M")).concat(oldWomen.map(n => E.player(n, "F"))) });
+    expect(E.fix(old()).players.map(p => p.name)).toEqual(E.MEN.concat(E.WOMEN));
+    const edited = old(); edited.players[3].lvl = 5;
+    expect(E.fix(edited).players[1].name).toBe("Bharani"); // levels were set: keep it
+    const inTeams = old(); inTeams.teams[0].m1 = "Arjun";
+    expect(E.fix(inTeams).players[1].name).toBe("Bharani"); // a team uses it: keep it
   });
 });
 
 describe("team draw", () => {
   const ready = () => {
     const S = E.defaults();
-    S.players.find(p => p.name === "Karan").on = false;
-    S.players.find(p => p.name === "Yuvaraj").on = false;
+    S.players.push(E.player("Karan", "M"), E.player("Rupesh", "M")); // two reserves
+    S.players.filter(p => p.name === "Karan" || p.name === "Rupesh").forEach(p => p.on = false);
     const lv = [5, 5, 5, 4, 4, 4, 4, 3, 3, 3, 3, 2, 2, 2, 1, 1];
     S.players.filter(p => p.on && p.g === "M").forEach((p, i) => p.lvl = lv[i]);
     S.players.filter(p => p.g === "F").forEach((p, i) => p.lvl = [5, 4, 3, 3, 2, 2, 1, 1][i]);
@@ -72,6 +85,8 @@ describe("team draw", () => {
 
   it("checks player numbers", () => {
     const S = E.defaults();
+    expect(E.poolIssues(S)).toEqual([]); // the club list is exactly 16 men and 8 women
+    S.players.push(E.player("Karan", "M"), E.player("Rupesh", "M"));
     expect(E.poolIssues(S)[0]).toMatch(/18 men .* Untick 2/);
     expect(E.poolIssues(ready())).toEqual([]);
   });
@@ -116,8 +131,6 @@ describe("team draw", () => {
 describe("group draw", () => {
   const drawn = () => {
     const S = E.defaults();
-    S.players.find(p => p.name === "Karan").on = false;
-    S.players.find(p => p.name === "Yuvaraj").on = false;
     S.players.forEach((p, i) => p.lvl = 1 + (i % 5));
     E.drawTeams(S);
     S.locked = true;
