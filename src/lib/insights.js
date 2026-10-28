@@ -85,23 +85,24 @@ export function chanceWord(r, pct) {
   return pct >= 85 ? "Very likely" : pct >= 60 ? "Likely" : "Toss-up";
 }
 
-// The prediction for each unfinished group: the 2 teams most likely to finish top 2 go to the
+// The prediction for each group: the 2 teams most likely to finish top 2 go to the
 // Champions League, the other 2 to the FPL. Each team gets its chance of ending up there, and
-// the matches still to play between the two sides, which could swap them.
+// the matches still to play between the two sides, which could swap them. A finished group
+// (settled) shows where its teams went.
 export function predict(S) {
-  return top2Odds(S).filter(g => !g.settled).map(g => {
+  return top2Odds(S).map(g => {
     const order = [...g.rows].sort((x, y) => y.pct - x.pct || x.pos - y.pos);
     const side = (rows, cl) => rows.map(r => { const pct = cl ? r.pct : 100 - r.pct; return { ...r, chance: pct, word: chanceWord(r, pct) }; });
     const cl = side(order.slice(0, 2), true), fpl = side(order.slice(2), false);
     const top = new Set(cl.map(r => r.t));
     const key = prelims(S).filter(m => m.stage === g.name && !res(S, m).done && top.has(m.a) !== top.has(m.b));
-    return { name: g.name, cl, fpl, key };
+    return { name: g.name, settled: g.settled, cl, fpl, key };
   });
 }
 
 // What the AI needs to explain the prediction for each unfinished group and team.
 export function outlookFacts(S) {
-  return predict(S).map(g => ({
+  return predict(S).filter(g => !g.settled).map(g => ({
     group: g.name,
     likelyChampionsLeague: g.cl.map(r => tn(S, r.t)),
     likelyFPL: g.fpl.map(r => tn(S, r.t)),

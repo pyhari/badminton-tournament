@@ -195,8 +195,11 @@ describe("Champions League prediction", () => {
     const top = new Set(g.cl.map(r => r.t));
     g.key.forEach(x => expect(top.has(x.a)).not.toBe(top.has(x.b)));
     expect(outlookFacts(S)[0]).toMatchObject({ group: "Group A", likelyChampionsLeague: g.cl.map(r => E.tn(S, r.t)) });
-    // A finished group has no prediction.
+    // A finished group shows where its teams went, and the AI is asked only about the other.
     E.prelims(S).filter(x => x.stage === "Group A").forEach(x => play(S, x, [[15, 9], [15, 9], [15, 9]]));
-    expect(predict(S).map(x => x.name)).toEqual(["Group B"]);
+    const a = predict(S)[0];
+    expect(a.settled).toBe(true);
+    expect([...a.cl, ...a.fpl].map(r => r.word)).toEqual(["Confirmed", "Confirmed", "Confirmed", "Confirmed"]);
+    expect(outlookFacts(S).map(x => x.group)).toEqual(["Group B"]);
   });
 });
