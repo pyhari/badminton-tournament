@@ -1,7 +1,7 @@
 import { Minus, Plus, X } from "lucide-react";
 import { GAME_LABELS, allMatches, busyCourts, courtCount, courtOf, pairOf, res, scoresOf, setCourt, setScore, tn, validGame } from "../lib/engine.js";
 import { update } from "../lib/store.js";
-import { Badge, Sheet, buzz } from "./ui.jsx";
+import { Badge, Sheet, buzz, Pair } from "./ui.jsx";
 
 export default function ScoreSheet({ S, id, onClose }) {
   const m = allMatches(S).find(x => x.id === id);
@@ -45,9 +45,9 @@ export default function ScoreSheet({ S, id, onClose }) {
           <div className="game-edit" key={g}>
             <div className="gl"><span>Game {g + 1} · {label}</span>{gm && !validGame(gm) && <span className="warn">Not a finished score</span>}</div>
             <div className="ge-row">
-              <div className="ge-side"><small>{pairOf(S, m.a, g)}</small>{stepper(g, 0)}</div>
+              <div className="ge-side"><small><Pair S={S} t={m.a} i={g} /></small>{stepper(g, 0)}</div>
               <span className="ge-colon">:</span>
-              <div className="ge-side r"><small>{pairOf(S, m.b, g)}</small>{stepper(g, 1)}</div>
+              <div className="ge-side r"><small><Pair S={S} t={m.b} i={g} /></small>{stepper(g, 1)}</div>
             </div>
           </div>
         );

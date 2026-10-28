@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Sparkles } from "lucide-react";
 import { useRecap } from "../lib/insightsFeed.js";
 import { matchTag, tieFacts } from "../lib/insights.js";
-import { abbr, tn, tp, res, courtOf, onCourt } from "../lib/engine.js";
+import { abbr, tn, res, courtOf, onCourt, roster, pairPlayers } from "../lib/engine.js";
 
 // One colour per team, bright enough for dark text in both themes.
 export const TEAM_COLORS = ["#ff6b6b", "#ffb020", "#3ddc97", "#4cc9f0", "#b388ff", "#ff7eb6", "#c6f432", "#ff8a3d"];
@@ -14,6 +14,14 @@ export function Badge({ S, t, size = "" }) {
 
 // A short buzz under the finger on phones that support it (Android; iPhones ignore it).
 export const buzz = (ms = 8) => { try { navigator.vibrate && navigator.vibrate(ms); } catch (e) {} };
+
+// Player names with a small dot for women and men (see GenderKey).
+export function Names({ list }) {
+  return <span className="names">{list.map((p, i) => <span key={i} className="pn"><i className={`gd ${p.g === "F" ? "f" : "m"}`} aria-label={p.g === "F" ? "woman" : "man"} />{p.name}</span>)}</span>;
+}
+export const Players = ({ S, t }) => <Names list={roster(S, t)} />;
+export const Pair = ({ S, t, i }) => <Names list={pairPlayers(S, t, i)} />;
+export const GenderKey = () => <span className="gkey"><span><i className="gd f" />Women</span><span><i className="gd m" />Men</span></span>;
 
 export function Empty({ icon: Icon, title, children }) {
   return <div className="empty">{Icon && <Icon size={40} strokeWidth={1.6} />}<b>{title}</b>{children}</div>;
@@ -53,7 +61,7 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
     return (
       <div className={`row-team ${won ? "win" : ""} ${lost ? "lose" : ""}`}>
         <Badge S={S} t={ready ? t : null} />
-        <div className="nm"><b>{ready ? tn(S, t) : label}</b>{ready && <small>{tp(S, t)}</small>}</div>
+        <div className="nm"><b>{ready ? tn(S, t) : label}</b>{ready && <small><Players S={S} t={t} /></small>}</div>
         <div className="games">{r.gs.map((g, k) => <Pop key={k} id={`${m.id}.${i}.${k}`} className={g && g.w === i ? "w" : ""} v={g ? (i === 0 ? g.a : g.b) : "–"} />)}</div>
         <div className="tie"><Pop id={`${m.id}.${i}`} v={r.played ? r.gw[i] : ""} /></div>
       </div>

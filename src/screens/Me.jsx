@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Search, Users, Repeat2, MapPin } from "lucide-react";
-import { allMatches, courtOf, groups, onCourt, prelimsDone, ready, res, table, tn, tp } from "../lib/engine.js";
+import { allMatches, courtOf, groups, onCourt, prelimsDone, ready, res, table, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
-import { Badge, Empty, MatchCard, teamColor } from "../components/ui.jsx";
+import { Badge, Empty, MatchCard, teamColor, Players } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
 
 const ord = n => n + (["th", "st", "nd", "rd"][n] || "th");
@@ -47,7 +47,7 @@ export default function Me({ S }) {
     <div className="page">
       <div className="section" style={{ marginTop: 14 }}><h2>{name ? "Hi " + name : "Your team"}</h2><button className="btn sm" onClick={() => choose("")}><Repeat2 size={14} />Change</button></div>
       <div className="hero" style={{ background: `linear-gradient(135deg, ${teamColor(idx)}, color-mix(in srgb, ${teamColor(idx)} 70%, #ffffff))` }}>
-        <div className="hero-top"><Badge S={S} t={idx} size="lg" /><div><b>{tn(S, idx)}</b><span>{tp(S, idx)}</span></div></div>
+        <div className="hero-top"><Badge S={S} t={idx} size="lg" /><div><b>{tn(S, idx)}</b><span><Players S={S} t={idx} /></span></div></div>
         <div className="hero-stats">
           <div><b>{ord(pos + 1)}</b><small>Group {gk}</small></div>
           <div><b>{rec.w}–{rec.l}</b><small>W–L</small></div>

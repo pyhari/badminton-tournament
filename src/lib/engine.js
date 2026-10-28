@@ -43,11 +43,16 @@ export function fix(o) {
 
 /* ---------- teams ---------- */
 export const tn = (S, t) => t == null ? "To be decided" : (S.teams[t].name || "Team " + (t + 1));
-export const tp = (S, t) => {
-  if (t == null) return "";
+// A team's players, woman first, as [{ name, g }].
+export const roster = (S, t) => {
+  if (t == null) return [];
   const x = S.teams[t];
-  const men = [x.m1, x.m2].filter(Boolean).join(" & ");
-  return [men, x.w].filter(Boolean).join(" + ");
+  return [{ name: x.w, g: "F" }, { name: x.m1, g: "M" }, { name: x.m2, g: "M" }].filter(p => p.name);
+};
+// The same as text: "Nandhini, Arjun & Prem".
+export const tp = (S, t) => {
+  const n = roster(S, t).map(p => p.name);
+  return n.length > 1 ? n.slice(0, -1).join(", ") + " & " + n[n.length - 1] : n.join("");
 };
 // Short code for a team badge: initials of a multi-word name, else the first three letters.
 export function abbr(S, t) {
@@ -56,11 +61,13 @@ export function abbr(S, t) {
   const s = words.length > 1 ? words.map(w => w[0]).join("") : words[0] || "";
   return s.slice(0, 3).toUpperCase();
 }
-export function pairOf(S, t, i) {
+// The pair playing game i for team t (woman first in the mixed games), as [{ name, g }].
+export function pairPlayers(S, t, i) {
   const x = S.teams[t];
-  const a = x.m1 || "Man 1", b = x.m2 || "Man 2", w = x.w || "Woman";
-  return i === 0 ? a + " & " + b : i === 1 ? a + " & " + w : b + " & " + w;
+  const a = { name: x.m1 || "Man 1", g: "M" }, b = { name: x.m2 || "Man 2", g: "M" }, w = { name: x.w || "Woman", g: "F" };
+  return i === 0 ? [a, b] : i === 1 ? [w, a] : [w, b];
 }
+export const pairOf = (S, t, i) => pairPlayers(S, t, i).map(p => p.name).join(" & ");
 export const findP = (S, name, g) => S.players.find(p => p.g === g && p.name === name);
 export const lvl = (S, name, g) => (findP(S, name, g) || { lvl: 0 }).lvl;
 export const power = (S, t) => { const x = S.teams[t]; return lvl(S, x.m1, "M") + lvl(S, x.m2, "M") + lvl(S, x.w, "F"); };

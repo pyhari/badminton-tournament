@@ -10,6 +10,7 @@
   --accent-ink: #0a0c10;
   --accent-text: #d4ff3a;
   --live: #ff3b5c;
+  --female: #ff6fa3; --male: #5aa9ff;
   --warn: #ffb020;
   --tabbar: rgba(10, 12, 16, .82);
   --shadow: 0 10px 30px rgba(0, 0, 0, .45);
@@ -28,6 +29,7 @@
   --accent-ink: #d4ff3a;
   --accent-text: #3f7d00;
   --live: #e5193f;
+  --female: #e0457b; --male: #2f7fe0;
   --warn: #b26a00;
   --tabbar: rgba(255, 255, 255, .86);
   --shadow: 0 10px 30px rgba(20, 30, 50, .14);
@@ -109,6 +111,19 @@ a { color: var(--accent-text); }
 .banner.warn { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--text); }
 .banner.ok { background: color-mix(in srgb, var(--accent-text) 14%, transparent); }
 .banner svg { flex: none; margin-top: 1px; }
+
+/* Player names: woman first, a small dot for women and men. */
+.names { display: inline-flex; flex-wrap: wrap; column-gap: 8px; }
+.pn { white-space: nowrap; }
+.gd { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: 1px; background: var(--male); }
+.gd.f { background: var(--female); }
+.gkey { display: inline-flex; gap: 10px; }
+.gkey span { display: inline-flex; align-items: center; }
+.legend .gd { width: 8px; height: 8px; border-radius: 50%; margin-right: 5px; vertical-align: 0; }
+/* On team-coloured panels, deeper dots with a light ring. */
+.hero .gd, .champion .gd, .story-champ .gd { box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .9); background: #1d4fa8; }
+.hero .gd.f, .champion .gd.f, .story-champ .gd.f { background: #b0124f; }
+
 
 /* ---------- buttons, inputs ---------- */
 .btn { border: 0; border-radius: 14px; padding: 13px 18px; font-weight: 800; font-size: 15px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: var(--surface-3); color: var(--text); transition: transform .08s; }
@@ -201,7 +216,8 @@ button.match:active { transform: scale(.98); }
 .row-team { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; padding: 5px 0; }
 .row-team .nm { min-width: 0; }
 .row-team .nm b { display: block; font-size: 16px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row-team .nm small { display: block; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Players wrap between names (never inside one), so all three always show. */
+.row-team .nm small { display: block; font-size: 12px; color: var(--muted); line-height: 1.35; }
 .row-team.lose { opacity: .5; }
 .games { display: flex; gap: 2px; }
 .games span { width: 26px; text-align: center; font-family: var(--score); font-size: 17px; font-weight: 600; color: var(--muted); }
@@ -249,12 +265,12 @@ button.match:active { transform: scale(.98); }
 .standings .tm { display: flex; align-items: center; gap: 10px; font-weight: 700; min-width: 0; }
 /* Team name with its players underneath, in the tables and seed lists. */
 .tm-nm { min-width: 0; display: flex; flex-direction: column; line-height: 1.25; }
-.tm-nm b, .tm-nm small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.tm-nm small { font-size: 11.5px; font-weight: 600; color: var(--muted); margin-top: 1px; }
+.tm-nm b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tm-nm small { font-size: 11.5px; font-weight: 600; color: var(--muted); margin-top: 1px; line-height: 1.35; }
 .standings .tm-nm { max-width: 36vw; }
 @media (min-width: 760px) { .standings .tm-nm { max-width: 240px; } }
 /* Phones: players wrap to a second line rather than pushing the numbers off the edge. */
-@media (max-width: 520px) { .standings .tm-nm small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; } }
+
 .standings td.pts { font-family: var(--score); font-size: 18px; font-weight: 800; }
 .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; color: var(--muted); font-weight: 600; margin: 4px 2px; }
 .legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; vertical-align: -1px; }
@@ -264,7 +280,7 @@ button.match:active { transform: scale(.98); }
 .champion::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 90% 10%, rgba(255, 255, 255, .45), transparent 55%); pointer-events: none; }
 .champion small { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; opacity: .7; }
 .champion b { display: block; font-size: 22px; font-weight: 900; letter-spacing: -.4px; }
-.champion span:not(.badge) { font-size: 13px; font-weight: 600; opacity: .75; }
+.champion span:not(.badge) { font-size: 13px; font-weight: 600; color: rgba(10, 12, 16, .75); }
 .path { font-size: 12px; color: var(--muted); font-weight: 600; margin: -4px 4px 12px; display: flex; gap: 6px; align-items: center; }
 
 /* ---------- me ---------- */
@@ -272,7 +288,8 @@ button.match:active { transform: scale(.98); }
 .hero::after { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 100% 0, rgba(255, 255, 255, .5), transparent 60%); pointer-events: none; }
 .hero-top { display: flex; align-items: center; gap: 12px; position: relative; z-index: 1; }
 .hero-top b { display: block; font-size: 24px; font-weight: 900; letter-spacing: -.5px; line-height: 1.1; }
-.hero-top span:not(.badge) { font-size: 13px; font-weight: 600; opacity: .75; }
+.hero-top span:not(.badge) { font-size: 13px; font-weight: 600; }
+.hero-top .pn { color: rgba(10, 12, 16, .75); }
 .hero .badge { background: #0a0c10 !important; color: #fff; }
 .hero-stats { display: flex; gap: 8px; margin-top: 14px; position: relative; z-index: 1; }
 .hero-stats div { flex: 1; background: rgba(10, 12, 16, .12); border-radius: 14px; padding: 8px 10px; }
@@ -533,7 +550,7 @@ button.match:active { transform: scale(.98); }
 /* Team players wrap to a second line instead of being cut off, and the score columns are tighter. */
 @media (max-width: 380px) {
   .row-team { gap: 8px; }
-  .row-team .nm small { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; line-height: 1.3; }
+
   .games span { width: 22px; font-size: 16px; }
   .tie { width: 26px; font-size: 26px; }
   .match { padding: 12px; }

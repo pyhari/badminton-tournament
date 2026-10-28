@@ -82,7 +82,7 @@ export function top2Odds(S, runs = 2000) {
 // What the AI needs to explain each unsettled team's chances.
 export function outlookFacts(S) {
   return top2Odds(S).filter(g => !g.settled).flatMap(g => g.rows.map(r => ({
-    t: r.t, team: tn(S, r.t), group: g.name, top2Chance: r.pct + "%", position: r.pos,
+    t: r.t, team: tn(S, r.t), players: tp(S, r.t), group: g.name, top2Chance: r.pct + "%", position: r.pos,
     played: r.played, won: r.won, gamesWon: r.gamesWon, pointDiff: r.pointDiff,
     strength: power(S, r.t),
     stillToPlay: r.opponents.map(o => `${tn(S, o)} (strength ${power(S, o)})`)

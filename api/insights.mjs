@@ -13,7 +13,7 @@ import { dayFacts, tieFacts, factsKey, tieKey, highlights, outlookFacts } from "
 const INSIGHTS_ON = process.env.VERCEL_ENV !== "production";
 const MODEL = "claude-opus-5-5";
 // Bump when the wording rules change, so saved words are written again.
-const VERSION = "5:";
+const VERSION = "6:";
 const recapKey = t => VERSION + tieKey(t);
 const MIN_GAP = 45 * 1000, RETRY_AFTER = 5 * 60 * 1000, LOCK_SECS = 120;
 
@@ -33,6 +33,7 @@ Story so far: the app already shows the tables, who is through or out, the champ
 - one caption per highlight, under 16 words, saying why that match mattered.
 Recaps sit under each match card, which shows the scores.
 Outlook: for each team in an unfinished group, one reason under 16 words for its chance of a top-2 place (the Champions League), next to the percentage the app shows. Explain it from the facts: matches won so far, who it still has to play and whether they are stronger or weaker (strength is the sum of player levels), and point difference if it may decide places. Don't repeat the percentage. Say "likely" or "needs", never "will".
+Name the players, not just the team: in each recap, the pair(s) who won the key games; in each caption and outlook reason, at least one player of the team. Write names exactly as given, keeping their order (the woman first in a mixed pair).
 Teams finishing 3rd or 4th in a group are not eliminated: they go on to the FPL bracket.
 Warm and fun, never mocking the losing side. No hashtags or emoji.`;
 
