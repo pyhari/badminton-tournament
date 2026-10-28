@@ -1,5 +1,5 @@
 import { ListOrdered } from "lucide-react";
-import { BR, groups, seeds, table, tn } from "../lib/engine.js";
+import { BR, groups, seeds, table, tn, tp } from "../lib/engine.js";
 import { Badge, Empty } from "../components/ui.jsx";
 
 export default function Tables({ S }) {
@@ -19,7 +19,7 @@ export default function Tables({ S }) {
                   {table(S, gk).map((x, i) => (
                     <tr key={x.t} className={i < 2 ? "q" : ""}>
                       <td className="l pos">{i + 1}</td>
-                      <td className="l"><div className="tm"><Badge S={S} t={x.t} size="sm" /><span>{tn(S, x.t)}</span></div></td>
+                      <td className="l"><div className="tm"><Badge S={S} t={x.t} size="sm" /><div className="tm-nm"><b>{tn(S, x.t)}</b><small>{tp(S, x.t)}</small></div></div></td>
                       <td>{x.p}</td>
                       <td className="pts">{x.w}</td>
                       <td>{x.gw}</td>
@@ -39,7 +39,7 @@ export default function Tables({ S }) {
           <div key={br}>
             <div className="section"><h2>{BR[br]} seeds</h2></div>
             <div className="card">
-              {sd[br].map((t, i) => <div key={t} className="gitem"><span className="seat">{i + 1}</span><Badge S={S} t={t} size="sm" /><span>{tn(S, t)}</span></div>)}
+              {sd[br].map((t, i) => <div key={t} className="gitem"><span className="seat">{i + 1}</span><Badge S={S} t={t} size="sm" /><div className="tm-nm"><b>{tn(S, t)}</b><small>{tp(S, t)}</small></div></div>)}
             </div>
           </div>
         ))}
