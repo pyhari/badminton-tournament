@@ -650,3 +650,11 @@ button.match:active { transform: scale(.98); }
 .gd-groups { margin-top: 22px; }
 .gitem.just { padding-left: 6px; animation: popin .6s cubic-bezier(.2, 1.6, .4, 1); background: color-mix(in srgb, var(--tc) 20%, transparent); border-radius: 10px; }
 @media (prefers-reduced-motion: reduce) { .gd-reel.rolling, .gd-reel.landed, .gd-to, .gitem.just { animation: none; } }
+
+/* ---------- players' link: open and share ---------- */
+.linkbox { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-weight: 700; color: var(--accent-text); text-decoration: none; overflow: hidden; }
+.linkbox svg { flex: none; }
+.share { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 8px; margin-top: 10px; }
+.share .btn { text-decoration: none; justify-content: center; padding-left: 8px; padding-right: 8px; gap: 6px; }
+.share .btn.wa { background: #25d366; color: #0a0c10; border-color: #25d366; }
+.share .btn svg { flex: none; }

@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X } from "lucide-react";
+import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X, ExternalLink, MessageCircle, MessageSquare, Share2 } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, toast } from "../components/ui.jsx";
@@ -300,6 +300,7 @@ function Groups({ S, back }) {
 /* ---------- more ---------- */
 function More({ S, live }) {
   const link = location.origin + "/watch";
+  const invite = "Follow the badminton tournament live: your next match, court and all the scores.\n" + link;
   const copy = (text, msg) => navigator.clipboard ? navigator.clipboard.writeText(text).then(() => toast(msg), () => prompt("Copy this:", text)) : prompt("Copy this:", text);
   const restore = () => {
     const t = prompt("Paste your backup here:");
@@ -312,7 +313,12 @@ function More({ S, live }) {
       <div className="section"><h2>Live link for players</h2></div>
       <div className="card">
         <p className="hint" style={{ marginTop: 0 }}>Players open this link, pick their name and follow their matches live.</p>
-        <div className="field" style={{ fontWeight: 700, overflow: "hidden", textOverflow: "ellipsis" }}>{link}</div>
+        <a className="field linkbox" href={link} target="_blank" rel="noreferrer">{link}<ExternalLink size={16} /></a>
+        <div className="share">
+          <a className="btn wa" href={`https://wa.me/?text=${encodeURIComponent(invite)}`} target="_blank" rel="noreferrer"><MessageCircle size={16} />WhatsApp</a>
+          <a className="btn" href={`sms:?&body=${encodeURIComponent(invite)}`}><MessageSquare size={16} />Message</a>
+          {navigator.share && <button className="btn" onClick={() => navigator.share({ title: "Badminton Day: live scores", text: invite.replace(link, "").trim(), url: link }).catch(() => {})}><Share2 size={16} />Share</button>}
+        </div>
         <div className="btns">
           <button className="btn primary" onClick={() => copy(link, "Link copied")}><Copy size={16} />Copy link</button>
           {getPin() && <button className="btn" onClick={sync}><Wifi size={16} />Sync now</button>}
