@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { Search, Sparkles, Check, X } from "lucide-react";
+import { AI_INSIGHTS } from "../lib/insightsFeed.js";
 import { NT, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
-import { Badge, teamColor } from "./ui.jsx";
+import { Badge, TeamName, teamColor } from "./ui.jsx";
 import { ConfettiLayer, confetti } from "./Confetti.jsx";
 
 // The players' page before the groups are drawn: everyone who is playing, popping in one
@@ -10,6 +11,7 @@ import { ConfettiLayer, confetti } from "./Confetti.jsx";
 // now; once the teams are set, their team lights up (and stays picked on the Me tab).
 export default function PreDraw({ S, me, choose }) {
   const [q, setQ] = useState("");
+  const [pep, setPep] = useState(null); // { name, text } for the pop-up after picking a name
   const name = (me || "").split("|")[1] || "";
   const playing = S.players.filter(p => p.on);
   const women = playing.filter(p => p.g === "F"), men = playing.filter(p => p.g !== "F");
@@ -27,10 +29,26 @@ export default function PreDraw({ S, me, choose }) {
     return () => clearTimeout(t);
   }, [mine, name]);
 
+  // Picking a name: a pop-up at the bottom with a cheer from the AI (a plain one without it).
+  const pick = who => {
+    choose(who ? "|" + who : "");
+    if (!who) return setPep(null);
+    setPep({ name: who, text: null });
+    const plain = "Find your team here the moment it's drawn. Have a great day on court!";
+    if (!AI_INSIGHTS) return setPep({ name: who, text: plain });
+    fetch("/api/pep?name=" + encodeURIComponent(who)).then(r => r.json()).then(j => j.text || plain, () => plain)
+      .then(text => setPep(p => p && p.name === who ? { name: who, text } : p));
+  };
+  useEffect(() => {
+    if (!pep || !pep.text) return;
+    const t = setTimeout(() => setPep(null), 9000);
+    return () => clearTimeout(t);
+  }, [pep]);
+
   let n = 0; // running index, so the chips pop in one after another
   const chip = p => (
     <button key={p.name} className={`pd-chip ${p.g === "F" ? "f" : "m"} ${p.name === name ? "me" : ""}`} style={{ "--i": n++ }}
-      onClick={() => choose(p.name === name ? "" : "|" + p.name)} aria-pressed={p.name === name}>
+      onClick={() => pick(p.name === name ? "" : p.name)} aria-pressed={p.name === name}>
       <i>{p.name[0]}</i>{p.name}{p.name === name && <Check size={14} strokeWidth={3} />}
     </button>
   );
@@ -58,18 +76,17 @@ export default function PreDraw({ S, me, choose }) {
           {mine >= 0
             ? <><Badge S={S} t={mine} /><div><small>That's you, {name}!</small><b>{tn(S, mine)}</b><span>with {[S.teams[mine].m1, S.teams[mine].m2, S.teams[mine].w].filter(x => x !== name).join(" and ")}</span></div></>
             : <><span className="pd-q">?</span><div><small>You're {name}</small><b>Waiting for the draw</b><span>Your team lights up here the moment you're drawn.</span></div></>}
-          <button className="icon-btn" onClick={() => choose("")} aria-label="Not me"><X size={16} /></button>
+          <button className="icon-btn" onClick={() => pick("")} aria-label="Not me"><X size={16} /></button>
         </div>
       )}
 
       <div className="section"><h2>The teams</h2></div>
       <div className="pd-teams">
-        {S.teams.slice(0, NT).map((x, t) => set ? (
-          <div key={t} className={`pd-team on ${t === mine ? "mine" : ""}`} style={{ "--tc": teamColor(t), "--i": t }}>
-            <Badge S={S} t={t} size="sm" /><div><b>{tn(S, t)}</b><span>{x.m1} · {x.m2} · {x.w}</span></div>
+        {S.teams.slice(0, NT).map((x, t) => (
+          <div key={t} className={`pd-team ${set ? "on" : ""} ${t === mine ? "mine" : ""}`} style={{ "--tc": teamColor(t), "--i": t }}>
+            <div className="pd-team-top"><Badge S={S} t={t} size="sm" /><b>{tn(S, t)}</b>{t === mine && <em>You</em>}</div>
+            {set ? <TeamName S={S} t={t} className="pd-team-nm" /> : <div className="pd-qs"><span className="pd-q">?</span><span className="pd-q">?</span><span className="pd-q">?</span></div>}
           </div>
-        ) : (
-          <div key={t} className="pd-team" style={{ "--i": t }}><span className="pd-q">?</span><span className="pd-q">?</span><span className="pd-q">?</span></div>
         ))}
       </div>
 
@@ -79,6 +96,14 @@ export default function PreDraw({ S, me, choose }) {
       {group("Women", women)}
       {group("Men", men)}
       {q && !shown(playing).length && <p className="hint">No player called “{q}”.</p>}
+      {pep && (
+        <div className="pd-pep" role="status" key={pep.name}>
+          <Sparkles size={18} />
+          <div><b>{mine >= 0 && pep.name === name ? `You're in ${tn(S, mine)}, ${pep.name}!` : `You're in, ${pep.name}!`}</b>
+            {pep.text ? <p>{pep.text}</p> : <p className="pd-dots"><span /><span /><span /></p>}</div>
+          <button className="icon-btn" onClick={() => setPep(null)} aria-label="Close"><X size={16} /></button>
+        </div>
+      )}
     </div>
   );
 }
