@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as E from "./engine.js";
-import { tieFacts, dayFacts, factsKey } from "./insights.js";
+import { tieFacts, dayFacts, factsKey, highlights, matchTag, groupRace, champions } from "./insights.js";
 import { makeHandler, KEYS } from "../../api/insights.mjs";
 
 const full = () => {
@@ -36,14 +36,43 @@ describe("tournament facts", () => {
       const aWins = m.a === g[0] || m.b === g[3];
       play(S, m, aWins ? [[15, 5], [15, 5], [15, 5]] : [[5, 15], [5, 15], [5, 15]]);
     });
-    const rows = dayFacts(S).groups["Group A"];
-    const by = t => rows.find(r => r.team === E.tn(S, t));
+    const rows = groupRace(S)[0].rows;
+    const by = t => rows.find(r => r.t === t);
     expect(by(g[0]).status).toBe("through");
     expect(by(g[3]).status).toBe("out");
-    // Every Group A tie is played, so all four places are settled.
+    // Before the last match: seat 1 is through on wins alone, seat 4 is out, the middle two are not settled.
+    const last = E.prelims(S).filter(m => m.stage === "Group A").find(m => [m.a, m.b].includes(g[1]) && [m.a, m.b].includes(g[2]));
+    const keep = S.scores[last.id]; delete S.scores[last.id];
+    expect(groupRace(S)[0].rows.filter(r => r.status === "in contention")).toHaveLength(2);
+    S.scores[last.id] = keep;
+    // Every Group A match is played, so all four places are settled.
     expect(rows.filter(r => r.status === "through")).toHaveLength(2);
     expect(rows.filter(r => r.status === "out")).toHaveLength(2);
-    expect(dayFacts(S).groups["Group B"].every(r => r.status === "in contention")).toBe(true);
+    expect(groupRace(S)[1].rows.every(r => r.status === "in contention")).toBe(true);
+    // Claude is told where 3rd and 4th go, so it never calls them eliminated.
+    expect(dayFacts(S).groups["Group A"].find(r => r.team === E.tn(S, g[3])).status).toBe("certain 3rd or 4th: into the FPL");
+  });
+});
+
+describe("highlight cards and tags", () => {
+  it("picks different matches for the upset, the thriller, a comeback and a sweep", () => {
+    const S = full(), [m1, m2, m3, m4] = E.prelims(S);
+    S.players.find(p => p.name === S.teams[m1.a].m1 && p.g === "M").lvl = 5;
+    S.players.find(p => p.name === S.teams[m1.a].m2 && p.g === "M").lvl = 5;
+    play(S, m1, [[5, 15], [6, 15], [7, 15]]);   // weaker side sweeps: upset
+    play(S, m2, [[15, 9], [19, 17], [15, 9]]);  // 19-17: thriller
+    play(S, m3, [[9, 15], [15, 9], [15, 9]]);   // lost game 1: comeback
+    play(S, m4, [[15, 2], [15, 2], [15, 2]]);   // sweep
+    const h = highlights(S);
+    expect(h.map(x => x.kind)).toEqual(["upset", "thriller", "comeback"]);
+    expect(h.map(x => x.match.id)).toEqual([m1.id, m2.id, m3.id]);
+    expect(h[1].game.score).toBe("19–17");
+    expect(matchTag(tieFacts(S, m1))).toBe("Upset");
+    expect(matchTag(tieFacts(S, m2))).toBe("19–17 thriller");
+    expect(matchTag(tieFacts(S, m3))).toBe("Comeback");
+    expect(matchTag(tieFacts(S, m4))).toBe("Clean sweep");
+    expect(groupRace(S).map(g => g.rows.length)).toEqual([4, 4]);
+    expect(champions(S)).toEqual([]);
   });
 });
 
@@ -75,14 +104,14 @@ describe("insights endpoint", () => {
     const t = setup(), [m1, m2] = E.prelims(t.S);
     expect((await t.get()).out).toEqual({ story: null, recaps: {} });
     play(t.S, m1, [[15, 9], [15, 9], [9, 15]]); t.save();
-    t.setReply((p) => ({ stop_reason: "end_turn", model: "claude-opus-5-5", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Day one", paragraphs: ["p"] }, recaps: [{ id: m1.id, text: "Great start." }] }) }] }));
+    t.setReply((p) => ({ stop_reason: "end_turn", model: "claude-opus-5-5", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Day one", lede: "It begins.", captions: [{ key: "upset:nope", caption: "Made up" }] }, recaps: [{ id: m1.id, text: "Great start." }] }) }] }));
     const first = await t.get();
     expect(first.out.story).toBe(null); // the write runs in the background; this reply has the old (empty) words
     expect(t.calls).toHaveLength(1);
     expect(t.calls[0].output_config.format.type).toBe("json_schema");
     expect(t.calls[0].messages[0].content).toMatch(new RegExp(`"id":"${m1.id}"`));
     const second = await t.get();
-    expect(second.out.story.headline).toBe("Day one");
+    expect(second.out.story).toEqual({ headline: "Day one", lede: "It begins.", captions: {} }); // a caption for no real highlight is dropped
     expect(second.out.recaps).toEqual({ [m1.id]: "Great start." });
     expect(second.out.current).toBe(true);
     expect(t.calls).toHaveLength(1); // nothing changed, no new call
@@ -93,12 +122,14 @@ describe("insights endpoint", () => {
     await t.get();
     expect(t.calls).toHaveLength(1);
     t.tick(46000);
-    t.setReply(p => ({ stop_reason: "end_turn", model: "claude-opus-5-5", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Two down", paragraphs: ["p"] }, recaps: [{ id: m2.id, text: "A sweep." }] }) }] }));
+    t.setReply(p => ({ stop_reason: "end_turn", model: "claude-opus-5-5", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Two down", lede: "Two in.", captions: [{ key: "sweep:" + m2.id, caption: "Total control. " }] }, recaps: [{ id: m2.id, text: "A sweep." }] }) }] }));
     await t.get();
     expect(t.calls).toHaveLength(2);
     expect(t.calls[1].messages[0].content).not.toMatch(new RegExp(`"id":"${m1.id}"`));
     const third = await t.get();
     expect(third.out.recaps).toEqual({ [m1.id]: "Great start.", [m2.id]: "A sweep." });
+    expect(third.out.story.captions).toEqual({ ["sweep:" + m2.id]: "Total control." });
+    expect(t.calls[1].messages[0].content).toMatch(/<highlights>\n\[\{"key":"sweep:/);
 
     // A corrected score hides that tie's old recap until a new one is written.
     play(t.S, m1, [[9, 15], [9, 15], [9, 15]]); t.save();

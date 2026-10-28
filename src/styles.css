@@ -435,13 +435,40 @@ button.match:active { transform: scale(.98); }
 .rl-team { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ---------- AI story and recaps (players' page) ---------- */
-.story { position: relative; border-radius: 20px; padding: 14px 16px; margin: 4px 0 12px; background: linear-gradient(135deg, color-mix(in srgb, #d4ff3a 24%, var(--surface)), var(--surface)); border: 1px solid color-mix(in srgb, var(--accent-text) 25%, var(--line)); }
+.story { position: relative; border-radius: 22px; padding: 14px 16px 16px; margin: 4px 0 12px; background: linear-gradient(135deg, color-mix(in srgb, #d4ff3a 24%, var(--surface)), var(--surface) 70%); border: 1px solid color-mix(in srgb, var(--accent-text) 25%, var(--line)); }
 .story-top { display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--accent-text); }
 .story-top small { margin-left: auto; font-size: 11px; font-weight: 600; letter-spacing: 0; text-transform: none; color: var(--muted); }
-.story h3 { margin: 6px 0 4px; font-size: 19px; font-weight: 800; letter-spacing: -.3px; line-height: 1.25; }
-.story p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; }
-.story-more { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; border: 0; background: none; padding: 0; font-size: 13px; font-weight: 700; color: var(--accent-text); }
-.story-more svg { transition: transform .2s; }
+.story h3 { margin: 6px 0 2px; font-size: 21px; font-weight: 900; letter-spacing: -.5px; line-height: 1.2; }
+.story-lede { margin: 4px 0 0; font-size: 14px; line-height: 1.45; color: var(--muted); font-weight: 500; }
+.story-champ { display: flex; align-items: center; gap: 12px; margin-top: 12px; padding: 12px 14px; border-radius: 16px; color: #0a0c10; }
+.story-champ small { display: block; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; opacity: .7; }
+.story-champ b { display: block; font-size: 18px; font-weight: 900; }
+.story-champ .badge { margin-left: auto; background: rgba(255, 255, 255, .55) !important; }
+/* Highlight cards: swipe on phones, three across on wide screens. */
+.hl-row { display: flex; gap: 10px; overflow-x: auto; margin: 12px -16px 0; padding: 0 16px 4px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.hl-row::-webkit-scrollbar { display: none; }
+.hl { --k: #8b5cf6; flex: 0 0 72%; max-width: 260px; scroll-snap-align: start; background: var(--surface); border: 1px solid var(--line); border-top: 3px solid var(--k); border-radius: 16px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 4px; }
+.hl.upset { --k: #ff5c7a; } .hl.thriller { --k: #ff9f1c; } .hl.comeback { --k: #2bb3a3; } .hl.sweep { --k: #6aa500; }
+.hl-kind { align-self: flex-start; display: inline-flex; align-items: center; gap: 4px; font-size: 10.5px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--k); background: color-mix(in srgb, var(--k) 14%, transparent); padding: 3px 8px; border-radius: 99px; }
+.hl-score { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.hl-score b { font-family: var(--score); font-size: 26px; font-weight: 800; line-height: 1; }
+.hl-names { font-size: 12.5px; font-weight: 700; }
+.hl-fact { font-size: 12px; color: var(--muted); font-weight: 600; }
+.hl p { margin: 4px 0 0; font-size: 13px; line-height: 1.4; font-style: italic; }
+@media (min-width: 760px) { .hl-row { margin: 12px 0 0; padding: 0; overflow: visible; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .hl { max-width: none; } }
+/* Group race: each group's teams in table order, ticked when through, crossed when out. */
+.race { margin-top: 14px; display: grid; gap: 8px; }
+.race-g { display: flex; align-items: center; gap: 10px; }
+.race-g > small { width: 58px; flex: none; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+.race-teams { display: flex; gap: 8px; }
+.race-t { position: relative; display: inline-flex; }
+.race-t svg { position: absolute; right: -5px; bottom: -5px; width: 16px; height: 16px; padding: 2px; border-radius: 50%; border: 2px solid var(--surface); }
+.race-t.through svg { background: var(--accent-text); color: #fff; }
+.race-t.out { opacity: .6; }
+.race-t.out svg { background: var(--muted); color: #fff; }
+.race-key { display: flex; gap: 12px; font-size: 11px; color: var(--muted); font-weight: 600; }
+.race-key span { display: inline-flex; align-items: center; gap: 4px; }
+.recap-tag { display: inline-block; margin-right: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--accent-text); }
 .recap { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45; color: var(--text); }
 .recap svg { flex: none; margin-top: 2px; color: var(--accent-text); }
 

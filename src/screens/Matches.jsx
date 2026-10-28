@@ -70,7 +70,7 @@ export default function Matches({ S, admin, onOpen }) {
   return (
     <div className="page wide">
       <div className="title-row"><h1 className="page-title">Matches</h1>{filtered && <button className="btn sm" onClick={() => set({ team: null, status: "all" })}><X size={14} />Clear</button>}</div>
-      {!admin && !filtered && <Story />}
+      {!admin && !filtered && <Story S={S} />}
       {filters}
       {filtered && <p className="hint">{list.length} {list.length === 1 ? "match" : "matches"}{team != null ? ` for ${tn(S, team)}` : ""}{f.status !== "all" ? ` · ${STATUS.find(s => s[0] === f.status)[1].toLowerCase()}` : ""}</p>}
       {finished && <div className="banner ok"><PartyPopper size={18} /> Tournament finished. Congratulations to the winners!</div>}

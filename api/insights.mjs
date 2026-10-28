@@ -6,13 +6,13 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { waitUntil } from "@vercel/functions";
 import { fix, allMatches } from "../src/lib/engine.js";
-import { dayFacts, tieFacts, factsKey, tieKey } from "../src/lib/insights.js";
+import { dayFacts, tieFacts, factsKey, tieKey, highlights } from "../src/lib/insights.js";
 
 // The on/off switch for this feature (separate from the AI planner).
 const INSIGHTS_ON = true;
 const MODEL = "claude-opus-5-5";
 // Bump when the wording rules change, so saved words are written again.
-const VERSION = "2:";
+const VERSION = "4:";
 const recapKey = t => VERSION + tieKey(t);
 const MIN_GAP = 45 * 1000, RETRY_AFTER = 5 * 60 * 1000, LOCK_SECS = 120;
 
@@ -26,15 +26,27 @@ const SYSTEM = `You write short, lively updates for players at a club badminton 
 Use only the facts given. Never invent scores, players, shots or events. Name teams and players exactly as given.
 A match is one team against another, made of 3 games. Always say "match" for it, never "tie".
 Recaps: 1–2 sentences per match, under 45 words. Lead with what made it interesting: an upset, a comeback, a close or extra-points game, a clean sweep.
-Story so far: a headline under 10 words, then 2–4 short paragraphs on the standings, who is through or out, the upsets and the tightest games, and champions if decided. Under 160 words in all.
+Story so far: the app already shows the tables, who is through or out, the champions and a card for each highlight with its teams and score, so do not repeat numbers it shows. Write:
+- headline: under 9 words, the big story of the day so far.
+- lede: one sentence, under 28 words, setting the scene.
+- one caption per highlight, under 16 words, saying why that match mattered.
+Recaps sit under each match card, which shows the scores.
+Teams finishing 3rd or 4th in a group are not eliminated: they go on to the FPL bracket.
 Warm and fun, never mocking the losing side. No hashtags or emoji.`;
 
 const SCHEMA = {
   type: "object", additionalProperties: false, required: ["story", "recaps"],
   properties: {
     story: {
-      type: "object", additionalProperties: false, required: ["headline", "paragraphs"],
-      properties: { headline: { type: "string" }, paragraphs: { type: "array", items: { type: "string" } } }
+      type: "object", additionalProperties: false, required: ["headline", "lede", "captions"],
+      properties: {
+        headline: { type: "string" },
+        lede: { type: "string" },
+        captions: {
+          type: "array",
+          items: { type: "object", additionalProperties: false, required: ["key", "caption"], properties: { key: { type: "string" }, caption: { type: "string" } } }
+        }
+      }
     },
     recaps: {
       type: "array",
@@ -54,6 +66,7 @@ async function upstash(cmd) {
 export async function write(client, S, saved) {
   const ties = allMatches(S).filter(m => m.a != null && m.b != null).map(m => tieFacts(S, m)).filter(Boolean);
   const need = ties.filter(t => !saved.recaps[t.id] || saved.recaps[t.id].key !== recapKey(t));
+  const cards = highlights(S).map(h => ({ key: h.key, kind: h.kind, match: h.match, game: h.game }));
   const response = await client.beta.messages.create({
     model: MODEL,
     max_tokens: 16000,
@@ -63,7 +76,7 @@ export async function write(client, S, saved) {
     system: SYSTEM,
     messages: [{
       role: "user",
-      content: `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<matches_needing_recaps>\n${JSON.stringify(need)}\n</matches_needing_recaps>\nWrite the story so far, and one recap for each match needing one, using its id.`
+      content: `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<highlights>\n${JSON.stringify(cards)}\n</highlights>\n<matches_needing_recaps>\n${JSON.stringify(need)}\n</matches_needing_recaps>\nWrite the story so far with one caption per highlight (using its key), and one recap for each match needing one (using its id).`
     }]
   });
   if (response.stop_reason !== "end_turn") throw new Error("Claude stopped early: " + response.stop_reason);
@@ -73,7 +86,9 @@ export async function write(client, S, saved) {
     const t = need.find(x => x.id === r.id);
     if (t && r.text) recaps[t.id] = { key: recapKey(t), text: r.text.trim() };
   }
-  return { story: out.story, recaps, model: response.model };
+  const keys = new Set(cards.map(c => c.key));
+  const story = { headline: out.story.headline, lede: out.story.lede, captions: Object.fromEntries(out.story.captions.filter(c => keys.has(c.key)).map(c => [c.key, c.caption.trim()])) };
+  return { story, recaps, model: response.model };
 }
 
 // What players see: the story and the recaps that still match the scores.

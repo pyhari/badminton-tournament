@@ -60,7 +60,7 @@ Each run is added to a run log showing the group tables, both playoff brackets a
 
 ## AI recaps and story (players' page)
 
-On `/watch`, finished matches get a 1–2 sentence recap, and a **Story so far** card sums up the day: standings, who is through or out, upsets, the closest games and champions.
+On `/watch`, finished matches get a tag (Upset, Comeback, 18–16 thriller, Clean sweep) and a 1–2 sentence recap. A **Story so far** card shows champions, up to 3 highlight cards (upset, thriller, comeback or sweep, each with teams, score and the key fact) and the group race (which teams are certain of the Champions League or FPL). The app draws all of that from the scores; Claude adds only the headline, one line and a caption per card.
 
 - `src/lib/insights.js` works out the facts from the scores: upsets (a win by a team at least 2 levels weaker), comebacks, extra-points games, and who is certainly through or out of the top 2. Claude (`api/insights.mjs`, Opus 5.5 at low effort, structured outputs) only writes them up, so it can't invent scores.
 - Players never trigger AI directly. When results change, the next player request starts one background write (at most one every 45 seconds); the words are saved in Redis and shared from Vercel's edge, so any number of players costs the same. A tournament day is a few dozen calls, well under $1.
