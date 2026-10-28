@@ -8,10 +8,11 @@ import { ConfettiLayer, confetti } from "../components/Confetti.jsx";
 import Wheel from "../components/Wheel.jsx";
 import { getApart, getTogether } from "../components/Together.jsx";
 
-const POTS = ["Pot 1 · Man 1", "Pot 2 · Man 2", "Women"];
+// Shown to everyone watching the draw, so nothing here hints at player levels.
+const POTS = ["Man 1", "Man 2", "Women"];
 
 const AUTO_SPIN = 2600, MANUAL_SPIN = 4600, WIND = 320; // ms; the wheel winds back for WIND before spinning
-const POT_NOTE = ["The stronger half of the men", "The rest of the men", "One woman for each team"];
+const POT_NOTE = ["One man for each team", "A second man for each team", "One woman for each team"];
 
 // The draw ceremony. The balanced teams are worked out first; the wheel then
 // reveals them one pick at a time: all of Pot 1, then Pot 2, then the women.
@@ -90,7 +91,6 @@ export default function TeamDraw({ S, onClose }) {
   const save = () => { update(n => E.SLOTS.forEach((f, c) => n.teams.forEach((x, t) => { x[f] = plan.cols[c][t].name; }))); onClose(true); };
   const skip = () => { setAuto(false); setCount(null); setIntro(null); setSpinning(false); setK(total); setWk(total); };
   const toggleSound = () => { setSound(!sound); setSnd(!sound); };
-  const pw = Array.from({ length: E.NT }, (_, t) => plan.cols.reduce((a, col) => a + col[t].lvl, 0));
 
   return (
     <div className="ceremony" role="dialog" aria-modal="true" aria-label="Team draw">
@@ -136,7 +136,7 @@ export default function TeamDraw({ S, onClose }) {
         <div className="cer-done finale">
           <div className="brand-mark"><Check size={30} strokeWidth={3} /></div>
           <b>Teams are drawn</b>
-          <span>Strength {Math.min(...pw)} to {Math.max(...pw)}. You can still swap players before locking.</span>
+          <span>You can still swap players before locking.</span>
           <div className="btns"><button className="btn primary block" onClick={save}>Use these teams</button></div>
         </div>
       )}

@@ -292,7 +292,7 @@ function Groups({ S, back }) {
       </div>
       {S.pots.length > 0 && (
         <>
-          <div className="section"><h2>Pots by strength</h2></div>
+          <div className="section"><h2>Pots</h2></div>
           <div className="pots">
             {S.pots.map((p, i) => (
               <div className="pot" key={i}><small>Pot {i + 1}</small><div className="badges">{p.map(t => <span key={t} className={S.picks.includes(t) ? "gone" : ""}><Badge S={S} t={t} size="sm" /></span>)}</div></div>
@@ -314,7 +314,7 @@ function Groups({ S, back }) {
           </div>
         ))}
       </div>
-      <p className="hint">Teams are ranked by strength into {E.NT / E.NG} pots of {E.NG}. Each pot sends one team to each group, so the strongest teams start in different groups.</p>
+      <p className="hint">{E.NT / E.NG} pots of {E.NG} teams. Each pot sends one team to each group.</p>
     </>
   );
 }
