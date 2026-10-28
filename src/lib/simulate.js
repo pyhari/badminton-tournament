@@ -11,8 +11,14 @@ export const MODES = {
 const chance = (rnd, p) => rnd(1000) < p * 1000;
 
 // Which side wins a tie: 0 for team a, 1 for team b.
-function pickWinner(S, m, mode, team, rnd) {
-  if (team != null && (m.a === team || m.b === team)) return m.a === team ? 0 : 1;
+// cl: the team chosen to win the Champions League. It wins every match it plays.
+// fpl: the team chosen to win the FPL. It loses all its group matches, which always leaves it
+// 3rd or 4th (no other team can also end on zero wins and still be above it in the top 2),
+// then wins every FPL match.
+function pickWinner(S, m, mode, { cl, fpl }, rnd) {
+  const has = t => t != null && (m.a === t || m.b === t), side = t => (m.a === t ? 0 : 1);
+  if (has(cl) && m.br !== "Plate") return side(cl);
+  if (has(fpl)) return m.br === "Plate" ? side(fpl) : 1 - side(fpl);
   const pa = E.power(S, m.a), pb = E.power(S, m.b);
   const strongA = pa > pb ? 0.8 : pa < pb ? 0.2 : 0.5;
   const pA = mode === "favourites" ? strongA : mode === "upsets" ? 1 - strongA : 0.5;
@@ -43,7 +49,8 @@ export function playTie(S, m, winner, { tight = false, rnd = E.cryptoRnd } = {})
 // Plays unfinished ties whose teams are known. Playoff ties become ready as earlier
 // results come in, so it keeps going until nothing is left to play.
 // upTo: "some" (up to 4 ties, like one turn of the courts), "groups" or "all".
-export function simulate(S, { upTo = "all", mode = "random", team = null, rnd = E.cryptoRnd } = {}) {
+// team: same as cl (the team that wins everything).
+export function simulate(S, { upTo = "all", mode = "random", team = null, cl = team, fpl = null, rnd = E.cryptoRnd } = {}) {
   if (!E.groups(S)) return 0;
   let played = 0;
   for (;;) {
@@ -52,7 +59,7 @@ export function simulate(S, { upTo = "all", mode = "random", team = null, rnd = 
     if (upTo === "some") todo = E.shuffle(todo, rnd).slice(0, Math.max(0, E.courtCount(S) - played));
     if (!todo.length) break;
     for (const m of todo) {
-      playTie(S, m, pickWinner(S, m, mode, team, rnd), { tight: mode === "tight", rnd });
+      playTie(S, m, pickWinner(S, m, mode, { cl, fpl: fpl === cl ? null : fpl }, rnd), { tight: mode === "tight", rnd });
       played++;
     }
     if (upTo === "some") break;

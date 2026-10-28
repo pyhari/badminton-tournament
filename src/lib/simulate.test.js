@@ -62,6 +62,18 @@ describe("simulator", () => {
     }
   });
 
+  it("makes the chosen teams win the Champions League and the FPL", () => {
+    for (let k = 0; k < 16; k++) {
+      const S = fresh(), cl = k % E.NT, fpl = (k * 3 + 1) % E.NT;
+      if (cl === fpl) continue;
+      simulate(S, { cl, fpl, mode: k % 2 ? "favourites" : "upsets" });
+      const s = summary(S);
+      expect(s.champ.Cup).toBe(cl);
+      expect(s.champ.Plate).toBe(fpl);
+      checkPlayoffs(S);
+    }
+  });
+
   it("builds a three-way tie that falls back to team number", () => {
     const S = fresh();
     threeWayTie(S, "A");

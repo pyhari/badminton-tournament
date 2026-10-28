@@ -16,7 +16,8 @@ export const showAI = AI_ON && (!IS_PROD || /[?&]ai=1/.test(location.search));
 
 export default function TestTools({ S }) {
   const [mode, setMode] = useState("random");
-  const [team, setTeam] = useState(null);
+  const [cl, setCl] = useState(null);   // chosen Champions League winner
+  const [fpl, setFpl] = useState(null); // chosen FPL winner
   const [log, setLog] = useState([]);
   const g = E.groups(S);
   const hasScores = Object.keys(S.scores).length > 0;
@@ -25,15 +26,18 @@ export default function TestTools({ S }) {
   const record = label => {
     const s = summary(getState());
     if (!s) return;
-    setLog(l => [{ n: l.length ? l[0].n + 1 : 1, label, mode: team != null ? "Make " + E.tn(getState(), team) + " win" : MODES[mode], s, S: getState() }, ...l].slice(0, 12));
+    const picks = [cl != null && E.BR.Cup + ": " + E.tn(getState(), cl), fpl != null && E.BR.Plate + ": " + E.tn(getState(), fpl)].filter(Boolean);
+    setLog(l => [{ n: l.length ? l[0].n + 1 : 1, label, mode: [MODES[mode], ...picks].join(" · "), s, S: getState() }, ...l].slice(0, 12));
   };
   const run = (upTo, label, fresh = false) => {
     if (!g) { toast("Do the quick setup first."); return; }
     if (fresh && hasScores && !ok("All scores will be replaced.")) return;
     let n = 0;
-    update(st => { if (fresh) clearScores(st); n = simulate(st, { upTo, mode, team }); });
+    update(st => { if (fresh) clearScores(st); n = simulate(st, { upTo, mode, cl, fpl }); });
     if (!n) { toast(allPlayed(getState()) ? "Everything is already played. Use Rerun." : "Nothing to play yet."); return; }
-    toast(`${n} ${n === 1 ? "match" : "matches"} played`);
+    // Scores already in place can stop a chosen team from winning: say so.
+    const champ = summary(getState()).champ, missed = [[cl, champ.Cup, E.BR.Cup], [fpl, champ.Plate, E.BR.Plate]].filter(([t, w]) => t != null && w != null && w !== t);
+    toast(missed.length ? missed.map(([t, , name]) => `${E.tn(getState(), t)} could not win the ${name}: earlier scores got in the way. Use Rerun.`).join("\n") : `${n} ${n === 1 ? "match" : "matches"} played`);
     record(label);
   };
   const setup = () => {
@@ -41,7 +45,7 @@ export default function TestTools({ S }) {
     if (!ok("Teams, groups and scores will be replaced.")) return;
     let err = "";
     update(st => { try { quickSetup(st); } catch (e) { err = e.message; } });
-    if (err) toast(err); else { setTeam(null); toast("Teams and groups drawn"); }
+    if (err) toast(err); else { setCl(null); setFpl(null); toast("Teams and groups drawn"); }
   };
 
   return (
@@ -60,24 +64,30 @@ export default function TestTools({ S }) {
       <div className="card">
         <div className="fseg" role="radiogroup" aria-label="Results" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
           {Object.entries(MODES).map(([k, n]) => (
-            <button key={k} role="radio" aria-checked={mode === k && team == null} className={mode === k && team == null ? "on" : ""} onClick={() => { setMode(k); setTeam(null); }}><b>{n}</b></button>
+            <button key={k} role="radio" aria-checked={mode === k} className={mode === k ? "on" : ""} onClick={() => setMode(k)}><b>{n}</b></button>
           ))}
         </div>
-        <p className="hint">{team != null ? `${E.tn(S, team)} wins every match it plays. Other matches follow "${MODES[mode]}".` : {
+        <p className="hint">{{
           random: "Every match is a coin toss.",
           favourites: "The stronger team (sum of levels) wins 8 times in 10.",
           upsets: "The weaker team wins 8 times in 10.",
           tight: "Every match ends 2–1 with close games, to test the tiebreakers."
         }[mode]}</p>
-        <label className="lbl">Make one team win everything</label>
-        <div className={`fteams ${team != null ? "picked" : ""}`} role="radiogroup" aria-label="Team to win">
-          <button role="radio" aria-checked={team == null} className={`all ${team == null ? "on" : ""}`} onClick={() => setTeam(null)}>None</button>
-          {S.teams.map((_, t) => (
-            <button key={t} role="radio" aria-checked={team === t} aria-label={E.tn(S, t)} title={E.tn(S, t)} className={team === t ? "on" : ""} onClick={() => setTeam(team === t ? null : t)}>
-              <Badge S={S} t={t} size="sm" />
-            </button>
-          ))}
-        </div>
+        {[[E.BR.Cup + " winner", cl, setCl, setFpl, fpl], [E.BR.Plate + " winner", fpl, setFpl, setCl, cl]].map(([label, v, set, setOther, other]) => (
+          <div key={label}>
+            <label className="lbl">{label}</label>
+            <div className={`fteams ${v != null ? "picked" : ""}`} role="radiogroup" aria-label={label}>
+              <button role="radio" aria-checked={v == null} className={`all ${v == null ? "on" : ""}`} onClick={() => set(null)}>Any</button>
+              {S.teams.map((_, t) => (
+                <button key={t} role="radio" aria-checked={v === t} aria-label={E.tn(S, t)} title={E.tn(S, t)} className={v === t ? "on" : ""}
+                  onClick={() => { set(v === t ? null : t); if (other === t) setOther(null); }}>
+                  <Badge S={S} t={t} size="sm" />
+                </button>
+              ))}
+            </div>
+          </div>
+        ))}
+        {(cl != null || fpl != null) && <p className="hint" style={{ marginBottom: 0 }}>{[cl != null && `${E.tn(S, cl)} wins every match and the ${E.BR.Cup}.`, fpl != null && `${E.tn(S, fpl)} loses its group matches, so it finishes 3rd or 4th, then wins the ${E.BR.Plate}.`].filter(Boolean).join(" ")} Other matches follow "{MODES[mode]}". Use Rerun if some scores are already in.</p>}
       </div>
 
       <div className="section"><h2>3 · Play</h2><span>{g ? (allPlayed(S) ? "All played" : `${E.allMatches(S).filter(m => E.res(S, m).done).length}/20 matches played`) : "Not set up"}</span></div>
