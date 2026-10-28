@@ -28,7 +28,7 @@ export default function Playoffs({ S, admin, onOpen }) {
               )}
               {ms.map(m => (
                 <div key={m.id}>
-                  <MatchCard S={S} m={m} showStage={false} onOpen={admin ? onOpen : null} />
+                  <MatchCard S={S} m={m} showStage={false} onOpen={onOpen} />
                   {PATH[m.label] && <div className="path"><ArrowRight size={12} />{PATH[m.label]}</div>}
                 </div>
               ))}

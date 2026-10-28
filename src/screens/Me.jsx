@@ -8,7 +8,7 @@ import PreDraw from "../components/PreDraw.jsx";
 
 const ord = n => n + (["th", "st", "nd", "rd"][n] || "th");
 
-export default function Me({ S }) {
+export default function Me({ S, onOpen }) {
   const [me, setMe] = useState(lsGet("bt_me") || "");
   const [q, setQ] = useState("");
   const g = groups(S);
@@ -73,7 +73,7 @@ export default function Me({ S }) {
       )}
       <Story S={S} />
       <div className="section"><h2>Your matches</h2></div>
-      {mine.map(m => <MatchCard key={m.id} S={S} m={m} />)}
+      {mine.map(m => <MatchCard key={m.id} S={S} m={m} onOpen={onOpen} />)}
       <p className="hint">Playoff matches appear here when your team qualifies.</p>
     </div>
   );

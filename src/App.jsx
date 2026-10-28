@@ -70,7 +70,7 @@ export default function App() {
         <button className="icon-btn" onClick={flip} aria-label="Switch light or dark">{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button>
       </header>
       <main key={tab}>
-        {tab === "me" && <Me S={S} />}
+        {tab === "me" && <Me S={S} onOpen={onOpen} />}
         {tab === "setup" && <Suspense fallback={null}><Setup S={S} live={live} /></Suspense>}
         {tab === "sched" && <Matches S={S} admin={!VIEW} onOpen={onOpen} />}
         {tab === "tables" && <Tables S={S} />}

@@ -66,7 +66,7 @@ export default function Matches({ S, admin, onOpen }) {
   const list = byTeam.filter(m => inStatus(S, m, f.status));
   const live = list.filter(m => onCourt(S, m)).sort((x, y) => (courtOf(S, x) || 99) - (courtOf(S, y) || 99));
   const finished = all.length > 0 && all.every(m => res(S, m).done);
-  const card = m => <MatchCard key={m.id} S={S} m={m} onOpen={admin ? onOpen : null} />;
+  const card = m => <MatchCard key={m.id} S={S} m={m} onOpen={onOpen} />;
   return (
     <div className="page wide">
       <div className="title-row"><h1 className="page-title">Matches</h1>{filtered && <button className="btn sm" onClick={() => set({ team: null, status: "all" })}><X size={14} />Clear</button>}</div>

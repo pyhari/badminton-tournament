@@ -707,3 +707,8 @@ button.match:active { transform: scale(.98); }
 .pd-chip.me { border: 2px solid var(--accent-text); background: color-mix(in srgb, var(--accent-text) 14%, var(--surface)); }
 @keyframes pd-pop { from { opacity: 0; transform: scale(.6) translateY(8px); } }
 @media (prefers-reduced-motion: reduce) { .pd-chip, .pd-team, .pd-team .pd-q, .pd-you.in, .pd-pep, .pd-hero::after, .pd-soon i { animation: none; } }
+
+/* Players' read-only score sheet: points instead of steppers. */
+.ge-pts { display: block; min-width: 58px; text-align: center; font-family: var(--score); font-size: 34px; font-weight: 800; line-height: 1.2; color: var(--text); }
+.ge-pts.won { color: var(--accent-text); }
+.game-edit .gl .muted { color: var(--muted); text-transform: none; letter-spacing: 0; }
