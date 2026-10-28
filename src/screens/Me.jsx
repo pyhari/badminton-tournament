@@ -13,7 +13,8 @@ export default function Me({ S }) {
   const [q, setQ] = useState("");
   const g = groups(S);
   const choose = v => { lsSet("bt_me", v); setMe(v); setQ(""); };
-  if (!g) return <PreDraw S={S} me={me} choose={choose} />;
+  // Before the draw, or groups left over from an old draw whose teams have no players yet.
+  if (!g || !S.teams.every(x => x.m1 && x.m2 && x.w)) return <PreDraw S={S} me={me} choose={choose} />;
   const idx = pickedTeam(S, me);
 
   if (isNaN(idx) || !S.teams[idx]) {
