@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import * as E from "./engine.js";
-import { tieFacts, dayFacts, factsKey, highlights, matchTag, groupRace, champions, top2Odds } from "./insights.js";
+import { tieFacts, dayFacts, factsKey, highlights, matchTag, groupRace, champions, top2Odds, predict, outlookFacts } from "./insights.js";
 import { makeHandler, KEYS } from "../../api/insights.mjs";
 
 const full = () => {
@@ -175,5 +175,28 @@ describe("top-2 odds", () => {
     const g = top2Odds(S)[0];
     expect(g.settled).toBe(true);
     expect(g.rows.map(r => r.pct).sort((x, y) => y - x)).toEqual([100, 100, 0, 0]);
+  });
+});
+
+describe("Champions League prediction", () => {
+  it("puts the 2 likeliest teams of each unfinished group in the Champions League and the rest in the FPL", () => {
+    const S = full();
+    S.players.forEach((p, i) => { p.lvl = 1 + (i % 5); });
+    const [m] = E.prelims(S).filter(x => x.stage === "Group A");
+    play(S, m, [[15, 9], [15, 9], [15, 9]]);
+    const g = predict(S)[0], odds = top2Odds(S)[0];
+    expect(g.cl).toHaveLength(2);
+    expect(g.fpl).toHaveLength(2);
+    const pct = t => odds.rows.find(r => r.t === t).pct;
+    expect(Math.min(...g.cl.map(r => pct(r.t)))).toBeGreaterThanOrEqual(Math.max(...g.fpl.map(r => pct(r.t))));
+    // An FPL team's chance is its chance of finishing 3rd or 4th.
+    g.fpl.forEach(r => expect(r.chance).toBe(100 - pct(r.t)));
+    // The matches that could change it are between a predicted Champions League team and an FPL team.
+    const top = new Set(g.cl.map(r => r.t));
+    g.key.forEach(x => expect(top.has(x.a)).not.toBe(top.has(x.b)));
+    expect(outlookFacts(S)[0]).toMatchObject({ group: "Group A", likelyChampionsLeague: g.cl.map(r => E.tn(S, r.t)) });
+    // A finished group has no prediction.
+    E.prelims(S).filter(x => x.stage === "Group A").forEach(x => play(S, x, [[15, 9], [15, 9], [15, 9]]));
+    expect(predict(S).map(x => x.name)).toEqual(["Group B"]);
   });
 });

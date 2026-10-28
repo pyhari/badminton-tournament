@@ -79,14 +79,40 @@ export function top2Odds(S, runs = 2000) {
   });
 }
 
-// What the AI needs to explain each unsettled team's chances.
+// In plain words, how likely a team is to end up where it is predicted to go.
+export function chanceWord(r, pct) {
+  if (r.status === "through" || r.status === "out") return "Confirmed";
+  return pct >= 85 ? "Very likely" : pct >= 60 ? "Likely" : "Toss-up";
+}
+
+// The prediction for each unfinished group: the 2 teams most likely to finish top 2 go to the
+// Champions League, the other 2 to the FPL. Each team gets its chance of ending up there, and
+// the matches still to play between the two sides, which could swap them.
+export function predict(S) {
+  return top2Odds(S).filter(g => !g.settled).map(g => {
+    const order = [...g.rows].sort((x, y) => y.pct - x.pct || x.pos - y.pos);
+    const side = (rows, cl) => rows.map(r => { const pct = cl ? r.pct : 100 - r.pct; return { ...r, chance: pct, word: chanceWord(r, pct) }; });
+    const cl = side(order.slice(0, 2), true), fpl = side(order.slice(2), false);
+    const top = new Set(cl.map(r => r.t));
+    const key = prelims(S).filter(m => m.stage === g.name && !res(S, m).done && top.has(m.a) !== top.has(m.b));
+    return { name: g.name, cl, fpl, key };
+  });
+}
+
+// What the AI needs to explain the prediction for each unfinished group and team.
 export function outlookFacts(S) {
-  return top2Odds(S).filter(g => !g.settled).flatMap(g => g.rows.map(r => ({
-    t: r.t, team: tn(S, r.t), players: tp(S, r.t), group: g.name, top2Chance: r.pct + "%", position: r.pos,
-    played: r.played, won: r.won, gamesWon: r.gamesWon, pointDiff: r.pointDiff,
-    strength: power(S, r.t),
-    stillToPlay: r.opponents.map(o => `${tn(S, o)} (strength ${power(S, o)})`)
-  })));
+  return predict(S).map(g => ({
+    group: g.name,
+    likelyChampionsLeague: g.cl.map(r => tn(S, r.t)),
+    likelyFPL: g.fpl.map(r => tn(S, r.t)),
+    matchesThatCouldChangeIt: g.key.map(m => `${tn(S, m.a)} v ${tn(S, m.b)}`),
+    teams: [...g.cl.map(r => [r, BR.Cup]), ...g.fpl.map(r => [r, BR.Plate])].map(([r, to]) => ({
+      t: r.t, team: tn(S, r.t), players: tp(S, r.t), predicted: to, chance: `${r.word} (${r.chance}%)`, position: r.pos,
+      played: r.played, won: r.won, pointDiff: r.pointDiff,
+      strength: power(S, r.t),
+      stillToPlay: r.opponents.map(o => `${tn(S, o)} (strength ${power(S, o)})`)
+    }))
+  }));
 }
 
 // Every finished match, groups first, then the playoffs in order.

@@ -491,23 +491,27 @@ button.match:active { transform: scale(.98); }
 /* Race for the Champions League (Tables, players' page). */
 .outlook { border-radius: 22px; padding: 14px 16px 6px; margin: 4px 0 6px; background: linear-gradient(135deg, color-mix(in srgb, #d4ff3a 18%, var(--surface)), var(--surface) 60%); border: 1px solid color-mix(in srgb, var(--accent-text) 22%, var(--line)); }
 .outlook-sub { margin: 4px 0 6px; font-size: 12px; color: var(--muted); font-weight: 500; }
-.ol-group { padding: 4px 0; }
-.ol-name { display: block; margin: 8px 0 2px; font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
-.ol-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0; border-top: 1px solid var(--line); }
-.ol-row:first-of-type { border-top: 0; }
+.ol-group { padding: 4px 0 8px; }
+.ol-name { display: block; margin: 10px 0 2px; font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+.ol-sum { margin: 4px 0 8px; font-size: 14px; line-height: 1.45; font-weight: 600; }
+.ol-side { display: flex; align-items: center; gap: 6px; margin: 10px 0 2px; font-size: 11px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; }
+.ol-side.cl { color: var(--accent-text); }
+.ol-side.fpl { color: var(--muted); }
+.ol-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px 0 8px 10px; border-left: 3px solid var(--accent-text); margin-top: 4px; }
+.ol-row.fpl { border-left-color: var(--surface-3); }
 .ol-main { flex: 1; min-width: 0; }
 .ol-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
 .ol-top .tm-nm b { font-size: 15px; }
-.ol-pct { display: inline-flex; align-items: center; gap: 3px; flex: none; font-family: var(--score); font-size: 20px; font-weight: 800; }
-.ol-row.through .ol-pct { color: var(--accent-text); font-size: 16px; }
-.ol-row.out .ol-pct { color: var(--muted); font-size: 14px; }
-.ol-bar { height: 6px; border-radius: 9px; background: var(--surface-3); overflow: hidden; margin: 5px 0 2px; }
-.ol-bar span { display: block; height: 100%; border-radius: 9px; background: var(--accent-text); transition: width .6s ease; }
-.ol-row.out .ol-bar span { background: var(--muted); }
-.ol-main p { margin: 5px 0 0; font-size: 13px; line-height: 1.4; font-style: italic; }
-.ol-left { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
-.ol-left small { font-size: 11px; font-weight: 700; color: var(--muted); margin-right: 2px; }
-.ol-left .badge { width: 24px; height: 24px; font-size: 9px; border-radius: 7px; }
+.ol-chance { flex: none; display: inline-flex; align-items: baseline; gap: 5px; padding: 3px 9px; border-radius: 99px; font-size: 12px; font-weight: 800; background: var(--surface-2); color: var(--text); }
+.ol-chance small { font-size: 11px; font-weight: 700; color: var(--muted); }
+.ol-chance.confirmed, .ol-chance.very-likely { background: color-mix(in srgb, var(--accent-text) 16%, var(--surface)); color: var(--accent-text); }
+.ol-row.fpl .ol-chance.confirmed, .ol-row.fpl .ol-chance.very-likely { background: var(--surface-2); color: var(--text); }
+.ol-chance.toss-up { background: color-mix(in srgb, var(--warn) 16%, var(--surface)); color: var(--warn); }
+.ol-main p { margin: 4px 0 0; font-size: 13px; line-height: 1.4; color: var(--muted); }
+.ol-key { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.ol-key small { font-size: 11px; font-weight: 700; color: var(--muted); }
+.ol-key > span { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--muted); }
+.ol-key .badge { width: 24px; height: 24px; font-size: 9px; border-radius: 7px; }
 @media (min-width: 760px) { .outlook .ol-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; } }
 .recap-tag { display: inline-block; margin-right: 6px; font-size: 10.5px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--accent-text); }
 .recap { display: flex; gap: 8px; align-items: flex-start; margin-top: 8px; padding-top: 9px; border-top: 1px solid var(--line); font-size: 13px; line-height: 1.45; color: var(--text); }

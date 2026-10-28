@@ -37,4 +37,5 @@ export function startInsights() {
 const subscribe = f => { listeners.add(f); return () => listeners.delete(f); };
 export const useInsights = () => useSyncExternalStore(subscribe, () => data);
 export const useReasons = () => useSyncExternalStore(subscribe, () => (data && data.reasons) || null);
+export const useForecast = () => useSyncExternalStore(subscribe, () => (data && data.forecast) || null);
 export const useRecap = id => useSyncExternalStore(subscribe, () => (data && data.recaps && data.recaps[id]) || null);

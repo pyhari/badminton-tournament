@@ -13,7 +13,7 @@ import { dayFacts, tieFacts, factsKey, tieKey, highlights, outlookFacts } from "
 const INSIGHTS_ON = process.env.VERCEL_ENV !== "production";
 const MODEL = "claude-opus-5-5";
 // Bump when the wording rules change, so saved words are written again.
-const VERSION = "6:";
+const VERSION = "7:";
 const recapKey = t => VERSION + tieKey(t);
 const MIN_GAP = 45 * 1000, RETRY_AFTER = 5 * 60 * 1000, LOCK_SECS = 120;
 
@@ -32,13 +32,16 @@ Story so far: the app already shows the tables, who is through or out, the champ
 - lede: one sentence, under 28 words, setting the scene.
 - one caption per highlight, under 16 words, saying why that match mattered.
 Recaps sit under each match card, which shows the scores.
-Outlook: for each team in an unfinished group, one reason under 16 words for its chance of a top-2 place (the Champions League), next to the percentage the app shows. Explain it from the facts: matches won so far, who it still has to play and whether they are stronger or weaker (strength is the sum of player levels), and point difference if it may decide places. Don't repeat the percentage. Say "likely" or "needs", never "will".
+Outlook: the app predicts, for each unfinished group, which 2 teams are likely to finish top 2 (into the Champions League) and which 2 are likely 3rd or 4th (into the FPL, the FFBC Premier League). Write for casual players, in plain everyday words:
+- one group summary, under 30 words: name the 2 teams likely for the Champions League and the 2 likely for the FPL, and the match that could change it, if any.
+- one reason per team, under 14 words, for why it is predicted to go where it is: wins so far and how strong the teams it still has to play are (strength is the sum of player levels; say "stronger" or "weaker", never the numbers). Don't repeat the chance or percentage the app shows.
+Say "likely", "needs" or "could", never "will". No jargon such as "point difference" or "strength rating".
 Name the players, not just the team: in each recap, the pair(s) who won the key games; in each caption and outlook reason, at least one player of the team. Write names exactly as given, keeping their order (the woman first in a mixed pair).
 Teams finishing 3rd or 4th in a group are not eliminated: they go on to the FPL bracket.
 Warm and fun, never mocking the losing side. No hashtags or emoji.`;
 
 const SCHEMA = {
-  type: "object", additionalProperties: false, required: ["story", "outlook", "recaps"],
+  type: "object", additionalProperties: false, required: ["story", "groups", "outlook", "recaps"],
   properties: {
     story: {
       type: "object", additionalProperties: false, required: ["headline", "lede", "captions"],
@@ -50,6 +53,10 @@ const SCHEMA = {
           items: { type: "object", additionalProperties: false, required: ["key", "caption"], properties: { key: { type: "string" }, caption: { type: "string" } } }
         }
       }
+    },
+    groups: {
+      type: "array",
+      items: { type: "object", additionalProperties: false, required: ["group", "summary"], properties: { group: { type: "string" }, summary: { type: "string" } } }
     },
     outlook: {
       type: "array",
@@ -84,7 +91,7 @@ export async function write(client, S, saved) {
     system: SYSTEM,
     messages: [{
       role: "user",
-      content: `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<highlights>\n${JSON.stringify(cards)}\n</highlights>\n<outlook>\n${JSON.stringify(outlook)}\n</outlook>\n<matches_needing_recaps>\n${JSON.stringify(need)}\n</matches_needing_recaps>\nWrite the story so far with one caption per highlight (using its key), one outlook reason per team in <outlook> (using its t), and one recap for each match needing one (using its id).`
+      content: `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<highlights>\n${JSON.stringify(cards)}\n</highlights>\n<outlook>\n${JSON.stringify(outlook)}\n</outlook>\n<matches_needing_recaps>\n${JSON.stringify(need)}\n</matches_needing_recaps>\nWrite the story so far with one caption per highlight (using its key), one summary per group in <outlook> (using its group name), one reason per team in <outlook> (using its t), and one recap for each match needing one (using its id).`
     }]
   });
   if (response.stop_reason !== "end_turn") throw new Error("Claude stopped early: " + response.stop_reason);
@@ -96,9 +103,10 @@ export async function write(client, S, saved) {
   }
   const keys = new Set(cards.map(c => c.key));
   const story = { headline: out.story.headline, lede: out.story.lede, captions: Object.fromEntries(out.story.captions.filter(c => keys.has(c.key)).map(c => [c.key, c.caption.trim()])) };
-  const teams = new Set(outlook.map(o => o.t));
+  const teams = new Set(outlook.flatMap(g => g.teams.map(o => o.t))), names = new Set(outlook.map(g => g.group));
   const reasons = Object.fromEntries((out.outlook || []).filter(o => teams.has(o.t) && o.reason).map(o => [o.t, o.reason.trim()]));
-  return { story, reasons, recaps, model: response.model };
+  const forecast = Object.fromEntries((out.groups || []).filter(g => names.has(g.group) && g.summary).map(g => [g.group, g.summary.trim()]));
+  return { story, reasons, forecast, recaps, model: response.model };
 }
 
 // What players see: the story and the recaps that still match the scores.
@@ -109,9 +117,9 @@ function view(S, saved, key) {
     const t = tieFacts(S, m), r = t && saved.recaps[m.id];
     if (r && r.key === recapKey(t)) recaps[m.id] = r.text;
   });
-  // Reasons explain the odds for the results they were written for, so they are shown only while current.
+  // The prediction is for the results it was written for, so it is shown only while current.
   const current = saved.key === key;
-  return { story: saved.story, recaps, reasons: current ? saved.reasons || {} : {}, at: saved.at, current };
+  return { story: saved.story, recaps, reasons: current ? saved.reasons || {} : {}, forecast: current ? saved.forecast || {} : {}, at: saved.at, current };
 }
 
 export function makeHandler({ enabled, db, getClient, background, now = () => Date.now() }) {
