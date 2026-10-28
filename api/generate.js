@@ -95,6 +95,10 @@ function makeHandler(getClient) {
   };
 }
 
-module.exports = makeHandler(() => (process.env.ANTHROPIC_API_KEY ? new Anthropic() : null));
+// Turned off for now, so no AI calls are made. Set to true here and in src/screens/TestTools.jsx to turn it back on.
+const AI_ON = false;
+const off = (req, res) => res.status(503).json({ error: "The AI planner is turned off." });
+
+module.exports = AI_ON ? makeHandler(() => (process.env.ANTHROPIC_API_KEY ? new Anthropic() : null)) : off;
 module.exports.makeHandler = makeHandler;
 module.exports.SYSTEM = SYSTEM;

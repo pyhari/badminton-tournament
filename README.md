@@ -58,7 +58,10 @@ On preview and local builds, **Setup → Test** has tools to play the tournament
 
 Each run is added to a run log showing the group tables, both playoff brackets and the champions. `npm test` also plays 200 random tournaments and checks every playoff pairing.
 
-## AI format planner (preview)
+## AI format planner (turned off)
+
+**Turned off for now:** the AI tab is hidden and `/api/generate` answers 503. To turn it back on, set `AI_ON` to `true` in `src/screens/TestTools.jsx` and `api/generate.js`.
+
 
 **Setup → AI** turns a description such as "12 teams of 2 men and 1 woman, 3 groups, top 2 into a knockout, games to 21, 5 courts from 8:30" into a tournament format, using Claude Opus 5.5 with structured outputs.
 

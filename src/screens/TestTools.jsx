@@ -9,8 +9,10 @@ import { Badge, toast } from "../components/ui.jsx";
 export const IS_PROD = __APP_ENV__ === "production";
 // Shown on preview and local builds; on the live site only with ?test=1.
 export const showTests = !IS_PROD || /[?&]test=1/.test(location.search);
-// The AI format planner: the same rule, with ?ai=1 on the live site.
-export const showAI = !IS_PROD || /[?&]ai=1/.test(location.search);
+// The AI format planner is turned off for now. To turn it back on, set AI_ON to true
+// here and in api/generate.js: it then shows like the test tools, with ?ai=1 on the live site.
+const AI_ON = false;
+export const showAI = AI_ON && (!IS_PROD || /[?&]ai=1/.test(location.search));
 
 export default function TestTools({ S }) {
   const [mode, setMode] = useState("random");
