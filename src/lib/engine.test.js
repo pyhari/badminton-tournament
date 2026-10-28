@@ -118,6 +118,23 @@ describe("team draw", () => {
     expect(E.pairIssue(together, "M:Sai", "F:Radha")).toBe(null);
   });
 
+  it("keeps chosen players apart, together with pairs", () => {
+    const together = [["F:Meenakshi", "M:Arjun"]];
+    const apart = [["M:Arjun", "M:Chandru"], ["M:Arjun", "M:Dinesh R"], ["F:Meenakshi", "M:Sai"], ["M:Hari", "F:Hema"], ["M:Prem", "M:Hari"]];
+    for (let run = 0; run < 10; run++) {
+      const S = ready();
+      E.drawTeams(S, undefined, together, apart);
+      const team = k => E.teamOf(S, E.findP(S, k.slice(2), k[0]));
+      expect(team("M:Arjun")).toBe(team("F:Meenakshi"));
+      apart.forEach(([x, y]) => expect(team(x)).not.toBe(team(y)));
+      expect(E.teamIssues(S)).toEqual([]);
+    }
+    expect(E.apartIssue(together, apart, "F:Hema", "F:Radha")).toMatch(/anyway/);
+    expect(E.apartIssue(together, apart, "M:Arjun", "F:Meenakshi")).toMatch(/kept together/);
+    expect(E.apartIssue(together, apart, "M:Chandru", "M:Arjun")).toMatch(/already/);
+    expect(E.pairIssue([], "M:Arjun", "M:Chandru", apart)).toMatch(/kept apart/);
+  });
+
   it("swaps, subs in reserves and flags duplicates", () => {
     const S = ready();
     E.drawTeams(S);
