@@ -1,7 +1,7 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { Check, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, FastForward, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X } from "lucide-react";
+import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, FastForward, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X } from "lucide-react";
 import * as E from "../lib/engine.js";
-import { update, replaceAll, getState, getPin, sync, pullNow, logout, isDirty } from "../lib/store.js";
+import { update, replaceAll, getState, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
 import Together from "../components/Together.jsx";
@@ -45,26 +45,60 @@ function Players({ S, next }) {
     taps.current = taps.current.filter(t => now - t < 4000).concat(now);
     if (taps.current.length >= 5) { taps.current = []; setSecret(true); }
   };
+  const [q, setQ] = useState("");
+  const [sort, setSortState] = useState(() => lsGet("bt_psort") || "az");
+  const setSort = v => { setSortState(v); lsSet("bt_psort", v); };
+  const by = { az: (a, b) => a[0].name.localeCompare(b[0].name), level: (a, b) => b[0].lvl - a[0].lvl || a[0].name.localeCompare(b[0].name), added: (a, b) => a[1] - b[1] }[sort] || (() => 0);
+  const count = g => { const ps = S.players.filter(p => p.g === g); return { on: ps.filter(p => p.on).length, off: ps.filter(p => !p.on).length, need: g === "M" ? 2 * E.NT : E.NT }; };
+  const men = count("M"), women = count("F");
+  const find = q.trim().toLowerCase();
   const list = g => {
-    const rows = S.players.map((p, i) => [p, i]).filter(([p]) => p.g === g);
-    const on = rows.filter(([p]) => p.on).length, need = g === "M" ? 2 * E.NT : E.NT;
+    const { on, need } = g === "M" ? men : women;
+    const rows = S.players.map((p, i) => [p, i]).filter(([p]) => p.g === g).sort(by);
+    // Playing players are numbered 1, 2, 3... in the order shown; the search keeps their numbers.
+    const playing = rows.filter(([p]) => p.on).map((r, k) => [...r, k + 1]), out = rows.filter(([p]) => !p.on);
+    const hit = ([p]) => !find || p.name.toLowerCase().includes(find);
+    const shownOn = playing.filter(hit), shownOff = out.filter(hit);
+    if (find && !shownOn.length && !shownOff.length) return null;
     return (
       <>
         <div className="section" onClick={g === "M" ? tapTitle : undefined} style={{ userSelect: "none" }}><h2>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
         <div className="card flat">
-          {rows.map(([p, i]) => <PlayerRow key={i} S={S} p={p} i={i} />)}
-          {!S.locked && <AddPlayer S={S} g={g} />}
+          {shownOn.map(([p, i, n]) => <PlayerRow key={i} S={S} p={p} i={i} n={n} />)}
+          {shownOff.length > 0 && <div className="prow-sub">Not playing · {shownOff.length}</div>}
+          {shownOff.map(([p, i]) => <PlayerRow key={i} S={S} p={p} i={i} />)}
+          {!S.locked && !find && <AddPlayer S={S} g={g} />}
         </div>
       </>
     );
   };
+  const ready = !issues.length;
+  // "2 men too many · 1 woman short"
+  const gap = (c, one, many) => { const d = c.on - c.need, k = Math.abs(d); return d ? `${k} ${k === 1 ? one : many} ${d > 0 ? "too many" : "short"}` : ""; };
+  const off = [gap(men, "man", "men"), gap(women, "woman", "women")].filter(Boolean).join(" · ");
   return (
     <>
+      <div className="psum">
+        {[["Men", men], ["Women", women]].map(([label, c]) => (
+          <div key={label} className={c.on === c.need ? "ok" : "bad"}><b className="num">{c.on}<small>/{c.need}</small></b><span>{label}</span>{c.off > 0 && <em>+{c.off} not playing</em>}</div>
+        ))}
+        <div><b className="num">{men.on + women.on}</b><span>Playing</span>{men.off + women.off > 0 && <em>{S.players.length} in the list</em>}</div>
+        <p className={ready ? "ok" : "bad"}>{ready ? <><Check size={14} strokeWidth={3} />Ready for {E.NT} teams</> : <><AlertTriangle size={14} />{off || "Check the players below"}</>}</p>
+      </div>
       {S.locked
         ? <div className="banner"><Lock size={18} />Teams are locked, so who plays and their levels are fixed. Names can still be corrected.</div>
         : <p className="hint" style={{ marginTop: 0 }}>Switch on who is playing and set each level: 5 dots is the strongest. The team draw uses levels to make even teams.</p>}
+      <div className="ptools">
+        <div className="search"><Search size={18} /><input className="field" placeholder="Search player" value={q} onChange={e => setQ(e.target.value)} /></div>
+        <select className="field" value={sort} aria-label="Sort players" onChange={e => setSort(e.target.value)}>
+          <option value="az">A–Z</option>
+          <option value="level">By level</option>
+          <option value="added">As added</option>
+        </select>
+      </div>
       {list("M")}
       {list("F")}
+      {find && !S.players.some(p => p.name.toLowerCase().includes(find)) && <p className="hint">No player called “{q.trim()}”.</p>}
       {issues.length > 0 && !S.locked && <div className="banner warn" style={{ marginTop: 12 }}><AlertTriangle size={18} /><div>{issues.map(x => <div key={x}>{x}</div>)}</div></div>}
       {!issues.length && !S.locked && <button className="btn primary block" style={{ marginTop: 12 }} onClick={next}>Next: make teams</button>}
       {secret && <Together S={S} onClose={() => setSecret(false)} />}
@@ -72,7 +106,7 @@ function Players({ S, next }) {
   );
 }
 
-function PlayerRow({ S, p, i }) {
+function PlayerRow({ S, p, i, n }) {
   const t = E.teamOf(S, p), fixed = S.locked || t >= 0;
   const [name, setName] = useState(p.name);
   useEffect(() => setName(p.name), [p.name]);
@@ -84,6 +118,7 @@ function PlayerRow({ S, p, i }) {
   };
   return (
     <div className={`prow ${p.on ? "" : "off"}`}>
+      <span className="pno num">{n || ""}</span>
       <button className={`switch ${p.on ? "on" : ""}`} role="switch" aria-checked={p.on} aria-label={`${p.name} is playing`} disabled={fixed}
         onClick={() => update(n => { n.players[i].on = !n.players[i].on; })} />
       <div>

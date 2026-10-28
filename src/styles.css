@@ -312,7 +312,10 @@ button.match:active { transform: scale(.98); }
 .namelist.teams button { border-radius: 16px; padding: 10px 12px; text-align: left; }
 
 /* ---------- setup ---------- */
-.prow { display: grid; grid-template-columns: auto 1fr auto auto; gap: 10px; align-items: center; padding: 8px 14px; border-top: 1px solid var(--line); }
+.prow { display: grid; grid-template-columns: 20px auto 1fr auto auto; gap: 10px; align-items: center; padding: 8px 14px 8px 8px; border-top: 1px solid var(--line); }
+.pno { text-align: right; font-family: var(--score); font-size: 15px; font-weight: 700; color: var(--muted); }
+.prow-sub { padding: 10px 14px 6px; border-top: 1px solid var(--line); font-size: 11px; font-weight: 800; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); background: var(--surface-2); }
+.prow-sub + .prow { border-top: 0; }
 .prow:first-child { border-top: 0; }
 .prow .nmi { width: 100%; border: 0; background: none; font-weight: 700; font-size: 16px; padding: 6px 0; outline: none; border-bottom: 1px dashed transparent; }
 .prow .nmi:focus { border-bottom-color: var(--accent-text); }
@@ -598,3 +601,18 @@ button.match:active { transform: scale(.98); }
 .ge-ok { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--line); font-size: 12.5px; color: var(--muted); font-weight: 600; line-height: 1.35; }
 .ge-ok span { flex: 1; }
 .ge-ok .btn { flex: none; }
+
+/* ---------- players summary and tools ---------- */
+.psum { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 0 0 12px; }
+.psum > div { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px; display: flex; flex-direction: column; }
+.psum b { font-family: var(--score); font-size: 28px; font-weight: 800; line-height: 1; }
+.psum b small { font-size: 16px; color: var(--muted); font-weight: 700; }
+.psum span { font-size: 12px; font-weight: 800; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+.psum em { font-style: normal; font-size: 11px; font-weight: 600; color: var(--muted); margin-top: 2px; }
+.psum > div.ok b { color: var(--accent-text); }
+.psum > div.bad b { color: var(--warn); }
+.psum p { grid-column: 1 / -1; margin: 0; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; }
+.psum p.ok { color: var(--accent-text); }
+.psum p.bad { color: var(--warn); }
+.ptools { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 4px; }
+.ptools select.field { width: auto; padding-right: 10px; }
