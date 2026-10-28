@@ -1,12 +1,12 @@
 import { useMemo } from "react";
 import { Sparkles, Trophy, Shield } from "lucide-react";
-import { BR } from "../lib/engine.js";
+import { BR, BR_FULL } from "../lib/engine.js";
 import { predict } from "../lib/insights.js";
 import { useForecast, useReasons } from "../lib/insightsFeed.js";
 import { Badge, TeamName } from "./ui.jsx";
 
-// "Race for the Champions League" on the players' Tables tab: for each group, the 2 teams
-// likely to go to the Champions League and the 2 likely to go to the FPL, worked out by the
+// "Race for the FFBC Champions League" on the players' Tables tab: for each group, the 2 teams
+// likely to go to the Champions League and the 2 likely to go to the Premier League, worked out by the
 // app (confirmed once the group is finished). The AI adds a one-line summary per unfinished
 // group and a reason per team.
 export default function Outlook({ S }) {
@@ -27,9 +27,9 @@ export default function Outlook({ S }) {
     </div>
   );
   return (
-    <section className="outlook" aria-label={`Race for the ${BR.Cup}`}>
-      <div className="story-top"><Sparkles size={14} /><span>Race for the {BR.Cup}</span></div>
-      <p className="outlook-sub">{done ? "The group stage is over. " : "Our prediction from results so far and player levels. "}Top 2 in each group go to the {BR.Cup}; 3rd and 4th go to the {BR.Plate} (FFBC Premier League).</p>
+    <section className="outlook" aria-label={`Race for the ${BR_FULL.Cup}`}>
+      <div className="story-top"><Sparkles size={14} /><span>Race for the {BR_FULL.Cup}</span></div>
+      <p className="outlook-sub">{done ? "The group stage is over. " : "Our prediction from results so far and player levels. "}Top 2 in each group go to the {BR_FULL.Cup}; 3rd and 4th go to the {BR_FULL.Plate}.</p>
       <div className="ol-wrap">
         {groups.map(g => (
           <div key={g.name} className="ol-group">

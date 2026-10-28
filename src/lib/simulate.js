@@ -12,9 +12,9 @@ const chance = (rnd, p) => rnd(1000) < p * 1000;
 
 // Which side wins a tie: 0 for team a, 1 for team b.
 // cl: the team chosen to win the Champions League. It wins every match it plays.
-// fpl: the team chosen to win the FPL. It loses all its group matches, which always leaves it
+// fpl: the team chosen to win the Premier League. It loses all its group matches, which always leaves it
 // 3rd or 4th (no other team can also end on zero wins and still be above it in the top 2),
-// then wins every FPL match.
+// then wins every Premier League match.
 function pickWinner(S, m, mode, { cl, fpl }, rnd) {
   const has = t => t != null && (m.a === t || m.b === t), side = t => (m.a === t ? 0 : 1);
   if (has(cl) && m.br !== "Plate") return side(cl);

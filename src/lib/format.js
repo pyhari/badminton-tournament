@@ -27,7 +27,7 @@ export const CLUB_FORMAT = {
   groups: { count: 2, rounds: 1 },
   playoffs: [
     { name: "Champions League", format: "ipl", positions: [1, 2] },
-    { name: "FPL", format: "ipl", positions: [3, 4] }
+    { name: "Premier League", format: "ipl", positions: [3, 4] }
   ],
   venue: { courts: 4, start: "09:00", minutesPerGame: 12 },
   notes: []

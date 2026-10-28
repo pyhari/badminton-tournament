@@ -50,7 +50,7 @@ describe("tournament facts", () => {
     expect(rows.filter(r => r.status === "out")).toHaveLength(2);
     expect(groupRace(S)[1].rows.every(r => r.status === "in contention")).toBe(true);
     // Claude is told where 3rd and 4th go, so it never calls them eliminated.
-    expect(dayFacts(S).groups["Group A"].find(r => r.team === E.tn(S, g[3])).status).toBe("certain 3rd or 4th: into the FPL");
+    expect(dayFacts(S).groups["Group A"].find(r => r.team === E.tn(S, g[3])).status).toBe("certain 3rd or 4th: into the Premier League");
   });
 });
 
@@ -179,7 +179,7 @@ describe("top-2 odds", () => {
 });
 
 describe("Champions League prediction", () => {
-  it("puts the 2 likeliest teams of each unfinished group in the Champions League and the rest in the FPL", () => {
+  it("puts the 2 likeliest teams of each unfinished group in the Champions League and the rest in the Premier League", () => {
     const S = full();
     S.players.forEach((p, i) => { p.lvl = 1 + (i % 5); });
     const [m] = E.prelims(S).filter(x => x.stage === "Group A");
@@ -189,9 +189,9 @@ describe("Champions League prediction", () => {
     expect(g.fpl).toHaveLength(2);
     const pct = t => odds.rows.find(r => r.t === t).pct;
     expect(Math.min(...g.cl.map(r => pct(r.t)))).toBeGreaterThanOrEqual(Math.max(...g.fpl.map(r => pct(r.t))));
-    // An FPL team's chance is its chance of finishing 3rd or 4th.
+    // A Premier League team's chance is its chance of finishing 3rd or 4th.
     g.fpl.forEach(r => expect(r.chance).toBe(100 - pct(r.t)));
-    // The matches that could change it are between a predicted Champions League team and an FPL team.
+    // The matches that could change it are between a predicted Champions League team and a Premier League team.
     const top = new Set(g.cl.map(r => r.t));
     g.key.forEach(x => expect(top.has(x.a)).not.toBe(top.has(x.b)));
     expect(outlookFacts(S)[0]).toMatchObject({ group: "Group A", likelyChampionsLeague: g.cl.map(r => E.tn(S, r.t)) });

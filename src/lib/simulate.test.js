@@ -62,7 +62,7 @@ describe("simulator", () => {
     }
   });
 
-  it("makes the chosen teams win the Champions League and the FPL", () => {
+  it("makes the chosen teams win the Champions League and the Premier League", () => {
     for (let k = 0; k < 16; k++) {
       const S = fresh(), cl = k % E.NT, fpl = (k * 3 + 1) % E.NT;
       if (cl === fpl) continue;

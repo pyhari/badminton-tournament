@@ -1,5 +1,5 @@
 import { Trophy, Medal, ArrowRight } from "lucide-react";
-import { BR, groups, playoffs, prelimsDone, tn, winnerTeam } from "../lib/engine.js";
+import { BR_FULL, groups, playoffs, prelimsDone, tn, winnerTeam } from "../lib/engine.js";
 import { Badge, Empty, MatchCard, teamColor, Players } from "../components/ui.jsx";
 
 const PATH = { "Qualifier 1": "Winner to the Final · loser to Qualifier 2", "Eliminator": "Winner to Qualifier 2 · loser is out", "Qualifier 2": "Winner to the Final", "Final": "" };
@@ -18,11 +18,11 @@ export default function Playoffs({ S, admin, onOpen }) {
           const Icon = br === "Cup" ? Trophy : Medal;
           return (
             <div key={br}>
-              <div className="section"><h2>{BR[br]}</h2></div>
+              <div className="section"><h2>{BR_FULL[br]}</h2></div>
               {w != null && (
                 <div className="champion" style={{ background: teamColor(w) }}>
                   <Icon size={36} strokeWidth={2.2} />
-                  <div><small>{BR[br]} champions</small><b>{tn(S, w)}</b><span><Players S={S} t={w} /></span></div>
+                  <div><small>Champions</small><b>{tn(S, w)}</b><span><Players S={S} t={w} /></span></div>
                   <div style={{ marginLeft: "auto" }}><Badge S={S} t={w} size="lg" /></div>
                 </div>
               )}

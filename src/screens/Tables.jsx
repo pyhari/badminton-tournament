@@ -1,5 +1,5 @@
 import { ListOrdered } from "lucide-react";
-import { BR, groups, seeds, table } from "../lib/engine.js";
+import { BR, BR_FULL, groups, seeds, table } from "../lib/engine.js";
 import { Badge, Empty, GenderKey, TeamName } from "../components/ui.jsx";
 import Outlook from "../components/Outlook.jsx";
 import { VIEW } from "../lib/store.js";
@@ -41,7 +41,7 @@ export default function Tables({ S }) {
       <div className="pair">
         {sd && ["Cup", "Plate"].map(br => (
           <div key={br}>
-            <div className="section"><h2>{BR[br]} seeds</h2></div>
+            <div className="section"><h2>{BR_FULL[br]} seeds</h2></div>
             <div className="card">
               {sd[br].map((t, i) => <div key={t} className="gitem"><span className="seat">{i + 1}</span><Badge S={S} t={t} size="sm" /><TeamName S={S} t={t} /></div>)}
             </div>

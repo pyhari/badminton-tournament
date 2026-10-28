@@ -16,7 +16,7 @@ How the club runs things today, for anything the description leaves open:
 - 8 teams of 3 (Man 1, Man 2, Woman), drawn from pots by level so teams are even.
 - A match between two teams is 3 games: men's doubles (Man 1 + Man 2), mixed doubles 1 (Man 1 + Woman), mixed doubles 2 (Man 2 + Woman). Games to 15, win by 2, no cap.
 - 2 groups of 4, everyone in a group plays each other once.
-- IPL-style playoffs: "Champions League" for places 1-2 of each group, "FPL" for places 3-4.
+- IPL-style playoffs: "Champions League" for places 1-2 of each group, "Premier League" for places 3-4.
 - 4 courts, starting 09:00, about 12 minutes per game.
 
 Rules for the config:

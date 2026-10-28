@@ -13,7 +13,7 @@ import { dayFacts, tieFacts, factsKey, tieKey, highlights, outlookFacts } from "
 const INSIGHTS_ON = process.env.VERCEL_ENV !== "production";
 const MODEL = "claude-opus-5-5";
 // Bump when the wording rules change, so saved words are written again.
-const VERSION = "7:";
+const VERSION = "8:";
 const recapKey = t => VERSION + tieKey(t);
 const MIN_GAP = 20 * 1000, RETRY_AFTER = 5 * 60 * 1000, LOCK_SECS = 120;
 
@@ -32,12 +32,13 @@ Story so far: the app already shows the tables, who is through or out, the champ
 - lede: one sentence, under 28 words, setting the scene.
 - one caption per highlight, under 16 words, saying why that match mattered.
 Recaps sit under each match card, which shows the scores.
-Outlook: the app predicts, for each unfinished group, which 2 teams are likely to finish top 2 (into the Champions League) and which 2 are likely 3rd or 4th (into the FPL, the FFBC Premier League). Write for casual players, in plain everyday words:
-- one group summary, under 30 words: name the 2 teams likely for the Champions League and the 2 likely for the FPL, and the match that could change it, if any.
+Outlook: the app predicts, for each unfinished group, which 2 teams are likely to finish top 2 (into the FFBC Champions League) and which 2 are likely 3rd or 4th (into the FFBC Premier League). Write for casual players, in plain everyday words:
+- one group summary, under 30 words: name the 2 teams likely for the Champions League and the 2 likely for the Premier League, and the match that could change it, if any.
 - one reason per team, under 14 words, for why it is predicted to go where it is: wins so far and how strong the teams it still has to play are (strength is the sum of player levels; say "stronger" or "weaker", never the numbers). Don't repeat the chance or percentage the app shows.
 Say "likely", "needs" or "could", never "will". No jargon such as "point difference" or "strength rating".
 Name the players, not just the team: in each recap, the pair(s) who won the key games; in each caption and outlook reason, at least one player of the team. Write names exactly as given, keeping their order (the woman first in a mixed pair).
-Teams finishing 3rd or 4th in a group are not eliminated: they go on to the FPL bracket.
+Teams finishing 3rd or 4th in a group are not eliminated: they go on to the FFBC Premier League.
+Call the two playoffs "the Champions League" and "the Premier League" (or "the FFBC Champions League" and "the FFBC Premier League"). Never "FPL", "Cup" or "Plate".
 Warm and fun, never mocking the losing side. No hashtags or emoji.`;
 
 const SCHEMA = {

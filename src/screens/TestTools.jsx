@@ -17,7 +17,7 @@ export const showAI = AI_ON && (!IS_PROD || /[?&]ai=1/.test(location.search));
 export default function TestTools({ S }) {
   const [mode, setMode] = useState("random");
   const [cl, setCl] = useState(null);   // chosen Champions League winner
-  const [fpl, setFpl] = useState(null); // chosen FPL winner
+  const [fpl, setFpl] = useState(null); // chosen Premier League winner
   const [log, setLog] = useState([]);
   const g = E.groups(S);
   const hasScores = Object.keys(S.scores).length > 0;

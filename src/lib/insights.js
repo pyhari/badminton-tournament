@@ -1,7 +1,7 @@
 // Facts about the tournament so far, worked out from the scores, for the AI
 // match recaps and "story so far" on the players' page. The AI only puts these
 // facts into words, so everything it says comes from here.
-import { GAME_LABELS, BR, groups, prelims, playoffs, res, table, tn, tp, pairOf, power, winnerTeam } from "./engine.js";
+import { GAME_LABELS, BR, BR_FULL, groups, prelims, playoffs, res, table, tn, tp, pairOf, power, winnerTeam } from "./engine.js";
 
 // A win by a team at least this much weaker (sum of player levels) counts as an upset.
 const UPSET_GAP = 2;
@@ -86,7 +86,7 @@ export function chanceWord(r, pct) {
 }
 
 // The prediction for each group: the 2 teams most likely to finish top 2 go to the
-// Champions League, the other 2 to the FPL. Each team gets its chance of ending up there, and
+// Champions League, the other 2 to the Premier League. Each team gets its chance of ending up there, and
 // the matches still to play between the two sides, which could swap them. A finished group
 // (settled) shows where its teams went.
 export function predict(S) {
@@ -105,7 +105,7 @@ export function outlookFacts(S) {
   return predict(S).filter(g => !g.settled).map(g => ({
     group: g.name,
     likelyChampionsLeague: g.cl.map(r => tn(S, r.t)),
-    likelyFPL: g.fpl.map(r => tn(S, r.t)),
+    likelyPremierLeague: g.fpl.map(r => tn(S, r.t)),
     matchesThatCouldChangeIt: g.key.map(m => `${tn(S, m.a)} v ${tn(S, m.b)}`),
     teams: [...g.cl.map(r => [r, BR.Cup]), ...g.fpl.map(r => [r, BR.Plate])].map(([r, to]) => ({
       t: r.t, team: tn(S, r.t), players: tp(S, r.t), predicted: to, chance: `${r.word} (${r.chance}%)`, position: r.pos,
@@ -160,7 +160,7 @@ export function champions(S) {
   const out = [];
   for (const br of ["Cup", "Plate"]) {
     const f = playoffs(S).find(m => m.br === br && m.label === "Final"), w = f && f.a != null && f.b != null ? winnerTeam(S, f) : null;
-    if (w != null) out.push({ name: BR[br], t: w });
+    if (w != null) out.push({ name: BR_FULL[br], t: w });
   }
   return out;
 }
@@ -193,7 +193,7 @@ export function dayFacts(S) {
   const allGames = ties.flatMap(t => t.games.map(g => ({ ...g, stage: t.stage, tie: `${t.winner} v ${t.loser}` })));
   return {
     progress: `${ties.length} of ${pre.length + 8} matches played`,
-    // Teams outside the top 2 are not out of the tournament: they play the FPL.
+    // Teams outside the top 2 are not out of the tournament: they play the Premier League.
     groups: Object.fromEntries(["A", "B"].map(gk => ["Group " + gk, groupStatus(S, gk).map(({ t, ...x }) => ({ ...x,
       status: x.status === "through" ? `certain top 2: into the ${BR.Cup}` : x.status === "out" ? `certain 3rd or 4th: into the ${BR.Plate}` : "not settled yet" }))])),
     upsets: ties.filter(t => t.upset).map(t => `${t.winner} beat ${t.loser} ${t.result} (${t.stage})`),

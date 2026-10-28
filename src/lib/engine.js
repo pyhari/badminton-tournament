@@ -8,13 +8,15 @@ export const WOMEN = ["Meenakshi", "Nandhini", "Hema", "Radha", "Nivedita", "Sho
 const OLD_LIST = "M:Arjun,Bharani,Chandru,Dinesh,Harikumar,Praveen,Shankar,Harish,Prabhu,Justin,Manoj,Prem,Rupesh,Sai,Shashank,Karthik,Yuvaraj,Karan|F:Bharani,Meenakshi,Nandhini,Hema,Radha,Vidhu,Pradhu,Nandini";
 const listSig = ps => ["M", "F"].map(g => g + ":" + ps.filter(p => p.g === g).map(p => p.name).join(",")).join("|");
 export const isOldList = S => listSig(S.players) === OLD_LIST && S.players.every(p => p.lvl === 3);
-export const BR = { Cup: "Champions League", Plate: "FPL" };
+// The two playoff brackets: short names for tight spots, full names for headings.
+export const BR = { Cup: "Champions League", Plate: "Premier League" };
+export const BR_FULL = { Cup: "FFBC Champions League", Plate: "FFBC Premier League" };
 export const GAME_LABELS = ["Men's doubles", "Mixed doubles 1", "Mixed doubles 2"];
 export const NT = 8, NG = 2; // teams, groups
 export const SLOT = { m1: "Man 1", m2: "Man 2", w: "Woman" };
 export const SLOTS = ["m1", "m2", "w"];
 export const slotG = f => f === "w" ? "F" : "M";
-export const STAGES = ["Group A", "Group B", "Champions League", "FPL"];
+export const STAGES = ["Group A", "Group B", BR.Cup, BR.Plate];
 
 export const player = (name, g) => ({ name, g, lvl: 3, on: true });
 
