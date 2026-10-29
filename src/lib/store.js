@@ -7,8 +7,8 @@ const KEY = "bt_tournament_v1";
 const WATCH_KEY = "bt_watch_v1"; // players: the last scores seen, shown at once on the next visit
 export const lsGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
 export const lsSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
-// Data from a removed draw feature, cleared from phones that still have it.
-try { ["bt_vault", "bt_together", "bt_apart"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
+// Data from removed features (draw pairs; ratings shown without a PIN), cleared from phones that still have it.
+try { ["bt_vault", "bt_together", "bt_apart", "bt_lv"].forEach(k => localStorage.removeItem(k)); } catch (e) {}
 
 export const VIEW = /\/watch\/?$/.test(location.pathname) || /[?&]view=1/.test(location.search);
 export const LOCAL = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);

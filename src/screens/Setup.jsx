@@ -5,6 +5,7 @@ import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSe
 import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
 import GroupDraw from "./GroupDraw.jsx";
+import RatingsPin from "../components/RatingsPin.jsx";
 import TestTools, { showTests, showAI } from "./TestTools.jsx";
 const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
 
@@ -12,9 +13,10 @@ const firstStep = S => !S.locked ? (S.teams.some(x => x.m1) ? "teams" : "players
 
 export default function Setup({ S, live }) {
   const [seg, setSeg] = useState(() => firstStep(S));
-  // Player ratings are hidden unless switched on, on this device, by the secret taps (Players).
-  const [lv, setLvState] = useState(() => lsGet("bt_lv") === "1");
-  const setLv = v => { setLvState(v); lsSet("bt_lv", v ? "1" : ""); toast(v ? "Ratings shown on this device" : "Ratings hidden"); };
+  // Player ratings are hidden unless opened with the secret taps (Players) and the ratings PIN,
+  // and only until this page is closed.
+  const [lv, setLvState] = useState(() => { try { return sessionStorage.getItem("bt_lv") === "1"; } catch (e) { return false; } });
+  const setLv = v => { setLvState(v); try { sessionStorage.setItem("bt_lv", v ? "1" : ""); } catch (e) {} toast(v ? "Ratings shown until you close this page" : "Ratings hidden"); };
   const done = { players: !E.poolIssues(S).length, teams: S.locked, groups: S.drawn.length >= E.NT };
   const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]].concat(showAI ? [["ai", "AI"]] : []);
   return (
@@ -46,12 +48,13 @@ export default function Setup({ S, live }) {
 /* ---------- players ---------- */
 function Players({ S, lv, setLv, next }) {
   const issues = E.poolIssues(S);
-  // Secret: five quick taps or clicks on the "Men" heading show or hide the ratings.
+  // Secret: five quick taps or clicks on the "Men" heading ask for the ratings PIN (or hide them).
   const taps = useRef([]);
+  const [askPin, setAskPin] = useState(false);
   const tapTitle = () => {
     const now = Date.now();
     taps.current = taps.current.filter(t => now - t < 4000).concat(now);
-    if (taps.current.length >= 5) { taps.current = []; setLv(!lv); }
+    if (taps.current.length >= 5) { taps.current = []; if (lv) setLv(false); else setAskPin(true); }
   };
   const [q, setQ] = useState("");
   const [sort, setSortState] = useState(() => lsGet("bt_psort") || "az");
@@ -110,6 +113,7 @@ function Players({ S, lv, setLv, next }) {
       {find && !S.players.some(p => p.name.toLowerCase().includes(find)) && <p className="hint">No player called “{q.trim()}”.</p>}
       {issues.length > 0 && !S.locked && <div className="banner warn" style={{ marginTop: 12 }}><AlertTriangle size={18} /><div>{issues.map(x => <div key={x}>{x}</div>)}</div></div>}
       {!issues.length && !S.locked && <button className="btn primary block" style={{ marginTop: 12 }} onClick={next}>Next: make teams</button>}
+      {askPin && <RatingsPin S={S} onClose={() => setAskPin(false)} onOpen={() => { setAskPin(false); setLv(true); }} />}
     </>
   );
 }

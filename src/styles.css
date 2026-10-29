@@ -780,3 +780,7 @@ button.match:active { transform: scale(.98); }
   .levels { gap: 2px; }
   .levels button { width: 13px; height: 13px; border-radius: 4px; }
 }
+
+/* PIN entry (ratings PIN). */
+.pinform { display: grid; gap: 8px; }
+.field.pin { font-size: 22px; letter-spacing: 6px; text-align: center; }
