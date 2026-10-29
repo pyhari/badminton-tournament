@@ -18,6 +18,9 @@ const POT_NOTE = ["One man for each team", "A second man for each team", "One wo
 // reveals them one pick at a time: all of Pot 1, then Pot 2, then the women.
 // The auto draw runs it as a show: a 3-2-1 countdown, a card for each pot, a drumroll
 // while the wheel spins and a fanfare with confetti at the end.
+// How big a fun fact grows, and settles: long facts grow a little less, so the card stays a sensible size.
+const factSize = f => ({ "--peak": Math.max(18, Math.min(23, 23 - (f.length - 80) / 12)) + "px", "--end": (f.length > 110 ? 15 : 16) + "px" });
+
 export default function TeamDraw({ S, onClose }) {
   const plan = useMemo(() => {
     const cols = E.balancedTeams(S);
@@ -116,7 +119,7 @@ export default function TeamDraw({ S, onClose }) {
               <div className="reveal" key={k} style={{ "--tc": teamColor(last.t) }}>
                 <small>{POTS[last.c]}</small>
                 <b>{last.p.name}</b>
-                {funFact(last.p.name) && <p className="reveal-fact">{funFact(last.p.name)}</p>}
+                {funFact(last.p.name) && <p className="reveal-fact" style={factSize(funFact(last.p.name))}>{funFact(last.p.name)}</p>}
                 <div className="joins"><span>joins</span><Badge S={S} t={last.t} size="sm" /><span className="tname">{E.tn(S, last.t)}</span></div>
               </div>
             ) : <span className="cer-wait">{spinning ? (left.length === 1 ? "Last one in the pot…" : "Here we go…") : auto ? "Get ready…" : k === 0 ? "Start the auto draw, or spin one at a time" : "Tap SPIN in the middle of the wheel"}</span>}
