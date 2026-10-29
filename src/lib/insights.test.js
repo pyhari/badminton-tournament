@@ -115,29 +115,31 @@ describe("insights endpoint", () => {
     t.setReply((p) => ({ stop_reason: "end_turn", model: "claude-opus-5-5", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Day one", lede: "It begins.", captions: [{ key: "upset:nope", caption: "Made up" }] }, recaps: [{ id: m1.id, text: "Great start." }] }) }] }));
     const first = await t.get();
     expect(first.out.story).toBe(null); // the write runs in the background; this reply has the old (empty) words
-    expect(t.calls).toHaveLength(1);
+    expect(t.calls).toHaveLength(2); // the story and the recaps, side by side
     expect(t.calls[0].output_config.format.type).toBe("json_schema");
-    expect(t.calls[0].messages[0].content).toMatch(new RegExp(`"id":"${m1.id}"`));
+    expect(t.calls[0].messages[0].content).not.toMatch(/matches_needing_recaps/);
+    expect(t.calls[1].messages[0].content).toMatch(new RegExp(`"id":"${m1.id}"`));
     const second = await t.get();
     expect(second.out.story).toEqual({ headline: "Day one", lede: "It begins.", captions: {} }); // a caption for no real highlight is dropped
     expect(second.out.recaps).toEqual({ [m1.id]: "Great start." });
     expect(second.out.current).toBe(true);
-    expect(t.calls).toHaveLength(1); // nothing changed, no new call
-    expect(second.headers["Cache-Control"]).toMatch(/s-maxage=10/);
+    expect(t.calls).toHaveLength(2); // nothing changed, no new call
+    expect(second.headers["Cache-Control"]).toMatch(/s-maxage=5/);
 
     // Another result within 20 seconds waits; after that, one call writes only the new recap.
     play(t.S, m2, [[15, 9], [15, 9], [15, 9]]); t.save();
     await t.get();
-    expect(t.calls).toHaveLength(1);
+    expect(t.calls).toHaveLength(2);
     t.tick(21000);
     t.setReply(p => ({ stop_reason: "end_turn", model: "claude-opus-5-5", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Two down", lede: "Two in.", captions: [{ key: "sweep:" + m2.id, caption: "Total control. " }] }, recaps: [{ id: m2.id, text: "A sweep." }] }) }] }));
     await t.get();
-    expect(t.calls).toHaveLength(2);
-    expect(t.calls[1].messages[0].content).not.toMatch(new RegExp(`"id":"${m1.id}"`));
+    expect(t.calls).toHaveLength(4);
+    expect(t.calls[3].messages[0].content).not.toMatch(new RegExp(`"id":"${m1.id}"`));
+    expect(t.calls[3].messages[0].content).toMatch(new RegExp(`"id":"${m2.id}"`));
     const third = await t.get();
     expect(third.out.recaps).toEqual({ [m1.id]: "Great start.", [m2.id]: "A sweep." });
     expect(third.out.story.captions).toEqual({ ["sweep:" + m2.id]: "Total control." });
-    expect(t.calls[1].messages[0].content).toMatch(/<highlights>\n\[\{"key":"sweep:/);
+    expect(t.calls[2].messages[0].content).toMatch(/<highlights>\n\[\{"key":"sweep:/);
 
     // A corrected score hides that tie's old recap until a new one is written.
     play(t.S, m1, [[9, 15], [9, 15], [9, 15]]); t.save();
@@ -148,7 +150,7 @@ describe("insights endpoint", () => {
     expect(fourth.out.current).toBe(false);
     // The failure is remembered, so it does not retry on every request.
     await t.get();
-    expect(t.calls).toHaveLength(3);
+    expect(t.calls).toHaveLength(6);
     expect(JSON.parse(t.store[KEYS.insights]).failAt).toBeTruthy();
     expect(t.store[KEYS.lock]).toBeUndefined();
   });
@@ -243,7 +245,7 @@ describe("organizer refresh", () => {
   it("writes straight away, even right after a write or a failure", async () => {
     const { res, calls, store } = await run({ S: played(), saved: { recaps: {}, at: 5e6 - 1000, failAt: 5e6 - 1000 } });
     expect(res.out).toEqual({ ok: true });
-    expect(calls).toHaveLength(1);
+    expect(calls).toHaveLength(2);
     expect(JSON.parse(store[KEYS.insights]).story.headline).toBe("Fresh");
     expect(store[KEYS.lock]).toBeUndefined();
   });

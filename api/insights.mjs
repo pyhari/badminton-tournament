@@ -41,8 +41,10 @@ Teams finishing 3rd or 4th in a group are not eliminated: they go on to the FFBC
 Call the two playoffs "the Champions League" and "the Premier League" (or "the FFBC Champions League" and "the FFBC Premier League"). Never "FPL", "Cup" or "Plate".
 Warm and fun, never mocking the losing side. No hashtags or emoji.`;
 
-const SCHEMA = {
-  type: "object", additionalProperties: false, required: ["story", "groups", "outlook", "recaps"],
+// Two calls run side by side, so new words arrive in about half the time:
+// one for the story and predictions, one for the match recaps.
+const STORY_SCHEMA = {
+  type: "object", additionalProperties: false, required: ["story", "groups", "outlook"],
   properties: {
     story: {
       type: "object", additionalProperties: false, required: ["headline", "lede", "captions"],
@@ -62,7 +64,12 @@ const SCHEMA = {
     outlook: {
       type: "array",
       items: { type: "object", additionalProperties: false, required: ["t", "reason"], properties: { t: { type: "integer" }, reason: { type: "string" } } }
-    },
+    }
+  }
+};
+const RECAP_SCHEMA = {
+  type: "object", additionalProperties: false, required: ["recaps"],
+  properties: {
     recaps: {
       type: "array",
       items: { type: "object", additionalProperties: false, required: ["id", "text"], properties: { id: { type: "string" }, text: { type: "string" } } }
@@ -83,20 +90,24 @@ export async function write(client, S, saved) {
   const need = ties.filter(t => !saved.recaps[t.id] || saved.recaps[t.id].key !== recapKey(t));
   const cards = highlights(S).map(h => ({ key: h.key, kind: h.kind, match: h.match, game: h.game }));
   const outlook = outlookFacts(S);
-  const response = await client.beta.messages.create({
-    model: MODEL,
-    max_tokens: 16000,
-    betas: ["server-side-fallback-2026-07-01"],
-    fallbacks: "default",
-    output_config: { effort: "low", format: { type: "json_schema", schema: SCHEMA } },
-    system: SYSTEM,
-    messages: [{
-      role: "user",
-      content: `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<highlights>\n${JSON.stringify(cards)}\n</highlights>\n<outlook>\n${JSON.stringify(outlook)}\n</outlook>\n<matches_needing_recaps>\n${JSON.stringify(need)}\n</matches_needing_recaps>\nWrite the story so far with one caption per highlight (using its key), one summary per group in <outlook> (using its group name), one reason per team in <outlook> (using its t), and one recap for each match needing one (using its id).`
-    }]
-  });
-  if (response.stop_reason !== "end_turn") throw new Error("Claude stopped early: " + response.stop_reason);
-  const out = JSON.parse(response.content.filter(b => b.type === "text").map(b => b.text).join(""));
+  const ask = async (schema, content) => {
+    const response = await client.beta.messages.create({
+      model: MODEL,
+      max_tokens: 16000,
+      betas: ["server-side-fallback-2026-07-01"],
+      fallbacks: "default",
+      output_config: { effort: "low", format: { type: "json_schema", schema } },
+      system: SYSTEM,
+      messages: [{ role: "user", content }]
+    });
+    if (response.stop_reason !== "end_turn") throw new Error("Claude stopped early: " + response.stop_reason);
+    return { ...JSON.parse(response.content.filter(b => b.type === "text").map(b => b.text).join("")), model: response.model };
+  };
+  const [main, more] = await Promise.all([
+    ask(STORY_SCHEMA, `<day>\n${JSON.stringify(dayFacts(S))}\n</day>\n<highlights>\n${JSON.stringify(cards)}\n</highlights>\n<outlook>\n${JSON.stringify(outlook)}\n</outlook>\nWrite the story so far with one caption per highlight (using its key), one summary per group in <outlook> (using its group name) and one reason per team in <outlook> (using its t).`),
+    need.length ? ask(RECAP_SCHEMA, `<matches_needing_recaps>\n${JSON.stringify(need)}\n</matches_needing_recaps>\nWrite one recap for each match (using its id).`) : { recaps: [] }
+  ]);
+  const out = { ...main, recaps: more.recaps || [] };
   const recaps = { ...saved.recaps };
   for (const r of out.recaps) {
     const t = need.find(x => x.id === r.id);
@@ -107,7 +118,7 @@ export async function write(client, S, saved) {
   const teams = new Set(outlook.flatMap(g => g.teams.map(o => o.t))), names = new Set(outlook.map(g => g.group));
   const reasons = Object.fromEntries((out.outlook || []).filter(o => teams.has(o.t) && o.reason).map(o => [o.t, o.reason.trim()]));
   const forecast = Object.fromEntries((out.groups || []).filter(g => names.has(g.group) && g.summary).map(g => [g.group, g.summary.trim()]));
-  return { story, reasons, forecast, recaps, model: response.model };
+  return { story, reasons, forecast, recaps, model: main.model };
 }
 
 // What players see: the story and the recaps that still match the scores.
@@ -185,10 +196,10 @@ export function makeHandler({ enabled, db, getClient, background, now = () => Da
           } finally { await db(["DEL", KEYS.lock]); }
         })());
       }
-      // Shared from Vercel's edge for 10 seconds, so phones polling it cost almost nothing;
-      // for 3 seconds while new words are being written, so they show up soon after.
+      // Shared from Vercel's edge for 5 seconds, so phones polling it cost almost nothing;
+      // for 2 seconds while new words are being written, so they show up soon after.
       const out = S && key ? view(S, saved, key) : { story: null, recaps: {} };
-      res.setHeader("Cache-Control", out.current === false ? "public, max-age=0, s-maxage=3, stale-while-revalidate=5" : "public, max-age=0, s-maxage=10, stale-while-revalidate=20");
+      res.setHeader("Cache-Control", out.current === false ? "public, max-age=0, s-maxage=2, stale-while-revalidate=2" : "public, max-age=0, s-maxage=5, stale-while-revalidate=5");
       return res.status(200).json(out);
     } catch (e) {
       console.error("Insights error:", e.message);

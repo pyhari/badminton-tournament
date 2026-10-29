@@ -1,11 +1,11 @@
 // The AI story and match recaps for the players' page, read from /api/insights.
-// Checked every 30 seconds while the page is open, and every 10 seconds while the server
-// is still writing words for the latest results.
+// Checked every 10 seconds while the page is open (Vercel answers most checks from its
+// shared copy), and every 4 seconds while the server is still writing for the latest results.
 import { useSyncExternalStore } from "react";
 import { VIEW } from "./store.js";
 
 
-const POLL_MS = 30000, CATCH_UP_MS = 10000;
+const POLL_MS = 10000, CATCH_UP_MS = 4000;
 let data = null, raw = "", timer = null;
 const listeners = new Set();
 
