@@ -1,18 +1,17 @@
 import { useEffect, useState } from "react";
 import { Search, Sparkles, Check, X } from "lucide-react";
-import { NT, aiOn, tn } from "../lib/engine.js";
+import { NT, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, teamColor } from "./ui.jsx";
 import { ConfettiLayer, confetti } from "./Confetti.jsx";
+import Cheer, { useCheer } from "./Cheer.jsx";
 
 // The players' page before the groups are drawn: everyone who is playing, popping in one
 // by one, and the 8 teams as "?" until the team draw is done. A player can pick their name
 // now; once the teams are set, their team lights up (and stays picked on the Me tab).
-const asked = new Map(); // player|team -> the AI message (a promise)
-
 export default function PreDraw({ S, me, choose }) {
   const [q, setQ] = useState("");
-  const [pep, setPep] = useState(null); // { name, text } for the pop-up after picking a name
+  const [cheer, showCheer] = useCheer(S); // the pop-up after picking a name
   const name = (me || "").split("|")[1] || "";
   const playing = S.players.filter(p => p.on);
   const women = playing.filter(p => p.g === "F"), men = playing.filter(p => p.g !== "F");
@@ -30,25 +29,11 @@ export default function PreDraw({ S, me, choose }) {
     return () => clearTimeout(t);
   }, [mine, name]);
 
-  // Picking a name: a pop-up at the bottom with a cheer from the AI (a plain one without it).
+  // Picking a name: their fun fact and a cheer pop up at the bottom.
   const pick = who => {
     choose(who ? "|" + who : "");
-    if (!who) return setPep(null);
-    setPep({ name: who, text: null });
-    const t = set ? S.teams.findIndex(x => [x.m1, x.m2, x.w].includes(who)) : -1;
-    const plain = t >= 0 ? "Have a great day on court with your team!" : "Find your team here the moment it's drawn. Have a great day on court!";
-    if (!aiOn(S, "pep")) return setPep({ name: who, text: plain });
-    // One request per player and team on this page, however often the name is tapped.
-    const k = who + "|" + t;
-    if (!asked.has(k)) asked.set(k, fetch("/api/pep?name=" + encodeURIComponent(who)).then(r => r.json()).then(j => j.text || null, () => null));
-    asked.get(k).then(text => { if (!text) asked.delete(k); return text || plain; })
-      .then(text => setPep(p => p && p.name === who ? { name: who, text } : p));
+    showCheer(who, set && who ? S.teams.findIndex(x => [x.m1, x.m2, x.w].includes(who)) : -1);
   };
-  useEffect(() => {
-    if (!pep || !pep.text) return;
-    const t = setTimeout(() => setPep(null), 9000);
-    return () => clearTimeout(t);
-  }, [pep]);
 
   let n = 0; // running index, so the chips pop in one after another
   const chip = p => (
@@ -108,14 +93,7 @@ export default function PreDraw({ S, me, choose }) {
       <div className="section"><h2>Who's playing</h2></div>
       {group("Women", women)}
       {group("Men", men)}
-      {pep && (
-        <div className="pd-pep" role="status" key={pep.name}>
-          <Sparkles size={18} />
-          <div><b>{mine >= 0 && pep.name === name ? `You're in ${tn(S, mine)}, ${pep.name}!` : `You're in, ${pep.name}!`}</b>
-            {pep.text ? <p>{pep.text}</p> : <p className="pd-dots"><span /><span /><span /></p>}</div>
-          <button className="icon-btn" onClick={() => setPep(null)} aria-label="Close"><X size={16} /></button>
-        </div>
-      )}
+      <Cheer S={S} cheer={cheer} onClose={() => showCheer("")} />
     </div>
   );
 }

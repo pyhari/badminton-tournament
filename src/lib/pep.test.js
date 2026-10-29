@@ -2,6 +2,8 @@ import { describe, it, expect, vi } from "vitest";
 import * as E from "./engine.js";
 import { makePep } from "../../api/pep.mjs";
 import { KEYS } from "../../api/insights.mjs";
+import { funFact } from "./funFacts.js";
+import FACTS from "../data/funFacts.json" with { type: "json" };
 
 const teamsSet = () => {
   const S = E.defaults();
@@ -109,6 +111,30 @@ describe("AI switches", () => {
     S.settings.ai = { story: false, recaps: false, race: false, pep: false };
     expect(E.anyAi(S)).toBe(false);
     expect(E.anyAi(E.fix(JSON.parse(JSON.stringify(S))))).toBe(false); // kept when saved and loaded
+  });
+});
+
+describe("fun facts", () => {
+  it("has one for every player in the club list, by the app's short names", () => {
+    const names = E.defaults().players.map(p => p.name);
+    expect(names.filter(n => !funFact(n))).toEqual([]);
+    // Every fact in the file is used by someone, and no two players share one.
+    expect(new Set(names.map(funFact)).size).toBe(Object.keys(FACTS).length);
+  });
+  it("matches full names, short names and new short names", () => {
+    expect(funFact("Dinesh R")).toBe(FACTS["Dinesh Ramakrishnan"]);
+    expect(funFact("Hari")).toBe(FACTS["Harikumar Ravindran"]);
+    expect(funFact("Harish")).toBe(FACTS["Harish"]);
+    expect(funFact("Praveen V")).toBe(FACTS["Praveen V"]);
+    expect(funFact("Nobody")).toBe(null);
+    expect(funFact("")).toBe(null);
+  });
+  it("is given to the AI with the player", async () => {
+    const S = teamsSet(), name = "Hari", t = setup(S);
+    expect(S.players.some(p => p.name === name && p.on)).toBe(true);
+    await t.get(name);
+    const facts = JSON.parse(t.calls[0].messages[0].content.replace(/<\/?facts>/g, ""));
+    expect(facts.funFact).toBe(FACTS["Harikumar Ravindran"]);
   });
 });
 

@@ -696,7 +696,7 @@ button.match:active { transform: scale(.98); }
 .pd-team-nm > b { display: none; }
 .pd-team-nm small { font-size: 12.5px; margin-top: 0; }
 .pd-team.mine { border: 2px solid var(--tc); box-shadow: 0 0 0 4px color-mix(in srgb, var(--tc) 25%, transparent); }
-.pd-pep { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 55; width: min(440px, calc(100% - 24px)); display: flex; gap: 12px; align-items: flex-start; padding: 14px 10px 14px 16px; border-radius: 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 12px 32px rgba(0, 0, 0, .28); animation: pd-up .35s cubic-bezier(.3, 1.4, .5, 1); }
+.pd-pep { position: fixed; left: 50%; bottom: calc(92px + env(safe-area-inset-bottom)); transform: translateX(-50%); z-index: 55; width: min(440px, calc(100% - 24px)); display: flex; flex-direction: column; gap: 10px; padding: 14px 10px 14px 16px; border-radius: 18px; background: var(--accent); color: var(--accent-ink); box-shadow: 0 12px 32px rgba(0, 0, 0, .28); animation: pd-up .35s cubic-bezier(.3, 1.4, .5, 1); }
 .pd-pep > svg { flex: none; margin-top: 2px; }
 .pd-pep > div { flex: 1; min-width: 0; }
 .pd-pep b { font-size: 16px; }
@@ -784,3 +784,22 @@ button.match:active { transform: scale(.98); }
 /* PIN entry (ratings PIN). */
 .pinform { display: grid; gap: 8px; }
 .field.pin { font-size: 22px; letter-spacing: 6px; text-align: center; }
+
+/* The pick-your-name pop-up (Cheer): title, the fun fact that bursts open, then the AI cheer. */
+.pep-top { display: flex; align-items: center; gap: 10px; }
+.pep-top b { flex: 1; min-width: 0; }
+.pep-top svg { flex: none; }
+.pd-pep .pep-msg { margin: 0; font-size: 14px; font-weight: 600; line-height: 1.4; }
+.fact { position: relative; border-radius: 14px; padding: 10px 12px 11px; background: var(--accent-ink); color: var(--accent); text-align: center; animation: fact-shake .6s ease-in-out; }
+.fact small { display: block; font-size: 11px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; opacity: .75; }
+.fact p { margin: 4px 0 0; font-size: 15.5px; font-weight: 700; line-height: 1.35; }
+.fact-seal { letter-spacing: 8px; opacity: .8; }
+.fact.open { animation: fact-burst .55s cubic-bezier(.2, 1.6, .4, 1); }
+.fact.open p { animation: fact-in .45s .05s both; }
+@keyframes fact-shake { 20% { transform: rotate(-2deg) scale(.98); } 40% { transform: rotate(2deg) scale(1.02); } 60% { transform: rotate(-1.5deg); } 80% { transform: rotate(1.5deg); } }
+@keyframes fact-burst { 0% { transform: scale(.85); box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent-ink) 60%, transparent); } 60% { transform: scale(1.06); } 100% { transform: none; box-shadow: 0 0 0 14px transparent; } }
+@keyframes fact-in { from { opacity: 0; transform: translateY(6px); filter: blur(4px); } }
+@media (prefers-reduced-motion: reduce) { .fact, .fact.open, .fact.open p { animation: none; } }
+
+/* Team draw: the player's fun fact under their name. */
+.reveal-fact { margin: 2px 0 6px; max-width: 320px; font-size: 14px; font-weight: 600; font-style: italic; line-height: 1.35; color: var(--muted); animation: fact-in .5s .25s both; }

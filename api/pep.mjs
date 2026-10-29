@@ -4,16 +4,18 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { aiOn, fix } from "../src/lib/engine.js";
 import { KEYS } from "./insights.mjs";
+import { funFact } from "../src/lib/funFacts.js";
 
 const PEP_ON = true; // the organizer can switch it off in Setup > More
 const MODEL = "claude-opus-5-5";
-const VERSION = "1:";
+const VERSION = "2:";
 const DB_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
 const DB_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN || process.env.KV_REST_API_TOKEN;
 
 const SYSTEM = `You write one short message to a player at a friendly club badminton day, shown on their phone after they find their name.
 Make them excited to play: warm, fun, a little playful. Under 25 words, one or two sentences.
 Use only the facts given. If teammates are given, name them and cheer the team on; if not, the team draw is still to come.
+If a fun fact about the player is given, play on it with a light, friendly joke; the app shows the fact itself, so don't repeat it word for word.
 Never mention skill levels, ratings or who is stronger. No hashtags or emoji. Reply with the message only.`;
 
 async function upstash(cmd) {
@@ -45,7 +47,7 @@ export function makePep({ enabled, db, getClient }) {
       const saved = await db(["GET", key]);
       if (saved) return res.status(200).json({ text: saved });
 
-      const facts = { player: name, teams: S.teams.length, playersInTournament: S.players.filter(x => x.on).length, trophies: ["FFBC Champions League (top 2 of each group)", "FFBC Premier League (3rd and 4th)"], team };
+      const facts = { player: name, teams: S.teams.length, playersInTournament: S.players.filter(x => x.on).length, trophies: ["FFBC Champions League (top 2 of each group)", "FFBC Premier League (3rd and 4th)"], team, funFact: funFact(name) };
       const response = await client.beta.messages.create({
         model: MODEL,
         max_tokens: 1000,

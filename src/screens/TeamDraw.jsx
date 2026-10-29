@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { X, Play, FastForward, Pause, Check, Volume2, VolumeX, SkipForward, Sparkles } from "lucide-react";
 import * as E from "../lib/engine.js";
+import { funFact } from "../lib/funFacts.js";
 import { update } from "../lib/store.js";
 import { soundOn, setSound, unlock, beep, whoosh, drumroll, fanfare } from "../lib/sound.js";
 import { Badge, TEAM_COLORS, teamColor } from "../components/ui.jsx";
@@ -77,7 +78,9 @@ export default function TeamDraw({ S, onClose }) {
     setPop(step.t + "-" + step.f);
     const nk = wk + 1;
     setK(x => Math.max(x, nk)); // "Reveal all" during a spin wins
-    if (autoRef.current && nk < total) later(() => autoAt(nk), 1500);
+    // A fun fact under the name needs a moment to read before the next spin.
+    const read = funFact(step.p.name) ? 3200 : 1500;
+    if (autoRef.current && nk < total) later(() => autoAt(nk), read);
   };
   // The finale: fanfare and confetti across the screen.
   useEffect(() => {
@@ -113,6 +116,7 @@ export default function TeamDraw({ S, onClose }) {
               <div className="reveal" key={k} style={{ "--tc": teamColor(last.t) }}>
                 <small>{POTS[last.c]}</small>
                 <b>{last.p.name}</b>
+                {funFact(last.p.name) && <p className="reveal-fact">{funFact(last.p.name)}</p>}
                 <div className="joins"><span>joins</span><Badge S={S} t={last.t} size="sm" /><span className="tname">{E.tn(S, last.t)}</span></div>
               </div>
             ) : <span className="cer-wait">{spinning ? (left.length === 1 ? "Last one in the pot…" : "Here we go…") : auto ? "Get ready…" : k === 0 ? "Start the auto draw, or spin one at a time" : "Tap SPIN in the middle of the wheel"}</span>}

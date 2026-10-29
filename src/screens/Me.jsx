@@ -5,12 +5,15 @@ import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, MatchCard, teamColor, Players, TeamName } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
 import PreDraw from "../components/PreDraw.jsx";
+import Cheer, { useCheer } from "../components/Cheer.jsx";
+import { ConfettiLayer } from "../components/Confetti.jsx";
 
 const ord = n => n + (["th", "st", "nd", "rd"][n] || "th");
 
 export default function Me({ S, onOpen }) {
   const [me, setMe] = useState(lsGet("bt_me") || "");
   const [q, setQ] = useState("");
+  const [cheer, showCheer] = useCheer(S); // fun fact and cheer after picking a name
   const g = groups(S);
   const choose = v => { lsSet("bt_me", v); setMe(v); setQ(""); };
   // Before the draw, or groups left over from an old draw whose teams have no players yet.
@@ -29,7 +32,7 @@ export default function Me({ S, onOpen }) {
         <Story S={S} />
         <div className="search"><Search size={18} /><input className="field" placeholder="Search your name" value={q} onChange={e => setQ(e.target.value)} /></div>
         <div className="namelist">
-          {shown.map(([n, i]) => <button key={n + i} onClick={() => choose(i + "|" + n)}><Badge S={S} t={i} size="sm" />{n}</button>)}
+          {shown.map(([n, i]) => <button key={n + i} onClick={() => { choose(i + "|" + n); showCheer(n, i); }}><Badge S={S} t={i} size="sm" />{n}</button>)}
           {!shown.length && <p className="hint">No player called “{q}”.</p>}
         </div>
         <div className="section"><h2>Or pick a team</h2></div>
@@ -75,6 +78,8 @@ export default function Me({ S, onOpen }) {
       <div className="section"><h2>Your matches</h2></div>
       {mine.map(m => <MatchCard key={m.id} S={S} m={m} onOpen={onOpen} />)}
       <p className="hint">Playoff matches appear here when your team qualifies.</p>
+      <ConfettiLayer />
+      <Cheer S={S} cheer={cheer} onClose={() => showCheer("")} />
     </div>
   );
 }
