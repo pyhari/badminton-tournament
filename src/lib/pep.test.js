@@ -129,6 +129,13 @@ describe("fun facts", () => {
     expect(funFact("Nobody")).toBe(null);
     expect(funFact("")).toBe(null);
   });
+  it("writes a new message when a player's fun fact changes", async () => {
+    const S = teamsSet(), t = setup(S);
+    await t.get("Hari");
+    const key = Object.keys(t.store).find(k => k.includes(":pep:"));
+    expect(key).toContain(FACTS["Hari"]);
+  });
+
   it("is given to the AI with the player", async () => {
     const S = teamsSet(), name = "Hari", t = setup(S);
     expect(S.players.some(p => p.name === name && p.on)).toBe(true);

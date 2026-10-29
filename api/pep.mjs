@@ -43,7 +43,8 @@ export function makePep({ enabled, db, getClient }) {
       const set = S.locked && S.teams.every(x => x.m1 && x.m2 && x.w);
       const t = set ? S.teams.findIndex(x => [x.m1, x.m2, x.w].includes(name)) : -1;
       const team = t >= 0 ? { name: S.teams[t].name || "Team " + (t + 1), teammates: [S.teams[t].m1, S.teams[t].m2, S.teams[t].w].filter(n => n && n !== name) } : null;
-      const key = KEYS.insights + ":pep:" + VERSION + name + "|" + (team ? team.name + ":" + team.teammates.join(",") : "");
+      // The fun fact is part of the key, so editing it brings a fresh message.
+      const key = KEYS.insights + ":pep:" + VERSION + name + "|" + (team ? team.name + ":" + team.teammates.join(",") : "") + "|" + (funFact(name) || "");
       const saved = await db(["GET", key]);
       if (saved) return res.status(200).json({ text: saved });
 
