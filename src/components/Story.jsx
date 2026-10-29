@@ -1,5 +1,5 @@
 import { Sparkles, Trophy, Zap, Flame, TrendingUp, Check, X } from "lucide-react";
-import { BR, tn } from "../lib/engine.js";
+import { BR, aiOn, tn } from "../lib/engine.js";
 import { highlights, groupRace, champions } from "../lib/insights.js";
 import { useInsights } from "../lib/insightsFeed.js";
 import { Badge, Players, teamColor } from "./ui.jsx";
@@ -20,7 +20,7 @@ function fact(h) {
 // champions from the scores; the AI adds the headline, one line and the captions.
 export default function Story({ S }) {
   const d = useInsights();
-  if (!d || !d.story) return null;
+  if (!aiOn(S, "story") || !d || !d.story) return null;
   const { headline, lede, captions = {} } = d.story;
   const cards = highlights(S), champs = champions(S), race = groupRace(S);
   return (

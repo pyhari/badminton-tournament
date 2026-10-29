@@ -86,8 +86,29 @@ describe("pep message endpoint", () => {
     expect((await t.get(name)).out).toEqual({ text: "Now it works." });
   });
 
+  it("is off when the organizer switches the cheer off", async () => {
+    const S = teamsSet(); S.settings.ai = { pep: false };
+    const t = setup(S);
+    expect((await t.get(S.teams[0].m1)).out).toEqual({ off: true });
+    expect(t.calls).toHaveLength(0);
+  });
+
   it("answers 404 when nothing is saved on the server yet", async () => {
     expect((await setup(null).get("Hari")).code).toBe(404);
+  });
+});
+
+describe("AI switches", () => {
+  it("are all on unless switched off", () => {
+    const S = E.defaults();
+    expect(E.AI_FEATURES.map(([k]) => E.aiOn(S, k))).toEqual([true, true, true, true]);
+    S.settings.ai = { story: false, recaps: false };
+    expect(E.aiOn(S, "story")).toBe(false);
+    expect(E.aiOn(S, "race")).toBe(true);
+    expect(E.anyAi(S)).toBe(true);
+    S.settings.ai = { story: false, recaps: false, race: false, pep: false };
+    expect(E.anyAi(S)).toBe(false);
+    expect(E.anyAi(E.fix(JSON.parse(JSON.stringify(S))))).toBe(false); // kept when saved and loaded
   });
 });
 

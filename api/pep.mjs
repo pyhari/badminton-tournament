@@ -2,10 +2,10 @@
 // Written once per player (and team, once the teams are set) and saved, so each
 // player costs at most one Claude call. Same on/off switch as the insights.
 import Anthropic from "@anthropic-ai/sdk";
-import { fix } from "../src/lib/engine.js";
+import { aiOn, fix } from "../src/lib/engine.js";
 import { KEYS } from "./insights.mjs";
 
-const PEP_ON = process.env.VERCEL_ENV !== "production";
+const PEP_ON = true; // the organizer can switch it off in Setup > More
 const MODEL = "claude-opus-5-5";
 const VERSION = "1:";
 const DB_URL = process.env.UPSTASH_REDIS_REST_URL || process.env.KV_REST_API_URL;
@@ -36,6 +36,7 @@ export function makePep({ enabled, db, getClient }) {
       // Only for players in the tournament, so the page cannot be used to run other prompts.
       const p = name && S && S.players.find(x => x.on && x.name === name);
       if (!p) return res.status(404).json({ error: "No such player" });
+      if (!aiOn(S, "pep")) return res.status(200).json({ off: true });
       // The team counts once the teams are locked and full, as on the players' page.
       const set = S.locked && S.teams.every(x => x.m1 && x.m2 && x.w);
       const t = set ? S.teams.findIndex(x => [x.m1, x.m2, x.w].includes(name)) : -1;

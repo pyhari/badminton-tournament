@@ -3,7 +3,6 @@ import { BR, BR_FULL, groups, seeds, table } from "../lib/engine.js";
 import { Badge, Empty, GenderKey, TeamName } from "../components/ui.jsx";
 import Outlook from "../components/Outlook.jsx";
 import { VIEW } from "../lib/store.js";
-import { AI_INSIGHTS } from "../lib/insightsFeed.js";
 
 export default function Tables({ S }) {
   if (!groups(S)) return <div className="page"><Empty icon={ListOrdered} title="No standings yet">Standings appear once the groups are drawn.</Empty></div>;
@@ -11,7 +10,7 @@ export default function Tables({ S }) {
   return (
     <div className="page wide">
       <h1 className="page-title">Standings</h1>
-      {VIEW && AI_INSIGHTS && <Outlook S={S} />}
+      {VIEW && <Outlook S={S} />}
       <div className="pair">
         {["A", "B"].map(gk => (
           <div key={gk}>

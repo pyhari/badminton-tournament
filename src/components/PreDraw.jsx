@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { Search, Sparkles, Check, X } from "lucide-react";
-import { AI_INSIGHTS } from "../lib/insightsFeed.js";
-import { NT, tn } from "../lib/engine.js";
+import { NT, aiOn, tn } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, teamColor } from "./ui.jsx";
 import { ConfettiLayer, confetti } from "./Confetti.jsx";
@@ -38,7 +37,7 @@ export default function PreDraw({ S, me, choose }) {
     setPep({ name: who, text: null });
     const t = set ? S.teams.findIndex(x => [x.m1, x.m2, x.w].includes(who)) : -1;
     const plain = t >= 0 ? "Have a great day on court with your team!" : "Find your team here the moment it's drawn. Have a great day on court!";
-    if (!AI_INSIGHTS) return setPep({ name: who, text: plain });
+    if (!aiOn(S, "pep")) return setPep({ name: who, text: plain });
     // One request per player and team on this page, however often the name is tapped.
     const k = who + "|" + t;
     if (!asked.has(k)) asked.set(k, fetch("/api/pep?name=" + encodeURIComponent(who)).then(r => r.json()).then(j => j.text || null, () => null));

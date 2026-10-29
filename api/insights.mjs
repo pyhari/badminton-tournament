@@ -5,12 +5,11 @@
 // src/lib/insights.js; Claude only writes them up.
 import Anthropic from "@anthropic-ai/sdk";
 import { waitUntil } from "@vercel/functions";
-import { fix, allMatches } from "../src/lib/engine.js";
+import { fix, allMatches, anyAi } from "../src/lib/engine.js";
 import { dayFacts, tieFacts, factsKey, tieKey, highlights, outlookFacts } from "../src/lib/insights.js";
 
-// The on/off switch for this feature (separate from the AI planner).
-// For now it runs on preview and local builds only, never on the live site.
-const INSIGHTS_ON = process.env.VERCEL_ENV !== "production";
+// On everywhere; the organizer turns each AI feature on or off in Setup > More (S.settings.ai).
+const INSIGHTS_ON = true;
 const MODEL = "claude-opus-5-5";
 // Bump when the wording rules change, so saved words are written again.
 const VERSION = "8:";
@@ -134,7 +133,7 @@ export function makeHandler({ enabled, db, getClient, background, now = () => Da
       const key = S && factsKey(S) ? VERSION + factsKey(S) : "";
       const client = getClient();
       // Results changed since the last write: start one in the background, if it is time.
-      const due = key && key !== saved.key && client && now() - (saved.at || 0) > MIN_GAP && now() - (saved.failAt || 0) > RETRY_AFTER;
+      const due = key && key !== saved.key && anyAi(S) && client && now() - (saved.at || 0) > MIN_GAP && now() - (saved.failAt || 0) > RETRY_AFTER;
       if (due && (await db(["SET", KEYS.lock, "1", "NX", "EX", String(LOCK_SECS)])) === "OK") {
         background((async () => {
           try {

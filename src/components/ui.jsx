@@ -3,7 +3,7 @@ import { AlertTriangle, Sparkles } from "lucide-react";
 import { useRecap } from "../lib/insightsFeed.js";
 import { VIEW } from "../lib/store.js";
 import { matchTag, tieFacts } from "../lib/insights.js";
-import { abbr, tn, res, courtOf, onCourt, roster, pairPlayers } from "../lib/engine.js";
+import { abbr, aiOn, tn, res, courtOf, onCourt, roster, pairPlayers } from "../lib/engine.js";
 
 // One colour per team, bright enough for dark text in both themes.
 export const TEAM_COLORS = ["#ff6b6b", "#ffb020", "#3ddc97", "#4cc9f0", "#b388ff", "#ff7eb6", "#c6f432", "#ff8a3d"];
@@ -62,7 +62,7 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
   const r = res(S, m), ready = m.a != null && m.b != null, st = matchState(S, m);
   // The card glows briefly when any score in it changes (two class names, so the glow restarts each time).
   const bumps = changed(m.id, r.gs.map(g => g ? g.a + "-" + g.b : "").join() + ready);
-  const recap = useRecap(m.id);
+  const r0 = useRecap(m.id), recap = aiOn(S, "recaps") ? r0 : null;
   const side = (t, label, i) => {
     const won = r.done && r.winner === i, lost = r.done && r.winner !== i;
     return (

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Sparkles, Trophy, Shield } from "lucide-react";
-import { BR, BR_FULL, prelims, res } from "../lib/engine.js";
+import { BR, BR_FULL, aiOn, prelims, res } from "../lib/engine.js";
 import { predict } from "../lib/insights.js";
 import { useForecast, useReasons } from "../lib/insightsFeed.js";
 import { Badge, TeamName } from "./ui.jsx";
@@ -12,7 +12,9 @@ import { Badge, TeamName } from "./ui.jsx";
 export default function Outlook({ S }) {
   const started = prelims(S).some(m => res(S, m).done);
   const groups = useMemo(() => started ? predict(S) : [], [S, started]);
-  const reasons = useReasons() || {}, forecast = useForecast() || {};
+  // The prediction is the app's own; the summary and reasons are AI, shown when switched on.
+  const r0 = useReasons(), f0 = useForecast(), ai = aiOn(S, "race");
+  const reasons = (ai && r0) || {}, forecast = (ai && f0) || {};
   if (!groups.length) return null;
   const done = groups.every(g => g.settled);
   const row = (r, cl) => (

@@ -718,3 +718,10 @@ button.match:active { transform: scale(.98); }
 .fseg.stages button { padding: 9px 4px 8px; gap: 3px; }
 .fseg.stages b { font-size: 15px; }
 .fseg.stages small { font-family: inherit; font-size: 12px; font-weight: 600; }
+
+/* Setup > More: AI on/off switches. */
+.ai-opt { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.ai-opt:first-child { padding-top: 0; }
+.ai-opt > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.ai-opt b { font-size: 15px; }
+.ai-opt small { font-size: 13px; color: var(--muted); }

@@ -326,6 +326,21 @@ function More({ S, live }) {
         <p className="hint" style={{ marginBottom: 0 }}>Matches are played in any order on any free court. When you open a match, pick the court it goes to.</p>
       </div>
 
+      <div className="section"><h2>AI on the players' page</h2></div>
+      <div className="card ai-opts">
+        {E.AI_FEATURES.map(([k, name, what]) => {
+          const on = E.aiOn(S, k);
+          return (
+            <div className="ai-opt" key={k}>
+              <div><b>{name}</b><small>{what}</small></div>
+              <button className={`switch ${on ? "on" : ""}`} role="switch" aria-checked={on} aria-label={name}
+                onClick={() => update(n => { n.settings = { ...n.settings, ai: { ...(n.settings.ai || {}), [k]: !on } }; })} />
+            </div>
+          );
+        })}
+        <p className="hint" style={{ marginBottom: 0 }}>Written by Claude and saved once for everyone, so it costs little. The standings, predictions and everything else work without it.</p>
+      </div>
+
       <div className="section"><h2>Backup</h2></div>
       <div className="card">
         <p className="hint" style={{ marginTop: 0 }}>Everything saves on this phone{getPin() ? " and on the server" : ""}. Use one phone for score entry.</p>

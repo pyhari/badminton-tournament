@@ -100,6 +100,14 @@ describe("insights endpoint", () => {
     return { S, store, calls, get, save, setReply: r => { reply = r; }, tick: ms => { clock += ms; } };
   };
 
+  it("writes nothing when the organizer switches every AI feature off", async () => {
+    const t = setup(), [m1] = E.prelims(t.S);
+    t.S.settings.ai = { story: false, recaps: false, race: false, pep: false };
+    play(t.S, m1, [[15, 9], [15, 9], [9, 15]]); t.save();
+    await t.get();
+    expect(t.calls).toHaveLength(0);
+  });
+
   it("writes once when results change, then serves the saved words", async () => {
     const t = setup(), [m1, m2] = E.prelims(t.S);
     expect((await t.get()).out).toEqual({ story: null, recaps: {} });

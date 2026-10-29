@@ -12,6 +12,16 @@ export const isOldList = S => listSig(S.players) === OLD_LIST && S.players.every
 // The event, as shown in the header, the page title and shared links.
 export const EVENT = "FFBC Fall Fun Tournament", TAGLINE = "Smash. Rally. Celebrate.";
 
+// The AI features on the players' page, each switched on or off in Setup > More.
+export const AI_FEATURES = [
+  ["story", "Story so far", "A headline and captions for the day's best moments."],
+  ["recaps", "Match recaps", "One or two lines under each finished match."],
+  ["race", "Prediction reasons", "Why each team is likely for the Champions League or the Premier League."],
+  ["pep", "Cheer when picking a name", "A short message cheering on each player."]
+];
+export const aiOn = (S, k) => !(S.settings && S.settings.ai && S.settings.ai[k] === false);
+export const anyAi = S => AI_FEATURES.some(([k]) => aiOn(S, k));
+
 export const BR = { Cup: "Champions League", Plate: "Premier League" };
 export const BR_FULL = { Cup: "FFBC Champions League", Plate: "FFBC Premier League" };
 export const GAME_LABELS = ["Men's doubles", "Mixed doubles 1", "Mixed doubles 2"];
