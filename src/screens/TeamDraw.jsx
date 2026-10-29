@@ -38,6 +38,7 @@ export default function TeamDraw({ S, onClose }) {
   const setAuto = v => { autoRef.current = v; setAutoState(v); };
   const [spinKey, setSpinKey] = useState(0);
   const [pop, setPop] = useState(null); // "t-f" of the slot just filled
+  const [peek, setPeek] = useState(false); // the reveal card was tapped away to see the wheel
   const [sound, setSnd] = useState(soundOn());
 
   const done = k >= total, step = plan.steps[Math.min(wk, total - 1)], up = plan.steps[Math.min(k, total - 1)];
@@ -55,7 +56,7 @@ export default function TeamDraw({ S, onClose }) {
   const lock = useRef(null);
   useEffect(() => () => { timers.current.forEach(clearTimeout); autoRef.current = false; if (lock.current) lock.current.release().catch(() => {}); }, []);
 
-  const spinAt = (nk, ms) => { setWk(nk); setSpinning(true); setSpinKey(x => x + 1); if (autoRef.current) drumroll(ms + WIND); };
+  const spinAt = (nk, ms) => { setWk(nk); setPeek(false); setSpinning(true); setSpinKey(x => x + 1); if (autoRef.current) drumroll(ms + WIND); };
   // In the auto draw each pot opens with its own card.
   const autoAt = nk => {
     if (!autoRef.current) return;
@@ -103,33 +104,40 @@ export default function TeamDraw({ S, onClose }) {
       <div className="cer-top">
         <button className="icon-btn" onClick={() => (k === 0 || done || confirm("Stop the draw? The teams will not change.")) && onClose(false)} aria-label="Close"><X size={18} /></button>
         <div className="cer-title"><b>Team draw</b><small>{done ? "All picks revealed" : `Pick ${Math.min(k + 1, total)} of ${total}`}</small></div>
+        {!done && <button className="btn cer-skip" onClick={skip}><SkipForward size={14} />Reveal all</button>}
         <button className="icon-btn" onClick={toggleSound} aria-label={sound ? "Mute" : "Sound on"}>{sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>
         <div className="cer-bar"><span style={{ width: `${(k / total) * 100}%` }} /></div>
       </div>
 
       {!done ? (
         <>
-          <div className="cer-stage">
-            <div className="cer-pot">{POTS[up.c]}</div>
-            <div className="cer-for">{spinning ? "Drawing for" : "Next up"} <Badge S={S} t={up.t} size="sm" /> <b>{E.tn(S, up.t)}</b></div>
-          </div>
-          <Wheel items={items} target={target} spinKey={spinKey} duration={auto ? AUTO_SPIN : MANUAL_SPIN} onDone={landed} onHub={auto ? undefined : spin} />
-          <div className="cer-result" aria-live="polite">
-            {last && !spinning ? (
-              <div className="reveal" key={k} style={{ "--tc": teamColor(last.t) }}>
-                <small>{POTS[last.c]}</small>
-                <b>{last.p.name}</b>
-                {funFact(last.p.name) && <p className="reveal-fact" style={factSize(funFact(last.p.name))}>{funFact(last.p.name)}</p>}
-                <div className="joins"><span>joins</span><Badge S={S} t={last.t} size="sm" /><span className="tname">{E.tn(S, last.t)}</span></div>
+          {/* One screen: the wheel takes the room that is left, and the reveal pops up over it,
+              so the teams below stay in view. */}
+          <div className="cer-show">
+            <div className="cer-stage">
+              <div className="cer-pot">{POTS[up.c]}</div>
+              <div className="cer-for">{spinning ? "Drawing for" : "Next up"} <Badge S={S} t={up.t} size="sm" /> <b>{E.tn(S, up.t)}</b></div>
+            </div>
+            <div className="cer-arena">
+              <Wheel items={items} target={target} spinKey={spinKey} duration={auto ? AUTO_SPIN : MANUAL_SPIN} onDone={landed} onHub={auto ? undefined : spin} />
+            </div>
+            <p className="cer-wait">{spinning ? (left.length === 1 ? "Last one in the pot…" : "Here we go…") : auto ? "Get ready…" : k === 0 ? "Start the auto draw, or spin one at a time" : "Tap SPIN in the middle of the wheel"}</p>
+            {last && !spinning && !peek && (
+              <div className="cer-result over" aria-live="polite" onClick={() => setPeek(true)}>
+                <div className="reveal" key={k} style={{ "--tc": teamColor(last.t) }}>
+                  <small>{POTS[last.c]}</small>
+                  <b>{last.p.name}</b>
+                  {funFact(last.p.name) && <p className="reveal-fact" style={factSize(funFact(last.p.name))}>{funFact(last.p.name)}</p>}
+                  <div className="joins"><span>joins</span><Badge S={S} t={last.t} size="sm" /><span className="tname">{E.tn(S, last.t)}</span></div>
+                </div>
               </div>
-            ) : <span className="cer-wait">{spinning ? (left.length === 1 ? "Last one in the pot…" : "Here we go…") : auto ? "Get ready…" : k === 0 ? "Start the auto draw, or spin one at a time" : "Tap SPIN in the middle of the wheel"}</span>}
+            )}
           </div>
           <div className="btns cer-btns">
             {auto ? <button className="btn primary" onClick={pause}><Pause size={16} />Pause</button>
               : k === 0 ? <button className="btn primary cer-go" onClick={startAuto} disabled={spinning}><Sparkles size={16} />Start auto draw</button>
               : <button className="btn primary" onClick={startAuto} disabled={spinning}><FastForward size={16} />Continue auto</button>}
             {!auto && <button className="btn" onClick={spin} disabled={spinning}><Play size={16} />{k === 0 ? "Spin one" : "Spin"}</button>}
-            <button className="btn" onClick={skip}><SkipForward size={16} />Reveal all</button>
           </div>
           {count != null && <div className="cer-count" aria-live="assertive"><b key={count}>{count}</b></div>}
           {intro != null && (
@@ -149,8 +157,8 @@ export default function TeamDraw({ S, onClose }) {
 
       <div className="cer-teams">
         {S.teams.map((x, t) => (
-          <div key={t} className={`cer-team ${up.t === t && !done ? "now" : ""}`} style={{ "--tc": teamColor(t) }}>
-            <div className="cer-team-h"><Badge S={S} t={t} size="sm" /><span>{E.tn(S, t)}</span></div>
+          <div key={t} className={`cer-team ${up.t === t && !done ? "now" : ""}`} style={{ "--tc": teamColor(t) }} title={E.tn(S, t)}>
+            <Badge S={S} t={t} size="sm" />
             {E.SLOTS.map(f => {
               const v = name(t, f);
               return <div key={f} className={`cer-slot ${v ? "" : "empty"} ${pop === t + "-" + f ? "pop" : ""}`}>{v || E.SLOT[f]}</div>;

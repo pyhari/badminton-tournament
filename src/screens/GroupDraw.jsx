@@ -99,30 +99,33 @@ export default function GroupDraw({ S, onClose }) {
       <div className="cer-top">
         <button className="icon-btn" onClick={close} aria-label="Close"><X size={18} /></button>
         <div className="cer-title"><b>Group draw</b><small>{done ? "All teams drawn" : `Pick ${shown + 1} of ${total}`}</small></div>
+        {!done && <button className="btn cer-skip" onClick={skip}><SkipForward size={14} />Reveal all</button>}
         <button className="icon-btn" onClick={toggleSound} aria-label={sound ? "Mute" : "Sound on"}>{sound ? <Volume2 size={18} /> : <VolumeX size={18} />}</button>
         <div className="cer-bar"><span style={{ width: `${(shown / total) * 100}%` }} /></div>
       </div>
 
       {!done ? (
         <>
-          <div className="cer-stage">
-            <div className="cer-pot">Pot {pot + 1}</div>
-            <div className="gd-pot">{(S.pots[pot] || []).map(t => <span key={t} className={picks.includes(t) ? "gone" : ""}><Badge S={S} t={t} /></span>)}{!S.pots.length && <small>Two teams in each pot</small>}</div>
-          </div>
-          <div className={`gd-reel ${rolling ? "rolling" : ""} ${last && !rolling && reel != null ? "landed" : ""}`} style={{ "--tc": reel != null ? teamColor(reel) : "var(--surface-3)" }}>
-            {reel != null ? <><Badge S={S} t={reel} size="lg" /><b>{E.tn(S, reel)}</b></> : <Dices size={54} strokeWidth={1.5} />}
-          </div>
-          <div className="cer-result" aria-live="polite">
-            {last && reel === last.t ? (
-              <div className="gd-to" key={shown}><span>goes to</span><b>Group {last.g}</b></div>
-            ) : <span className="cer-wait">{rolling ? (shown % E.NG ? "…and the other team goes to Group B" : "Who goes to Group A?") : auto ? "Get ready…" : shown === 0 ? "Start the group draw, or draw one team at a time" : "Draw the next team"}</span>}
+          {/* One screen: the reel takes the room that is left, so both groups stay in view. */}
+          <div className="cer-show gd-show">
+            <div className="cer-stage">
+              <div className="cer-pot">Pot {pot + 1}</div>
+              <div className="gd-pot">{(S.pots[pot] || []).map(t => <span key={t} className={picks.includes(t) ? "gone" : ""}><Badge S={S} t={t} /></span>)}{!S.pots.length && <small>Two teams in each pot</small>}</div>
+            </div>
+            <div className={`gd-reel ${rolling ? "rolling" : ""} ${last && !rolling && reel != null ? "landed" : ""}`} style={{ "--tc": reel != null ? teamColor(reel) : "var(--surface-3)" }}>
+              {reel != null ? <><Badge S={S} t={reel} size="lg" /><b>{E.tn(S, reel)}</b></> : <Dices size={54} strokeWidth={1.5} />}
+            </div>
+            <div className="cer-result" aria-live="polite">
+              {last && reel === last.t ? (
+                <div className="gd-to" key={shown}><span>goes to</span><b>Group {last.g}</b></div>
+              ) : <span className="cer-wait">{rolling ? (shown % E.NG ? "…and the other team goes to Group B" : "Who goes to Group A?") : auto ? "Get ready…" : shown === 0 ? "Start the group draw, or draw one team at a time" : "Draw the next team"}</span>}
+            </div>
           </div>
           <div className="btns cer-btns">
             {auto ? <button className="btn primary" onClick={() => { setAuto(false); setCount(null); }}><Pause size={16} />Pause</button>
               : shown === 0 ? <button className="btn primary cer-go" onClick={startAuto} disabled={rolling}><Sparkles size={16} />Start group draw</button>
               : <button className="btn primary" onClick={startAuto} disabled={rolling}><FastForward size={16} />Continue auto</button>}
             {!auto && <button className="btn" onClick={one} disabled={rolling}><Play size={16} />Draw one</button>}
-            <button className="btn" onClick={skip}><SkipForward size={16} />Reveal all</button>
           </div>
           {count != null && <div className="cer-count" aria-live="assertive"><b key={count}>{count}</b></div>}
           {intro != null && (
