@@ -85,7 +85,7 @@ function Players({ S, next }) {
       </div>
       {S.locked
         ? <div className="banner"><Lock size={18} />Teams are locked, so who plays and their levels are fixed. Names can still be corrected.</div>
-        : <p className="hint" style={{ marginTop: 0 }}>Switch on who is playing and set each level: 5 dots is the strongest. The team draw uses levels to make even teams.</p>}
+        : <p className="hint" style={{ marginTop: 0 }}>Switch on who is playing and set each level: 6 dots is the strongest. The team draw uses levels to make even teams.</p>}
       <div className="ptools">
         <div className="search"><Search size={18} /><input className="field" placeholder="Search player" value={q} onChange={e => setQ(e.target.value)} /></div>
         <select className="field" value={sort} aria-label="Sort players" onChange={e => setSort(e.target.value)}>
@@ -123,7 +123,7 @@ function PlayerRow({ S, p, i, n }) {
         {t >= 0 && <small>{E.tn(S, t)}</small>}
       </div>
       <div className="levels" role="radiogroup" aria-label={`Level of ${p.name}`}>
-        {[1, 2, 3, 4, 5].map(v => (
+        {Array.from({ length: E.MAX_LVL }, (_, k) => k + 1).map(v => (
           <button key={v} className={v <= p.lvl ? "on" : ""} role="radio" aria-checked={v === p.lvl} aria-label={`Level ${v}`} disabled={S.locked}
             onClick={() => update(n => { n.players[i].lvl = v; })} />
         ))}

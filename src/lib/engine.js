@@ -31,6 +31,8 @@ export const SLOTS = ["m1", "m2", "w"];
 export const slotG = f => f === "w" ? "F" : "M";
 export const STAGES = ["Group A", "Group B", BR.Cup, BR.Plate];
 
+// Player levels run from 1 to MAX_LVL (the strongest).
+export const MAX_LVL = 6;
 export const player = (name, g) => ({ name, g, lvl: 3, on: true });
 
 export const defaults = () => ({

@@ -771,3 +771,12 @@ button.match:active { transform: scale(.98); }
 .test-box summary { display: flex; align-items: center; gap: 8px; padding: 10px 2px; font-weight: 800; cursor: pointer; list-style: none; }
 .test-box summary::-webkit-details-marker { display: none; }
 .test-box summary small { margin-left: auto; font-weight: 600; color: var(--muted); font-size: 12px; }
+
+/* Narrow phones: smaller level dots and gaps, so 6 levels leave room for the name. */
+@media (max-width: 379px) {
+  .prow { gap: 6px; padding-right: 8px; grid-template-columns: 16px auto 1fr auto auto; }
+  .prow .nmi { font-size: 15px; }
+  .prow .del { width: 26px; }
+  .levels { gap: 2px; }
+  .levels button { width: 13px; height: 13px; border-radius: 4px; }
+}
