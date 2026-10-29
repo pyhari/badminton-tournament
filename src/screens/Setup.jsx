@@ -6,7 +6,7 @@ import { Badge, TeamName, toast } from "../components/ui.jsx";
 import TeamDraw from "./TeamDraw.jsx";
 import GroupDraw from "./GroupDraw.jsx";
 import RatingsPin from "../components/RatingsPin.jsx";
-import TestTools, { showTests, showAI } from "./TestTools.jsx";
+import TestTools, { showTests, showAI, IS_PROD } from "./TestTools.jsx";
 const AIPlanner = lazy(() => import("./AIPlanner.jsx"));
 
 const firstStep = S => !S.locked ? (S.teams.some(x => x.m1) ? "teams" : "players") : S.drawn.length < E.NT ? "groups" : "more";
@@ -36,7 +36,7 @@ export default function Setup({ S, live }) {
       {/* Test tools sit at the end of More, folded away, rather than in their own tab. */}
       {seg === "more" && showTests && (
         <details className="test-box">
-          <summary><FlaskConical size={16} />Test tools<small>Preview and local only</small></summary>
+          <summary><FlaskConical size={16} />Test tools<small>{IS_PROD ? "Changes the live tournament" : "Test copy only"}</small></summary>
           <TestTools S={S} />
         </details>
       )}

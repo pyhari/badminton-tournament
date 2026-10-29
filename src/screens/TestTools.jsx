@@ -7,8 +7,8 @@ import { Badge, toast } from "../components/ui.jsx";
 
 /* global __APP_ENV__ */
 export const IS_PROD = __APP_ENV__ === "production";
-// Shown on preview and local builds; on the live site only with ?test=1.
-export const showTests = !IS_PROD || /[?&]test=1/.test(location.search);
+// Shown to organizers everywhere; on the live site each action asks first (see ok below).
+export const showTests = true;
 // The AI format planner is turned off for now. To turn it back on, set AI_ON to true
 // here and in api/generate.js: it then shows like the test tools, with ?ai=1 on the live site.
 const AI_ON = false;
@@ -36,7 +36,7 @@ export default function TestTools({ S }) {
   };
   const run = (upTo, label, fresh = false) => {
     if (!g) { toast("Do the quick setup first."); return; }
-    if (fresh && hasScores && !ok("All scores will be replaced.")) return;
+    if (!ok(fresh && hasScores ? "All scores will be replaced." : "Made-up scores will be added.")) return;
     let n = 0;
     update(st => { if (fresh) clearScores(st); n = simulate(st, { upTo, mode, cl, fpl }); });
     if (!n) {
@@ -64,7 +64,7 @@ export default function TestTools({ S }) {
     <>
       {IS_PROD
         ? <div className="banner warn"><AlertTriangle size={18} /><div>You are on the <b>live</b> site. These tools change the real tournament. Use the preview link for testing.</div></div>
-        : <div className="banner"><FlaskConical size={18} /><div>Test tools. Only on preview and local builds; saved separately from the live tournament.</div></div>}
+        : <div className="banner"><FlaskConical size={18} /><div>Test tools. This is a test copy, saved separately from the live tournament.</div></div>}
 
       <div className="section"><h2>1 · Start</h2></div>
       <div className="card">
