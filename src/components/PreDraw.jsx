@@ -80,6 +80,10 @@ export default function PreDraw({ S, me, choose }) {
         {q.trim() && !found.length && <p className="hint">No player called “{q}”.</p>}
       </div>
 
+      <div className="section"><h2>Who's playing</h2></div>
+      {group("Women", women)}
+      {group("Men", men)}
+
       <div className="section"><h2>The teams</h2></div>
       <div className="pd-teams">
         {S.teams.slice(0, NT).map((x, t) => (
@@ -89,10 +93,6 @@ export default function PreDraw({ S, me, choose }) {
           </div>
         ))}
       </div>
-
-      <div className="section"><h2>Who's playing</h2></div>
-      {group("Women", women)}
-      {group("Men", men)}
       <Cheer S={S} cheer={cheer} onClose={() => showCheer("")} />
     </div>
   );
