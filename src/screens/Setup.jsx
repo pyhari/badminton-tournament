@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X, ExternalLink, MessageCircle, MessageSquare, Share2, FlaskConical } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
@@ -12,6 +12,9 @@ const firstStep = S => !S.locked ? (S.teams.some(x => x.m1) ? "teams" : "players
 
 export default function Setup({ S, live }) {
   const [seg, setSeg] = useState(() => firstStep(S));
+  // Player ratings are hidden unless switched on, on this device, by the secret taps (Players).
+  const [lv, setLvState] = useState(() => lsGet("bt_lv") === "1");
+  const setLv = v => { setLvState(v); lsSet("bt_lv", v ? "1" : ""); toast(v ? "Ratings shown on this device" : "Ratings hidden"); };
   const done = { players: !E.poolIssues(S).length, teams: S.locked, groups: S.drawn.length >= E.NT };
   const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]].concat(showAI ? [["ai", "AI"]] : []);
   return (
@@ -24,8 +27,8 @@ export default function Setup({ S, live }) {
           </button>
         ))}
       </div>
-      {seg === "players" && <Players S={S} next={() => setSeg("teams")} />}
-      {seg === "teams" && <Teams S={S} next={() => setSeg("groups")} />}
+      {seg === "players" && <Players S={S} lv={lv} setLv={setLv} next={() => setSeg("teams")} />}
+      {seg === "teams" && <Teams S={S} lv={lv} next={() => setSeg("groups")} />}
       {seg === "groups" && <Groups S={S} back={() => setSeg("teams")} />}
       {seg === "more" && <More S={S} live={live} />}
       {/* Test tools sit at the end of More, folded away, rather than in their own tab. */}
@@ -41,12 +44,20 @@ export default function Setup({ S, live }) {
 }
 
 /* ---------- players ---------- */
-function Players({ S, next }) {
+function Players({ S, lv, setLv, next }) {
   const issues = E.poolIssues(S);
+  // Secret: five quick taps or clicks on the "Men" heading show or hide the ratings.
+  const taps = useRef([]);
+  const tapTitle = () => {
+    const now = Date.now();
+    taps.current = taps.current.filter(t => now - t < 4000).concat(now);
+    if (taps.current.length >= 5) { taps.current = []; setLv(!lv); }
+  };
   const [q, setQ] = useState("");
   const [sort, setSortState] = useState(() => lsGet("bt_psort") || "az");
   const setSort = v => { setSortState(v); lsSet("bt_psort", v); };
-  const by = { az: (a, b) => a[0].name.localeCompare(b[0].name), level: (a, b) => b[0].lvl - a[0].lvl || a[0].name.localeCompare(b[0].name), added: (a, b) => a[1] - b[1] }[sort] || (() => 0);
+  const sortBy = !lv && sort === "level" ? "az" : sort;
+  const by = { az: (a, b) => a[0].name.localeCompare(b[0].name), level: (a, b) => b[0].lvl - a[0].lvl || a[0].name.localeCompare(b[0].name), added: (a, b) => a[1] - b[1] }[sortBy] || (() => 0);
   const count = g => { const ps = S.players.filter(p => p.g === g); return { on: ps.filter(p => p.on).length, off: ps.filter(p => !p.on).length, need: g === "M" ? 2 * E.NT : E.NT }; };
   const men = count("M"), women = count("F");
   const find = q.trim().toLowerCase();
@@ -60,11 +71,11 @@ function Players({ S, next }) {
     if (find && !shownOn.length && !shownOff.length) return null;
     return (
       <>
-        <div className="section"><h2>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
+        <div className="section" onClick={g === "M" ? tapTitle : undefined} style={{ userSelect: "none" }}><h2>{g === "M" ? "Men" : "Women"}</h2><span className={`count ${on === need ? "ok" : "bad"}`}>{on}/{need}</span></div>
         <div className="card flat">
-          {shownOn.map(([p, i, n]) => <PlayerRow key={i} S={S} p={p} i={i} n={n} />)}
+          {shownOn.map(([p, i, n]) => <PlayerRow key={i} S={S} p={p} i={i} n={n} lv={lv} />)}
           {shownOff.length > 0 && <div className="prow-sub">Not playing · {shownOff.length}</div>}
-          {shownOff.map(([p, i]) => <PlayerRow key={i} S={S} p={p} i={i} />)}
+          {shownOff.map(([p, i]) => <PlayerRow key={i} S={S} p={p} i={i} lv={lv} />)}
           {!S.locked && !find && <AddPlayer S={S} g={g} />}
         </div>
       </>
@@ -84,13 +95,13 @@ function Players({ S, next }) {
         <p className={ready ? "ok" : "bad"}>{ready ? <><Check size={14} strokeWidth={3} />Ready for {E.NT} teams</> : <><AlertTriangle size={14} />{off || "Check the players below"}</>}</p>
       </div>
       {S.locked
-        ? <div className="banner"><Lock size={18} />Teams are locked, so who plays and their levels are fixed. Names can still be corrected.</div>
-        : <p className="hint" style={{ marginTop: 0 }}>Switch on who is playing and set each level: 6 dots is the strongest. The team draw uses levels to make even teams.</p>}
+        ? <div className="banner"><Lock size={18} />Teams are locked, so who plays{lv ? " and their levels" : ""} are fixed. Names can still be corrected.</div>
+        : <p className="hint" style={{ marginTop: 0 }}>{lv ? "Switch on who is playing and set each level: 6 dots is the strongest. The team draw uses levels to make even teams." : "Switch on who is playing. The team draw makes even teams."}</p>}
       <div className="ptools">
         <div className="search"><Search size={18} /><input className="field" placeholder="Search player" value={q} onChange={e => setQ(e.target.value)} /></div>
-        <select className="field" value={sort} aria-label="Sort players" onChange={e => setSort(e.target.value)}>
+        <select className="field" value={sortBy} aria-label="Sort players" onChange={e => setSort(e.target.value)}>
           <option value="az">A–Z</option>
-          <option value="level">By level</option>
+          {lv && <option value="level">By level</option>}
           <option value="added">As added</option>
         </select>
       </div>
@@ -103,7 +114,7 @@ function Players({ S, next }) {
   );
 }
 
-function PlayerRow({ S, p, i, n }) {
+function PlayerRow({ S, p, i, n, lv }) {
   const t = E.teamOf(S, p), fixed = S.locked || t >= 0;
   const [name, setName] = useState(p.name);
   useEffect(() => setName(p.name), [p.name]);
@@ -122,12 +133,12 @@ function PlayerRow({ S, p, i, n }) {
         <input className="nmi" value={name} aria-label="Player name" onChange={e => setName(e.target.value)} onBlur={commit} onKeyDown={e => e.key === "Enter" && e.target.blur()} />
         {t >= 0 && <small>{E.tn(S, t)}</small>}
       </div>
-      <div className="levels" role="radiogroup" aria-label={`Level of ${p.name}`}>
+      {lv && <div className="levels" role="radiogroup" aria-label={`Level of ${p.name}`}>
         {Array.from({ length: E.MAX_LVL }, (_, k) => k + 1).map(v => (
           <button key={v} className={v <= p.lvl ? "on" : ""} role="radio" aria-checked={v === p.lvl} aria-label={`Level ${v}`} disabled={S.locked}
             onClick={() => update(n => { n.players[i].lvl = v; })} />
         ))}
-      </div>
+      </div>}
       <button className="del" aria-label={`Remove ${p.name}`} disabled={fixed} onClick={() => update(n => { n.players.splice(i, 1); })}><Trash2 size={16} /></button>
     </div>
   );
@@ -151,7 +162,7 @@ function AddPlayer({ S, g }) {
 }
 
 /* ---------- teams ---------- */
-function Teams({ S, next }) {
+function Teams({ S, lv, next }) {
   const [sel, setSel] = useState(null); // slot picked for a swap: { t, f }
   const [show, setShow] = useState(false); // draw ceremony open
   const filled = S.teams.some(x => x.m1 || x.m2 || x.w), issues = E.teamIssues(S);
@@ -195,7 +206,7 @@ function Teams({ S, next }) {
           </div>
         </div>
       )}
-      {filled && <div className="section"><h2>Teams</h2><span>Strength {Math.min(...pw)}–{Math.max(...pw)} (sum of levels)</span></div>}
+      {filled && <div className="section"><h2>Teams</h2>{lv && <span>Strength {Math.min(...pw)}–{Math.max(...pw)} (sum of levels)</span>}</div>}
       {filled && issues.length > 0 && !S.locked && <div className="banner warn"><AlertTriangle size={18} /><div>{issues.slice(0, 5).map(x => <div key={x}>{x}</div>)}</div></div>}
       <div className="teams-grid">
         {S.teams.map((x, t) => (
@@ -203,14 +214,14 @@ function Teams({ S, next }) {
             <div className="tcard-head">
               <Badge S={S} t={t} />
               <input value={x.name} aria-label={`Team ${t + 1} name`} placeholder={`Team ${t + 1}`} onChange={e => { const v = e.target.value; update(n => { n.teams[t].name = v; }); }} />
-              {filled && <span className="strength">{pw[t]}</span>}
+              {filled && lv && <span className="strength">{pw[t]}</span>}
             </div>
             <div className="slots">
               {E.SLOTS.map(f => {
                 const isSel = sel && sel.t === t && sel.f === f, target = sel && !isSel && selG === E.slotG(f);
                 return (
                   <button key={f} className={`slot ${x[f] ? "" : "empty"} ${isSel ? "sel" : ""} ${target ? "target" : ""}`} disabled={S.locked} onClick={() => tap(t, f)}>
-                    <span className="role">{E.SLOT[f]}</span><b>{x[f] || "Empty"}</b>{x[f] && <span className="lv">L{E.lvl(S, x[f], E.slotG(f))}</span>}
+                    <span className="role">{E.SLOT[f]}</span><b>{x[f] || "Empty"}</b>{x[f] && lv && <span className="lv">L{E.lvl(S, x[f], E.slotG(f))}</span>}
                   </button>
                 );
               })}
@@ -222,7 +233,7 @@ function Teams({ S, next }) {
         <>
           <div className="section"><h2>Reserves</h2><span>Not in a team</span></div>
           <div className="reserves">
-            {spare.map(([p, i]) => <button key={i} className={sel && selG === p.g ? "target" : ""} onClick={() => sub(i)}>{p.name}<small>{p.g === "M" ? "M" : "W"} · L{p.lvl}</small></button>)}
+            {spare.map(([p, i]) => <button key={i} className={sel && selG === p.g ? "target" : ""} onClick={() => sub(i)}>{p.name}<small>{p.g === "M" ? "Man" : "Woman"}{lv ? " · L" + p.lvl : ""}</small></button>)}
           </div>
         </>
       )}
