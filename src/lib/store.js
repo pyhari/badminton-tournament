@@ -141,6 +141,9 @@ export async function pushNow(leaving) {
       setSync(j.rev, edits !== sent);
       setLive(dirty ? "Saving…" : "Live · saved " + hhmm());
       if (dirty) schedulePush();
+      // Nudges the AI words: the server starts writing for new results now, rather than when
+      // the next player's phone asks. A fresh URL, so Vercel's shared copy is not served.
+      if (leaving !== true) fetch("/api/insights?rev=" + j.rev, { cache: "no-store" }).catch(() => {});
     } else if (r.status === 409) {
       if (leaving !== true) conflict(j);
     } else if (r.status === 401 || r.status === 429) {

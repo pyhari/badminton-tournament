@@ -211,3 +211,46 @@ describe("Champions League prediction", () => {
     expect(outlookFacts(S).map(x => x.group)).toEqual(["Group B"]);
   });
 });
+
+describe("organizer refresh", () => {
+  const run = async ({ pin = true, S, saved, lock } = {}) => {
+    const store = { [KEYS.state]: S ? JSON.stringify(S) : null, [KEYS.insights]: saved ? JSON.stringify(saved) : null, ...(lock ? { [KEYS.lock]: "1" } : {}) }, calls = [];
+    const db = async ([cmd, ...a]) => {
+      if (cmd === "MGET") return a.map(k => store[k] ?? null);
+      if (cmd === "GET") return store[a[0]] ?? null;
+      if (cmd === "INCR") { store[a[0]] = (Number(store[a[0]]) || 0) + 1; return store[a[0]]; }
+      if (cmd === "EXPIRE") return 1;
+      if (cmd === "SET") { if (a[2] === "NX" && store[a[0]]) return null; store[a[0]] = a[1]; return "OK"; }
+      if (cmd === "DEL") { delete store[a[0]]; return 1; }
+    };
+    const client = { beta: { messages: { create: async p => { calls.push(p); return { stop_reason: "end_turn", model: "m", content: [{ type: "text", text: JSON.stringify({ story: { headline: "Fresh", lede: "Now.", captions: [] }, groups: [], outlook: [], recaps: [] }) }] }; } } } };
+    const handler = makeHandler({ enabled: true, db, getClient: () => client, background: () => {}, now: () => 5e6, pinOk: () => pin });
+    const res = { headers: {} };
+    res.status = c => { res.code = c; return res; };
+    res.json = j => { res.out = j; return res; };
+    res.setHeader = () => {};
+    await handler({ method: "POST", headers: { "x-pin": "x" } }, res);
+    return { res, calls, store };
+  };
+  const played = () => { const S = full(); play(S, E.prelims(S)[0], [[15, 9], [15, 9], [9, 15]]); return S; };
+
+  it("needs the organizer PIN", async () => {
+    const { res, calls } = await run({ pin: false, S: played() });
+    expect(res.code).toBe(401);
+    expect(calls).toHaveLength(0);
+  });
+
+  it("writes straight away, even right after a write or a failure", async () => {
+    const { res, calls, store } = await run({ S: played(), saved: { recaps: {}, at: 5e6 - 1000, failAt: 5e6 - 1000 } });
+    expect(res.out).toEqual({ ok: true });
+    expect(calls).toHaveLength(1);
+    expect(JSON.parse(store[KEYS.insights]).story.headline).toBe("Fresh");
+    expect(store[KEYS.lock]).toBeUndefined();
+  });
+
+  it("does not write twice at once", async () => {
+    const { res, calls } = await run({ S: played(), lock: true });
+    expect(res.code).toBe(409);
+    expect(calls).toHaveLength(0);
+  });
+});

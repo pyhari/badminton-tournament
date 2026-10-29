@@ -875,3 +875,4 @@ button.match:active { transform: scale(.98); }
   .gd-show .gd-to b { font-size: 28px; }
   .gd-groups .gitem { padding: 1px 0; }
 }
+svg.spin { animation: spin 1s linear infinite; }

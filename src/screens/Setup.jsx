@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useRef, useState } from "react";
-import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X, ExternalLink, MessageCircle, MessageSquare, Share2, FlaskConical } from "lucide-react";
+import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X, ExternalLink, MessageCircle, MessageSquare, Share2, FlaskConical, RefreshCw } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, toast } from "../components/ui.jsx";
@@ -319,6 +319,18 @@ function More({ S, live }) {
     try { replaceAll(E.fix(JSON.parse(t))); toast("Backup restored"); } catch (e) { toast("This backup is not valid."); }
   };
   const reset = () => { if (confirm("Delete players, teams, draw and scores?")) { replaceAll(E.defaults()); toast("Everything was reset"); } };
+  // Writes the AI words now instead of waiting for the next automatic update.
+  const [writing, setWriting] = useState(false);
+  const refreshAi = async () => {
+    setWriting(true);
+    try {
+      await sync(); // the server writes from the scores it has, so send ours first
+      const r = await fetch("/api/insights", { method: "POST", headers: { "x-pin": getPin() } });
+      const j = await r.json().catch(() => ({}));
+      toast(j.ok ? "AI updated. Players see it within a minute." : j.off ? "AI is not set up on this site." : j.error || "Could not update the AI words.");
+    } catch (e) { toast("Offline: could not update the AI words."); }
+    setWriting(false);
+  };
   return (
     <>
       <div className="section"><h2>Live link for players</h2></div>
@@ -359,7 +371,9 @@ function More({ S, live }) {
             </div>
           );
         })}
-        <p className="hint" style={{ marginBottom: 0 }}>Written by Claude and saved once for everyone, so it costs little. The standings, predictions and everything else work without it.</p>
+        <p className="hint">Written by Claude and saved once for everyone, so it costs little. The standings, predictions and everything else work without it.</p>
+        <p className="hint" style={{ marginTop: 0, marginBottom: getPin() ? undefined : 0 }}>It updates by itself a minute or two after scores change, while someone has the players' page open.</p>
+        {getPin() && <button className="btn block" onClick={refreshAi} disabled={writing}><RefreshCw size={16} className={writing ? "spin" : ""} />{writing ? "Writing… (up to a minute)" : "Refresh AI now"}</button>}
       </div>
 
       <div className="section"><h2>Backup</h2></div>

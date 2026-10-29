@@ -3,6 +3,7 @@
 // request after that starts one Claude call in the background (at most one
 // every 45 seconds), and its words are saved for everyone. The facts come from
 // src/lib/insights.js; Claude only writes them up.
+import crypto from "node:crypto";
 import Anthropic from "@anthropic-ai/sdk";
 import { waitUntil } from "@vercel/functions";
 import { fix, allMatches, anyAi } from "../src/lib/engine.js";
@@ -122,8 +123,47 @@ function view(S, saved, key) {
   return { story: saved.story, recaps, reasons: current ? saved.reasons || {} : {}, forecast: current ? saved.forecast || {} : {}, at: saved.at, current };
 }
 
-export function makeHandler({ enabled, db, getClient, background, now = () => Date.now() }) {
+// The organizer PIN, as in api/state.js.
+function adminPin(pin) {
+  const want = process.env.ADMIN_PIN;
+  if (!want || typeof pin !== "string") return false;
+  const h = s => crypto.createHash("sha256").update(s).digest();
+  return crypto.timingSafeEqual(h(pin), h(want));
+}
+
+export function makeHandler({ enabled, db, getClient, background, now = () => Date.now(), pinOk = adminPin }) {
+  // The organizer's "Refresh now": writes straight away, skipping the waits between writes
+  // and after a failure, and replies once the new words are saved.
+  const refresh = async (req, res) => {
+    res.setHeader("Cache-Control", "no-store");
+    // Wrong PINs are counted per address, as in api/state.js, so the PIN cannot be guessed here.
+    const ip = String((req.headers && req.headers["x-forwarded-for"]) || "").split(",")[0].trim() || "unknown";
+    const failKey = NS + "fails:" + ip;
+    if ((Number(await db(["GET", failKey])) || 0) >= 10) return res.status(429).json({ error: "Too many wrong PINs. Wait 15 minutes" });
+    if (!pinOk(req.headers && req.headers["x-pin"])) {
+      await db(["INCR", failKey]); await db(["EXPIRE", failKey, String(15 * 60)]);
+      return res.status(401).json({ error: "Wrong PIN" });
+    }
+    const client = enabled && getClient();
+    if (!client) return res.status(200).json({ off: true });
+    const [text, savedText] = await db(["MGET", KEYS.state, KEYS.insights]);
+    const S = text ? fix(JSON.parse(text)) : null;
+    const key = S && factsKey(S) ? VERSION + factsKey(S) : "";
+    if (!key) return res.status(200).json({ error: "No results yet" });
+    if (!anyAi(S)) return res.status(200).json({ error: "Every AI feature is switched off" });
+    if ((await db(["SET", KEYS.lock, "1", "NX", "EX", String(LOCK_SECS)])) !== "OK") return res.status(409).json({ error: "Already writing. Try again in a minute" });
+    const saved = (savedText && JSON.parse(savedText)) || { recaps: {} };
+    try {
+      const out = await write(client, S, saved);
+      await db(["SET", KEYS.insights, JSON.stringify({ ...out, key, at: now() })]);
+      return res.status(200).json({ ok: true });
+    } catch (e) {
+      console.error("Insights not written:", e.status || "", e.message);
+      return res.status(502).json({ error: "Claude did not answer. Try again" });
+    } finally { await db(["DEL", KEYS.lock]); }
+  };
   return async (req, res) => {
+    if (req.method === "POST") return refresh(req, res);
     if (req.method !== "GET") return res.status(405).json({ error: "Use GET" });
     if (!enabled) return res.status(200).json({ off: true });
     try {
