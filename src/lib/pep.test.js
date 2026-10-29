@@ -123,7 +123,7 @@ describe("fun facts", () => {
   });
   it("matches full names, short names and new short names", () => {
     expect(funFact("Dinesh R")).toBe(FACTS["Dinesh Ramakrishnan"]);
-    expect(funFact("Hari")).toBe(FACTS["Harikumar Ravindran"]);
+    expect(funFact("Hari")).toBe(FACTS["Hari"]);
     expect(funFact("Harish")).toBe(FACTS["Harish"]);
     expect(funFact("Praveen V")).toBe(FACTS["Praveen V"]);
     expect(funFact("Nobody")).toBe(null);
@@ -134,7 +134,7 @@ describe("fun facts", () => {
     expect(S.players.some(p => p.name === name && p.on)).toBe(true);
     await t.get(name);
     const facts = JSON.parse(t.calls[0].messages[0].content.replace(/<\/?facts>/g, ""));
-    expect(facts.funFact).toBe(FACTS["Harikumar Ravindran"]);
+    expect(facts.funFact).toBe(FACTS["Hari"]);
   });
 });
 
