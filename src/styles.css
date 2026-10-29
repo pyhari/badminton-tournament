@@ -802,4 +802,17 @@ button.match:active { transform: scale(.98); }
 @media (prefers-reduced-motion: reduce) { .fact, .fact.open, .fact.open p { animation: none; } }
 
 /* Team draw: the player's fun fact under their name. */
-.reveal-fact { margin: 2px 0 6px; max-width: 320px; font-size: 14px; font-weight: 600; font-style: italic; line-height: 1.35; color: var(--muted); animation: fact-in .5s .25s both; }
+.reveal-fact { margin: 6px auto 8px; max-width: 340px; padding: 8px 12px; border-radius: 14px; background: color-mix(in srgb, var(--tc) 16%, var(--surface)); color: var(--text); font-size: 16px; font-weight: 800; line-height: 1.3; letter-spacing: -.1px; animation: fact-zoom 2.8s .35s cubic-bezier(.3, 1.3, .5, 1) both; }
+.reveal-fact::before { content: "Fun fact · "; color: color-mix(in srgb, var(--tc) 70%, var(--text)); font-weight: 900; }
+/* The fact grows big inside the card, holds, then settles: font size changes, so the card grows with it. */
+@keyframes fact-zoom {
+  0% { opacity: 0; font-size: 12px; }
+  16% { opacity: 1; font-size: var(--peak, 23px); }
+  62% { font-size: var(--peak, 23px); }
+  100% { font-size: 16px; }
+}
+/* Room for the biggest moment, so the buttons below never jump. */
+/* Sized for the longest fact at its biggest (measured), so nothing below moves. */
+.ceremony .cer-result { min-height: 262px; }
+@media (max-width: 380px) { .reveal-fact { --peak: 20px; } .ceremony .cer-result { min-height: 290px; } }
+@media (prefers-reduced-motion: reduce) { .reveal-fact { animation: none; } }

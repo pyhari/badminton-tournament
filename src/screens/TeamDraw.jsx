@@ -79,7 +79,7 @@ export default function TeamDraw({ S, onClose }) {
     const nk = wk + 1;
     setK(x => Math.max(x, nk)); // "Reveal all" during a spin wins
     // A fun fact under the name needs a moment to read before the next spin.
-    const read = funFact(step.p.name) ? 3200 : 1500;
+    const read = funFact(step.p.name) ? 4200 : 1500; // the fact grows, holds and settles (about 3s)
     if (autoRef.current && nk < total) later(() => autoAt(nk), read);
   };
   // The finale: fanfare and confetti across the screen.
