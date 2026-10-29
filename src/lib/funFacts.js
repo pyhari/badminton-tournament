@@ -6,8 +6,6 @@ const ALIASES = {
   "Dinesh R": "Dinesh Ramakrishnan",
   "Dinesh B": "Dinesh Babu",
   "Shankar": "Shankar Gopal",
-  "Hari": "Harikumar Ravindran",
-  "Harikumar": "Harikumar Ravindran",
   "Hema": "Hema Ragupathy",
   "Sai": "Sai Sudhir",
   "Praveen": "Praveen V"
