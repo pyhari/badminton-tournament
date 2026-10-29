@@ -3,7 +3,7 @@ import { AlertTriangle, Sparkles } from "lucide-react";
 import { useRecap } from "../lib/insightsFeed.js";
 import { VIEW } from "../lib/store.js";
 import { matchTag, tieFacts } from "../lib/insights.js";
-import { abbr, aiOn, tn, res, courtOf, onCourt, roster, pairPlayers } from "../lib/engine.js";
+import { abbr, aiOn, tn, res, courtOf, onCourt, roster, pairPlayers, validGame, isConfirmed } from "../lib/engine.js";
 
 // One colour per team, bright enough for dark text in both themes.
 export const TEAM_COLORS = ["#ff6b6b", "#ffb020", "#3ddc97", "#4cc9f0", "#b388ff", "#ff7eb6", "#c6f432", "#ff8a3d"];
@@ -55,8 +55,11 @@ export function matchState(S, m) {
   const r = res(S, m);
   if (r.done) return { cls: "ft", text: "Final" };
   if (onCourt(S, m)) return { cls: "live", text: "Live", dot: true };
-  return { cls: "", text: m.a == null || m.b == null ? "" : "Not played" };
+  return { cls: "", text: "" }; // not played yet: the card stays quiet
 }
+
+// Short names for the 3 games, over the score columns.
+const GAME_SHORT = ["MD", "XD1", "XD2"];
 
 export function MatchCard({ S, m, onOpen, showStage = true }) {
   const r = res(S, m), ready = m.a != null && m.b != null, st = matchState(S, m);
@@ -69,23 +72,32 @@ export function MatchCard({ S, m, onOpen, showStage = true }) {
       <div className={`row-team ${won ? "win" : ""} ${lost ? "lose" : ""}`}>
         <Badge S={S} t={ready ? t : null} />
         {ready ? <TeamName S={S} t={t} className="nm" /> : <div className="nm"><b>{label}</b></div>}
-        <div className="games">{r.gs.map((g, k) => <Pop key={k} id={`${m.id}.${i}.${k}`} className={g && g.w === i ? "w" : ""} v={g ? (i === 0 ? g.a : g.b) : "–"} />)}</div>
+        <div className="games">{r.gs.map((g, k) => <Pop key={k} id={`${m.id}.${i}.${k}`} className={g && g.w === i && (validGame(g) || isConfirmed(S, m, k, g)) ? "w" : ""} v={g ? (i === 0 ? g.a : g.b) : "–"} />)}</div>
         <div className="tie"><Pop id={`${m.id}.${i}`} v={r.played ? r.gw[i] : ""} /></div>
       </div>
     );
   };
   const Tag = onOpen && ready ? "button" : "div";
+  // Inside a section the stage is already its heading, so the card names only a playoff round.
+  const title = showStage ? m.stage + (m.label ? " · " + m.label : "") : m.label || "";
+  const live = st.cls === "live" && courtOf(S, m);
   return (
     <Tag key={bumps} className={`match ${bumps ? "glow" : ""}`} onClick={onOpen && ready ? () => onOpen(m) : undefined}>
-      <div className="match-head">
-        <span className="grow">{showStage ? m.stage + (m.label ? " · " + m.label : "") : m.label || m.stage}</span>
+      {(title || st.text || live) && <div className="match-head">
+        <span className="grow">{title}</span>
         <span className={`state ${st.cls}`}>{st.dot && <span className="dot live" />}{st.text}</span>
-        {st.cls === "live" && courtOf(S, m) && <span className="court on">Court {courtOf(S, m)}</span>}
-      </div>
+        {live && <span className="court on">Court {courtOf(S, m)}</span>}
+      </div>}
+      {ready && r.played > 0 && (
+        <div className="row-team row-cols" aria-hidden="true">
+          <span className="badge" /><span />
+          <div className="games">{GAME_SHORT.map(x => <span key={x}>{x}</span>)}</div><div className="tie" />
+        </div>
+      )}
       {side(m.a, m.la, 0)}
       {side(m.b, m.lb, 1)}
       {!ready && <div className="match-foot">Waiting for earlier results</div>}
-      {ready && r.bad.length > 0 && <div className="match-foot warn"><AlertTriangle size={14} /> Check game {r.bad.map(i => i + 1).join(" and ")}: not a finished score</div>}
+      {ready && r.bad.length > 0 && !VIEW && <div className="match-foot warn"><AlertTriangle size={14} /> Check game {r.bad.map(i => i + 1).join(" and ")}: not a finished score</div>}
       {r.done && recap && <div className="recap"><Sparkles size={13} /><span>{matchTag(tieFacts(S, m)) && <b className="recap-tag">{matchTag(tieFacts(S, m))}</b>}{recap}</span></div>}
       {ready && onOpen && !r.played && !VIEW && <div className="match-foot">{courtOf(S, m) ? "Tap to enter scores" : "Tap to call to a court or enter scores"}</div>}
     </Tag>

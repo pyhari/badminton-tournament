@@ -53,16 +53,17 @@ export default function PreDraw({ S, me, choose }) {
   let n = 0; // running index, so the chips pop in one after another
   const chip = p => (
     <button key={p.name} className={`pd-chip ${p.g === "F" ? "f" : "m"} ${p.name === name ? "me" : ""}`} style={{ "--i": n++ }}
-      onClick={() => pick(p.name === name ? "" : p.name)} aria-pressed={p.name === name}>
+      onClick={() => { pick(p.name === name ? "" : p.name); setQ(""); }} aria-pressed={p.name === name}>
       <i>{p.name[0]}</i>{p.name}{p.name === name && <Check size={14} strokeWidth={3} />}
     </button>
   );
-  const group = (label, list) => shown(list).length > 0 && (
+  const group = (label, list) => (
     <>
       <div className="pd-label"><span className={`gd ${label === "Women" ? "f" : "m"}`} />{label} · {list.length}</div>
-      <div className="pd-wall">{shown(list).map(chip)}</div>
+      <div className="pd-wall">{list.map(chip)}</div>
     </>
   );
+  const found = q.trim() ? shown(playing).sort((a, b) => a.name.localeCompare(b.name)) : [];
 
   return (
     <div className="page">
@@ -86,6 +87,14 @@ export default function PreDraw({ S, me, choose }) {
         </div>
       )}
 
+      {/* Finding yourself comes first: it is what each player opens the page to do. */}
+      <div className="pd-find">
+        {!name && <p className="pd-find-hint">Find your name, and we'll show your team the moment it's drawn.</p>}
+        <div className="search"><Search size={18} /><input className="field" placeholder="Find your name" value={q} onChange={e => setQ(e.target.value)} aria-label="Find your name" /></div>
+        {found.length > 0 && <div className="pd-wall pd-results">{found.map(chip)}</div>}
+        {q.trim() && !found.length && <p className="hint">No player called “{q}”.</p>}
+      </div>
+
       <div className="section"><h2>The teams</h2></div>
       <div className="pd-teams">
         {S.teams.slice(0, NT).map((x, t) => (
@@ -97,11 +106,8 @@ export default function PreDraw({ S, me, choose }) {
       </div>
 
       <div className="section"><h2>Who's playing</h2></div>
-      {!name && <p className="page-sub">Tap your name, and we'll show your team as soon as it's drawn.</p>}
-      <div className="search"><Search size={18} /><input className="field" placeholder="Find your name" value={q} onChange={e => setQ(e.target.value)} /></div>
       {group("Women", women)}
       {group("Men", men)}
-      {q && !shown(playing).length && <p className="hint">No player called “{q}”.</p>}
       {pep && (
         <div className="pd-pep" role="status" key={pep.name}>
           <Sparkles size={18} />

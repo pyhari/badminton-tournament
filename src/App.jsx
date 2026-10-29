@@ -1,7 +1,7 @@
 import { Suspense, lazy, useCallback, useState } from "react";
 import { CalendarDays, ListOrdered, Trophy, UserRound, Settings2, Sun, Moon } from "lucide-react";
 import { useStore, VIEW, LOGIN, lsGet, lsSet } from "./lib/store.js";
-import { EVENT, NT, TAGLINE, allMatches, onCourt } from "./lib/engine.js";
+import { EVENT, EVENT_SHORT, NT, TAGLINE, allMatches, onCourt } from "./lib/engine.js";
 import { Toaster } from "./components/ui.jsx";
 import ScoreSheet from "./components/ScoreSheet.jsx";
 import Me from "./screens/Me.jsx";
@@ -65,7 +65,7 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <div className="brand"><span className="brand-mark"><Shuttle /></span><div>{EVENT}<small>{VIEW ? TAGLINE : "Organizer"}</small></div></div>
+        <div className="brand"><span className="brand-mark"><Shuttle /></span><div><span className="ev-full">{EVENT}</span><span className="ev-short">{EVENT_SHORT}</span><small>{VIEW ? TAGLINE : "Organizer"}</small></div></div>
         <Status S={S} live={live} updated={updated} />
         <button className="icon-btn" onClick={flip} aria-label="Switch light or dark">{theme === "dark" ? <Sun size={17} /> : <Moon size={17} />}</button>
       </header>

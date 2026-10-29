@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
-import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X, ExternalLink, MessageCircle, MessageSquare, Share2 } from "lucide-react";
+import { Check, Search, Lock, LockOpen, Plus, Shuffle, Trash2, AlertTriangle, Dices, RotateCcw, Copy, Download, Upload, LogOut, CloudDownload, Wifi, X, ExternalLink, MessageCircle, MessageSquare, Share2, FlaskConical } from "lucide-react";
 import * as E from "../lib/engine.js";
 import { update, replaceAll, getPin, sync, pullNow, logout, isDirty, lsGet, lsSet } from "../lib/store.js";
 import { Badge, TeamName, toast } from "../components/ui.jsx";
@@ -13,7 +13,7 @@ const firstStep = S => !S.locked ? (S.teams.some(x => x.m1) ? "teams" : "players
 export default function Setup({ S, live }) {
   const [seg, setSeg] = useState(() => firstStep(S));
   const done = { players: !E.poolIssues(S).length, teams: S.locked, groups: S.drawn.length >= E.NT };
-  const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]].concat(showTests ? [["test", "Test"]] : []).concat(showAI ? [["ai", "AI"]] : []);
+  const segs = [["players", "Players"], ["teams", "Teams"], ["groups", "Groups"], ["more", "More"]].concat(showAI ? [["ai", "AI"]] : []);
   return (
     <div className="page">
       <h1 className="page-title">Setup</h1>
@@ -28,7 +28,13 @@ export default function Setup({ S, live }) {
       {seg === "teams" && <Teams S={S} next={() => setSeg("groups")} />}
       {seg === "groups" && <Groups S={S} back={() => setSeg("teams")} />}
       {seg === "more" && <More S={S} live={live} />}
-      {seg === "test" && <TestTools S={S} />}
+      {/* Test tools sit at the end of More, folded away, rather than in their own tab. */}
+      {seg === "more" && showTests && (
+        <details className="test-box">
+          <summary><FlaskConical size={16} />Test tools<small>Preview and local only</small></summary>
+          <TestTools S={S} />
+        </details>
+      )}
       {seg === "ai" && <Suspense fallback={null}><AIPlanner S={S} /></Suspense>}
     </div>
   );

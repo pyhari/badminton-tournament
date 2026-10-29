@@ -10,7 +10,7 @@ const listSig = ps => ["M", "F"].map(g => g + ":" + ps.filter(p => p.g === g).ma
 export const isOldList = S => listSig(S.players) === OLD_LIST && S.players.every(p => p.lvl === 3);
 // The two playoff brackets: short names for tight spots, full names for headings.
 // The event, as shown in the header, the page title and shared links.
-export const EVENT = "FFBC Fall Fun Tournament", TAGLINE = "Smash. Rally. Celebrate.";
+export const EVENT = "FFBC Fall Fun Tournament", EVENT_SHORT = "FFBC Fall Fun", TAGLINE = "Smash. Rally. Celebrate.";
 
 // The AI features on the players' page, each switched on or off in Setup > More.
 export const AI_FEATURES = [

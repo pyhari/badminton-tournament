@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { CalendarClock, PartyPopper, X, SearchX } from "lucide-react";
-import { STAGES, allMatches, courtOf, groups, onCourt, pickedTeam, prelimsDone, res, tn } from "../lib/engine.js";
+import { STAGES, allMatches, courtOf, groups, onCourt, pickedTeam, prelimsDone, res, tn, tp } from "../lib/engine.js";
 import { lsGet, lsSet } from "../lib/store.js";
-import { Badge, Empty, MatchCard, TeamName } from "../components/ui.jsx";
+import { Badge, Empty, MatchCard } from "../components/ui.jsx";
 import Story from "../components/Story.jsx";
 
 // Upcoming means not finished yet, so matches being played stay in view.
@@ -31,37 +31,32 @@ export default function Matches({ S, admin, onOpen }) {
   const inStage = st => all.filter(m => (st === "po") === !!m.br);
   const shown = inStage(stage);
   const byTeam = team == null ? shown : shown.filter(m => m.a === team || m.b === team);
-  const nAll = byTeam.length * 3, nDone = byTeam.reduce((a, m) => a + gamesDone(S, m), 0);
   const nLive = byTeam.filter(m => { const d = gamesDone(S, m); return d > 0 && d < 3; }).length;
-  const pct = nAll ? Math.round((nDone / nAll) * 100) : 0;
-  const toggle = k => set({ status: f.status === k ? "all" : k });
 
-  const stageCount = st => { const ms = inStage(st); return `${ms.filter(m => res(S, m).done).length}/${ms.length}`; };
+  // Each stage button carries its own progress, so there is no separate progress card.
+  const stageInfo = st => {
+    const ms = inStage(st).filter(m => team == null || m.a === team || m.b === team);
+    const done = ms.filter(m => res(S, m).done).length;
+    return { done, n: ms.length, pct: ms.length ? (done / ms.length) * 100 : 0 };
+  };
   const filters = (
     <div className="filters">
       <div className="fseg stages" role="radiogroup" aria-label="Stage">
-        {[["groups", "Group stage"], ["po", "Playoffs"]].map(([k, n]) => (
-          <button key={k} role="radio" aria-checked={stage === k} className={stage === k ? "on" : ""} onClick={() => setStage(k)}>
-            <b>{n}</b><small className="num">{stageCount(k)} matches</small>
-          </button>
-        ))}
+        {[["groups", "Group stage"], ["po", "Playoffs"]].map(([k, n]) => {
+          const x = stageInfo(k);
+          return (
+            <button key={k} role="radio" aria-checked={stage === k} className={stage === k ? "on" : ""} onClick={() => setStage(k)}>
+              <b>{n}</b><small className="num">{x.done} of {x.n} played</small>
+              <i className="sbar" aria-hidden="true"><span style={{ width: x.pct + "%" }} /></i>
+            </button>
+          );
+        })}
       </div>
-      <div className="progress">
-        <div className="progress-top">
-          <span><b className="num">{nDone}</b> of {nAll} {team != null ? "games played by " + tn(S, team) : "games played"}</span>
-          <b className="num pct">{pct}%</b>
-        </div>
-        <div className="pbar" aria-hidden="true">
-          <span className="done" style={{ width: `${(nDone / (nAll || 1)) * 100}%` }} />
-        </div>
-        <div className="pstats" role="group" aria-label="Show matches">
-          <button className={f.status === "done" ? "on" : ""} aria-pressed={f.status === "done"} onClick={() => toggle("done")}>
-            <b className="num">{nDone}</b><span>Played</span>
-          </button>
-          <button className={f.status === "up" ? "on" : ""} aria-pressed={f.status === "up"} onClick={() => toggle("up")}>
-            <b className="num">{nAll - nDone}</b><span>Not played{nLive > 0 && <small><span className="dot live" />{nLive} {nLive === 1 ? "match" : "matches"} on court</small>}</span>
-          </button>
-        </div>
+      <div className="fstat" role="group" aria-label="Show matches">
+        {[["all", "All", byTeam.length], ["done", "Played", byTeam.filter(m => gamesDone(S, m) > 0).length], ["up", "Not played", byTeam.filter(m => gamesDone(S, m) < 3).length]].map(([k, n, c]) => (
+          <button key={k} className={f.status === k ? "on" : ""} aria-pressed={f.status === k} onClick={() => set({ status: k })}>{n}<span className="num">{c}</span></button>
+        ))}
+        {nLive > 0 && <span className="fstat-live"><span className="dot live" />{nLive} on court</span>}
       </div>
       <div className={`fteams ${team != null ? "picked" : ""}`} role="radiogroup" aria-label="Team">
         <button role="radio" aria-checked={team == null} className={`all ${team == null ? "on" : ""}`} onClick={() => set({ team: null })}>All</button>
@@ -72,7 +67,7 @@ export default function Matches({ S, admin, onOpen }) {
           </button>
         ))}
       </div>
-      {team != null && <div className="fteam-name"><Badge S={S} t={team} size="sm" /><TeamName S={S} t={team} />{team === mine && <span>My team</span>}</div>}
+      {team != null && <p className="fteam-line"><b>{tn(S, team)}</b>{team === mine && <em>My team</em>}<span>{tp(S, team)}</span></p>}
     </div>
   );
 
@@ -85,7 +80,6 @@ export default function Matches({ S, admin, onOpen }) {
       <div className="title-row"><h1 className="page-title">Matches</h1>{filtered && <button className="btn sm" onClick={() => set({ team: null, status: "all" })}><X size={14} />Clear</button>}</div>
       {!admin && !filtered && <Story S={S} />}
       {filters}
-      {filtered && <p className="hint">{list.length} {list.length === 1 ? "match" : "matches"}{team != null ? ` for ${tn(S, team)}` : ""}{f.status !== "all" ? ` · ${STATUS.find(s => s[0] === f.status)[1].toLowerCase()}` : ""}</p>}
       {finished && <div className="banner ok"><PartyPopper size={18} /> Tournament finished. Congratulations to the winners!</div>}
       {!list.length && <Empty icon={SearchX} title="Nothing here">{f.status === "up" ? "Every game has been played." : "No games played yet."}</Empty>}
       {live.length > 0 && (
@@ -101,7 +95,7 @@ export default function Matches({ S, admin, onOpen }) {
         return (
           <div key={stage}>
             <div className="section"><h2>{stage}</h2><span>{done}/{inStage.length} played</span></div>
-            <div className="cards">{ms.map(card)}</div>
+            <div className="cards">{ms.map(m => <MatchCard key={m.id} S={S} m={m} onOpen={onOpen} showStage={false} />)}</div>
           </div>
         );
       })}
